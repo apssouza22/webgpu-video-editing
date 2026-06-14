@@ -47,13 +47,18 @@ export function canvasElementToAddClipInput(element: CanvasElement): AddClipInpu
 }
 
 export function timelineClipToCompositionClip(clip: Clip): CompositionClip {
+  const sourceOffset = clip.inPoint;
+
   switch (clip.type) {
     case 'video':
-      return new VideoClip(clip.url ?? '', clip.startTime, clip.duration);
+      return new VideoClip(clip.url ?? '', clip.startTime, clip.duration, undefined, undefined, undefined, undefined, {
+        sourceOffset,
+        muted: Boolean(clip.linkedClipId),
+      });
     case 'image':
       return new ImageClip(clip.url ?? '', clip.startTime, clip.duration);
     case 'audio':
-      return new AudioClip(clip.url ?? '', clip.startTime, clip.duration);
+      return new AudioClip(clip.url ?? '', clip.startTime, clip.duration, sourceOffset);
     case 'text':
       return new TextClip(
         clip.textContent?.trim() || clip.name,

@@ -6,7 +6,9 @@ import {
   mountSidebar,
   type SidebarOptions,
 } from '@opensource/sidebar';
+import { AnimationFrameLoop } from './animationFrameLoop';
 import { bindClipCanvasSync } from './clipCanvasSync';
+import { bindEditorPlayback } from './editorPlayback';
 
 import '@opensource/sidebar/style.css';
 import '@opensource/timeline/style.css';
@@ -33,6 +35,7 @@ export class VideoEditor {
   readonly timeline: Timeline;
   readonly canvas: CompositionCanvas;
   readonly sidebar: Sidebar | null;
+  readonly frameLoop: AnimationFrameLoop;
   private readonly disposables: Array<() => void> = [];
 
   constructor(
@@ -59,19 +62,15 @@ export class VideoEditor {
       this.sidebar = null;
     }
 
-    this.bindPlayback();
+    this.frameLoop = new AnimationFrameLoop();
+    this.disposables.push(
+      bindEditorPlayback({
+        timeline: this.timeline,
+        canvas: this.canvas,
+        frameLoop: this.frameLoop,
+      }),
+    );
     this.disposables.push(bindClipCanvasSync({ timeline: this.timeline, canvas: this.canvas }));
-  }
-
-  private bindPlayback(): void {
-    const syncCanvas = ({ time }: { time: number }) => {
-      this.canvas.render(time);
-    };
-
-    this.timeline.on('playhead:change', syncCanvas);
-    this.disposables.push(() => this.timeline.off('playhead:change', syncCanvas));
-
-    this.canvas.render(this.timeline.getPlayhead());
   }
 
   destroy(): void {
@@ -79,6 +78,7 @@ export class VideoEditor {
       unsubscribe();
     }
     this.disposables.length = 0;
+    this.frameLoop.destroy();
     this.sidebar?.destroy();
     this.timeline.destroy();
     this.canvas.destroy();
@@ -96,6 +96,13 @@ export {
   timelineClipToCompositionClip,
 } from './clipCanvasSync';
 export type { ClipCanvasSyncOptions } from './clipCanvasSync';
+export {
+  AnimationFrameLoop,
+  type AnimationFrameLoopOptions,
+  type FrameCallback,
+  type FrameContext,
+} from './animationFrameLoop';
+export { bindEditorPlayback, type EditorPlaybackOptions } from './editorPlayback';
 export {
   Sidebar,
   mountSidebar,

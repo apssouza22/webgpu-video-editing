@@ -143,7 +143,17 @@ export class ClipCanvasSync {
         const linkedAudio = clips.find(
           (clip) => clip.type === 'audio' && clip.linkedClipId === primary.id,
         );
-        this.register(this.pendingElementId, primary.id, linkedAudio?.id);
+        this.register(this.pendingElementId, primary.id);
+
+        if (linkedAudio) {
+          this.canvas.updateElement(this.pendingElementId, { muted: true });
+          this.source = 'timeline';
+          this.canvas.addLayer(timelineClipToCompositionClip(linkedAudio));
+          const audioElement = this.canvas.getElements().at(-1);
+          if (audioElement) {
+            this.register(audioElement.id, linkedAudio.id);
+          }
+        }
       }
       return;
     }
@@ -152,12 +162,14 @@ export class ClipCanvasSync {
     try {
       for (const clip of clips) {
         if (isLinkedAudioCompanion(clip, clips)) {
-          const videoClip = clips.find((candidate) => candidate.id === clip.linkedClipId);
-          if (videoClip) {
-            const elementId = this.clipToElement.get(videoClip.id);
-            if (elementId) {
-              this.clipToElement.set(clip.id, elementId);
-            }
+          if (this.clipToElement.has(clip.id)) {
+            continue;
+          }
+
+          this.canvas.addLayer(timelineClipToCompositionClip(clip));
+          const element = this.canvas.getElements().at(-1);
+          if (element) {
+            this.register(element.id, clip.id);
           }
           continue;
         }
@@ -169,7 +181,7 @@ export class ClipCanvasSync {
         this.canvas.addLayer(timelineClipToCompositionClip(clip));
         const element = this.canvas.getElements().at(-1);
         if (element) {
-          this.register(element.id, clip.id, clip.linkedClipId);
+          this.register(element.id, clip.id);
         }
       }
     } finally {
@@ -231,10 +243,12 @@ export class ClipCanvasSync {
     clipId,
     startTime,
     duration,
+    inPoint,
   }: {
     clipId: string;
     startTime: number;
     duration: number;
+    inPoint: number;
   }): void {
     const elementId = this.clipToElement.get(clipId);
     if (!elementId || this.elementToClip.get(elementId) !== clipId) {
@@ -243,7 +257,7 @@ export class ClipCanvasSync {
 
     this.source = 'timeline';
     try {
-      this.canvas.updateElement(elementId, { startTime, duration });
+      this.canvas.updateElement(elementId, { startTime, duration, sourceOffset: inPoint });
     } finally {
       this.source = null;
     }
@@ -331,12 +345,9 @@ export class ClipCanvasSync {
     }
   }
 
-  private register(elementId: string, primaryClipId: string, linkedClipId?: string): void {
+  private register(elementId: string, primaryClipId: string): void {
     this.elementToClip.set(elementId, primaryClipId);
     this.clipToElement.set(primaryClipId, elementId);
-    if (linkedClipId) {
-      this.clipToElement.set(linkedClipId, elementId);
-    }
   }
 
   private unmapElement(elementId: string): void {
