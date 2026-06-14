@@ -93,6 +93,7 @@ export {
   bindClipCanvasSync,
   ClipCanvasSync,
   canvasElementToAddClipInput,
+  getTimelineClipZIndex,
   timelineClipToCompositionClip,
 } from './clipCanvasSync';
 export type { ClipCanvasSyncOptions } from './clipCanvasSync';

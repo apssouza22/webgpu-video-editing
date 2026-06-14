@@ -10,6 +10,7 @@ import type { CompositionCanvas, CanvasElement } from '@opensource/video-canvas'
 
 import {
   canvasElementToAddClipInput,
+  getTimelineClipZIndex,
   isLinkedAudioCompanion,
   timelineClipToCompositionClip,
 } from './converters';
@@ -43,9 +44,14 @@ export class ClipCanvasSync {
       this.canvas.on('selection:changed', (payload) => this.onCanvasSelectionChanged(payload.selectedId)),
       this.timeline.on('clip:add', (payload) => this.onTimelineClipAdd(payload.clips)),
       this.timeline.on('clip:remove', (payload) => this.onTimelineClipRemove(payload.clipIds)),
+      this.timeline.on('clip:drag', (payload) => this.onTimelineClipMoved(payload)),
       this.timeline.on('clip:drag:end', (payload) => this.onTimelineClipMoved(payload)),
       this.timeline.on('clip:trim', (payload) => this.onTimelineClipTrimmed(payload)),
+      this.timeline.on('clip:split', (payload) => this.onTimelineClipSplit(payload)),
       this.timeline.on('clip:select', (payload) => this.onTimelineClipSelect(payload.primaryId)),
+      this.timeline.on('track:reorder', () => this.syncAllZIndicesFromTimeline()),
+      this.timeline.on('track:add', () => this.syncAllZIndicesFromTimeline()),
+      this.timeline.on('track:remove', () => this.syncAllZIndicesFromTimeline()),
     );
 
     return () => this.destroy();
@@ -143,6 +149,7 @@ export class ClipCanvasSync {
         const linkedAudio = clips.find(
           (clip) => clip.type === 'audio' && clip.linkedClipId === primary.id,
         );
+        this.applyClipTimingToCanvas(primary, this.pendingElementId);
         this.register(this.pendingElementId, primary.id);
 
         if (linkedAudio) {
@@ -221,45 +228,66 @@ export class ClipCanvasSync {
 
   private onTimelineClipMoved({
     clipId,
-    startTime,
+    linkedClipId,
   }: {
     clipId: string;
     startTime: number;
+    trackId: string;
+    linkedClipId?: string;
   }): void {
-    const elementId = this.clipToElement.get(clipId);
-    if (!elementId || this.elementToClip.get(elementId) !== clipId) {
-      return;
-    }
-
-    this.source = 'timeline';
-    try {
-      this.canvas.updateElement(elementId, { startTime });
-    } finally {
-      this.source = null;
-    }
+    this.syncTimelineClipsToCanvas([clipId, linkedClipId]);
   }
 
-  private onTimelineClipTrimmed({
-    clipId,
-    startTime,
-    duration,
-    inPoint,
-  }: {
-    clipId: string;
-    startTime: number;
-    duration: number;
-    inPoint: number;
-  }): void {
-    const elementId = this.clipToElement.get(clipId);
-    if (!elementId || this.elementToClip.get(elementId) !== clipId) {
+  private onTimelineClipTrimmed({ clipId }: { clipId: string }): void {
+    const clip = this.timeline.getState().clips.find((item) => item.id === clipId);
+    if (!clip) {
       return;
     }
 
+    this.syncTimelineClipsToCanvas([clipId, clip.linkedClipId]);
+  }
+
+  private onTimelineClipSplit({
+    originalClipId,
+    newClipIds,
+  }: {
+    originalClipId: string;
+    newClipIds: [string, string];
+    time: number;
+  }): void {
+    if (this.source === 'canvas') {
+      return;
+    }
+
+    const state = this.timeline.getState();
+    const [firstId, secondId] = newClipIds;
+    const firstClip = state.clips.find((item) => item.id === firstId);
+    const secondClip = state.clips.find((item) => item.id === secondId);
+    if (!firstClip || !secondClip) {
+      return;
+    }
+
+    const orphanedClipIds = this.getOrphanedClipIds(state);
+    const companionClipId = orphanedClipIds.find((id) => id !== originalClipId);
+
     this.source = 'timeline';
     try {
-      this.canvas.updateElement(elementId, { startTime, duration, sourceOffset: inPoint });
+      this.syncSplitClip(originalClipId, firstClip, secondClip);
+
+      if (companionClipId && firstClip.linkedClipId && secondClip.linkedClipId) {
+        const firstLinked = state.clips.find((item) => item.id === firstClip.linkedClipId);
+        const secondLinked = state.clips.find((item) => item.id === secondClip.linkedClipId);
+        if (firstLinked && secondLinked) {
+          this.syncSplitClip(companionClipId, firstLinked, secondLinked);
+        }
+      }
+
+      for (const clipId of orphanedClipIds) {
+        this.unmapClip(clipId);
+      }
     } finally {
       this.source = null;
+      this.refreshCanvasPreview();
     }
   }
 
@@ -279,6 +307,109 @@ export class ClipCanvasSync {
     } finally {
       this.source = null;
     }
+  }
+
+  private syncTimelineClipsToCanvas(clipIds: Array<string | undefined>): void {
+    const uniqueIds = [...new Set(clipIds.filter((id): id is string => Boolean(id)))];
+    if (uniqueIds.length === 0) {
+      return;
+    }
+
+    this.source = 'timeline';
+    try {
+      for (const clipId of uniqueIds) {
+        const clip = this.timeline.getState().clips.find((item) => item.id === clipId);
+        if (clip) {
+          this.applyClipTimingToCanvas(clip);
+        }
+      }
+    } finally {
+      this.source = null;
+      this.refreshCanvasPreview();
+    }
+  }
+
+  private syncSplitClip(originalClipId: string, firstClip: Clip, secondClip: Clip): void {
+    const elementId = this.clipToElement.get(originalClipId);
+    if (elementId) {
+      this.applyClipTimingToCanvas(firstClip, elementId);
+      this.register(elementId, firstClip.id);
+    } else {
+      this.addCanvasLayerForClip(firstClip);
+    }
+
+    this.addCanvasLayerForClip(secondClip);
+  }
+
+  private addCanvasLayerForClip(clip: Clip): void {
+    if (this.clipToElement.has(clip.id)) {
+      return;
+    }
+
+    this.canvas.addLayer(timelineClipToCompositionClip(clip));
+    const element = this.canvas.getElements().at(-1);
+    if (element) {
+      this.register(element.id, clip.id);
+    }
+  }
+
+  private applyClipTimingToCanvas(clip: Clip, elementId?: string): void {
+    const targetId = elementId ?? this.clipToElement.get(clip.id);
+    if (!targetId) {
+      return;
+    }
+
+    if (!elementId) {
+      const mappedClipId = this.elementToClip.get(targetId);
+      if (mappedClipId && mappedClipId !== clip.id) {
+        return;
+      }
+    }
+
+    this.canvas.updateElement(targetId, {
+      startTime: clip.startTime,
+      duration: clip.duration,
+      sourceOffset: clip.inPoint,
+      zIndex: getTimelineClipZIndex(clip, this.timeline.getState().tracks),
+    });
+  }
+
+  private syncAllZIndicesFromTimeline(): void {
+    if (this.source === 'canvas') {
+      return;
+    }
+
+    const { tracks, clips } = this.timeline.getState();
+
+    this.source = 'timeline';
+    try {
+      for (const clip of clips) {
+        const elementId = this.clipToElement.get(clip.id);
+        if (!elementId || this.elementToClip.get(elementId) !== clip.id) {
+          continue;
+        }
+
+        this.canvas.updateElement(elementId, {
+          zIndex: getTimelineClipZIndex(clip, tracks),
+        });
+      }
+    } finally {
+      this.source = null;
+      this.refreshCanvasPreview();
+    }
+  }
+
+  private getOrphanedClipIds(state: ReturnType<Timeline['getState']>): string[] {
+    const clipIds = new Set(state.clips.map((clip) => clip.id));
+    return [...this.clipToElement.keys()].filter((clipId) => !clipIds.has(clipId));
+  }
+
+  private refreshCanvasPreview(): void {
+    if (this.timeline.getState().isPlaying) {
+      return;
+    }
+
+    this.canvas.render(this.canvas.getCurrentTime(), { playing: false });
   }
 
   private updateTimelineTiming(

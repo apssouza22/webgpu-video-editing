@@ -1,4 +1,4 @@
-import type { AddClipInput, Clip } from '@opensource/timeline';
+import type { AddClipInput, Clip, Track } from '@opensource/timeline';
 import {
   AudioClip,
   ImageClip,
@@ -66,6 +66,24 @@ export function timelineClipToCompositionClip(clip: Clip): CompositionClip {
         clip.duration,
       );
   }
+}
+
+export function getTimelineClipZIndex(
+  clip: Pick<Clip, 'type' | 'trackId'>,
+  tracks: Pick<Track, 'id'>[],
+): number {
+  const trackIndex = tracks.findIndex((track) => track.id === clip.trackId);
+  if (trackIndex < 0) {
+    return 0;
+  }
+
+  // Audio is not composited visually; keep it out of the layer stack.
+  if (clip.type === 'audio') {
+    return 0;
+  }
+
+  // Lower tracks in the timeline UI render above higher tracks.
+  return trackIndex;
 }
 
 export function isLinkedAudioCompanion(clip: Clip, addedClips: Clip[]): boolean {
