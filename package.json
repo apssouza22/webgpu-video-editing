@@ -12,6 +12,7 @@
     "dev:sidebar": "npm run dev -w @opensource/sidebar",
     "dev:timeline": "npm run dev -w @opensource/timeline",
     "dev:video-canvas": "npm run dev -w @opensource/video-canvas",
+    "dev:gpu-video-encode": "npm run dev -w @opensource/gpu-video-encode",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
