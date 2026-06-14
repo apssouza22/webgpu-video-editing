@@ -1,6 +1,7 @@
-import {CompositionExporter, downloadBlob} from './export/CompositionExporter';
-import {CompositionPlayer} from './player/CompositionPlayer';
-import {DEMO_COMPOSITION} from "./composition";
+import { CompositionExporter } from '@opensource/gpu-video-encode';
+import { CompositionPlayer } from './player/CompositionPlayer';
+import { DEMO_COMPOSITION } from './composition';
+import { downloadBlob } from './download';
 
 const statusEl = document.getElementById('status');
 const playerEl = document.getElementById('player');
@@ -22,7 +23,7 @@ async function verifySamples(): Promise<void> {
     if (!response.ok) {
       throw new Error(
         `Missing sample media: ${url}\n\n` +
-          'Add files under public/samples/:\n' +
+          'Add files under demo/public/samples/:\n' +
           '  - video.mp4 (with audio track)\n' +
           '  - overlay.png\n\n' +
           'See README.md for details.',

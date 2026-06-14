@@ -7,7 +7,10 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["@webgpu/types"]
+    "types": ["@webgpu/types"],
+    "paths": {
+      "@opensource/gpu-video-encode": ["./src/index.ts"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "demo"]
 }

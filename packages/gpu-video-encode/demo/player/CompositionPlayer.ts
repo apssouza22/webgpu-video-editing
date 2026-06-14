@@ -1,4 +1,4 @@
-import type {Composition} from '../composition';
+import type { Composition } from '@opensource/gpu-video-encode';
 import {AudioPlayer} from './AudioPlayer';
 import {VideoPlayer} from './VideoPlayer';
 

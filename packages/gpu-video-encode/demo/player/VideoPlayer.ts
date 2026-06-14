@@ -1,7 +1,6 @@
-import type {Composition} from '../composition';
-import {GpuCompositor} from '../gpu/GpuCompositor';
-import {PlayerCanvas} from '../gpu/PlayerCanvas';
-import type {ImageClip} from '../types';
+import type { Composition, ImageClip } from '@opensource/gpu-video-encode';
+import { GpuCompositor } from '../../src/gpu/GpuCompositor';
+import { PlayerCanvas } from '../gpu/PlayerCanvas';
 
 export class VideoPlayer {
   private readonly playerCanvas: PlayerCanvas;

@@ -1,4 +1,4 @@
-import type {AudioClip} from '../types';
+import type { AudioClip } from '@opensource/gpu-video-encode';
 
 export class AudioPlayer {
   private readonly audioContext: AudioContext | null;

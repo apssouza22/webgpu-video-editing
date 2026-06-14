@@ -4,9 +4,22 @@
   "version": "1.0.0",
   "type": "module",
   "description": "GPU + OffscreenCanvas video export with WebCodecs and MediaBunny",
+  "main": "./dist/gpu-video-encode.js",
+  "module": "./dist/gpu-video-encode.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/gpu-video-encode.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
+    "build:demo": "vite build --mode demo",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview"
   },
@@ -16,6 +29,7 @@
   "devDependencies": {
     "@webgpu/types": "^0.1.66",
     "typescript": "~5.9.3",
-    "vite": "^7.3.2"
+    "vite": "^7.3.2",
+    "vite-plugin-dts": "^4.5.4"
   }
 }

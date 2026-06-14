@@ -25,7 +25,7 @@ gpu-video-editor/                 ← this repo (assembly)
 | `@opensource/video-canvas` | Submodule | [apssouza22/video-canvas](https://github.com/apssouza22/video-canvas) |
 | `@opensource/core` | Assembly repo | [apssouza22/webgpu-video-editing](https://github.com/apssouza22/webgpu-video-editing) |
 | `@opensource/sidebar` | Assembly repo | same |
-| `@opensource/gpu-video-encode` | Assembly repo | same — WebGPU export pipeline (WebCodecs + MediaBunny) |
+| `@opensource/gpu-video-encode` | Assembly repo | same — WebGPU export pipeline (WebCodecs + MediaBunny); library in `src/`, preview player in `demo/` |
 
 Package-specific notes live in `packages/timeline/AGENTS.md` and `packages/video-canvas/AGENTS.md`.
 
