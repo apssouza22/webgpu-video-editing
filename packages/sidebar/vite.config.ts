@@ -10,11 +10,7 @@ export default defineConfig(({ command }) => {
       plugins: [tailwindcss()],
       resolve: {
         alias: {
-          '@opensource/core': resolve(__dirname, 'src/index.ts'),
-          '@opensource/sidebar/style.css': resolve(__dirname, '../sidebar/src/index.css'),
-          '@opensource/sidebar': resolve(__dirname, '../sidebar/src/index.ts'),
-          '@opensource/timeline/style.css': resolve(__dirname, '../timeline/src/view/timeline.css'),
-          '@opensource/timeline': resolve(__dirname, '../timeline/src/common/index.ts'),
+          '@opensource/sidebar': resolve(__dirname, 'src/index.ts'),
           '@opensource/video-canvas/style.css': resolve(__dirname, '../video-canvas/src/index.css'),
           '@opensource/video-canvas': resolve(__dirname, '../video-canvas/src/index.ts'),
         },
@@ -30,18 +26,14 @@ export default defineConfig(({ command }) => {
     build: {
       lib: {
         entry: resolve(__dirname, 'src/index.ts'),
-        name: 'GpuVideoEditorCore',
+        name: 'Sidebar',
         formats: ['es'],
-        fileName: 'core',
+        fileName: 'sidebar',
       },
       rollupOptions: {
-        external: [
-          '@opensource/sidebar',
-          '@opensource/timeline',
-          '@opensource/video-canvas',
-        ],
+        external: ['@opensource/video-canvas'],
         output: {
-          assetFileNames: 'core.[ext]',
+          assetFileNames: 'sidebar.[ext]',
         },
       },
       cssCodeSplit: false,

@@ -12,8 +12,9 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "paths": {
+      "paths": {
       "@opensource/core": ["./src/index.ts"],
+      "@opensource/sidebar": ["../sidebar/src/index.ts"],
       "@opensource/timeline": ["../timeline/src/common/index.ts"],
       "@opensource/video-canvas": ["../video-canvas/src/index.ts"]
     }

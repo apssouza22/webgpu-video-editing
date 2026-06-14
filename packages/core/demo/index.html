@@ -19,13 +19,22 @@
 
       .layout {
         display: grid;
+        grid-template-columns: 320px minmax(0, 1fr);
         grid-template-rows: minmax(240px, 1fr) 280px;
         height: 100vh;
+      }
+
+      .sidebar {
+        grid-row: 1 / span 2;
+        min-height: 0;
+        border-right: 1px solid #2a2f3a;
       }
 
       .preview {
         padding: 1rem;
         border-bottom: 1px solid #2a2f3a;
+        min-width: 0;
+        min-height: 0;
       }
 
       .preview-panel {
@@ -38,10 +47,25 @@
       .timeline {
         min-height: 0;
       }
+
+      @media (max-width: 960px) {
+        .layout {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto minmax(240px, 1fr) 280px;
+        }
+
+        .sidebar {
+          grid-row: auto;
+          border-right: none;
+          border-bottom: 1px solid #2a2f3a;
+          max-height: 320px;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="layout">
+      <aside id="sidebar" class="sidebar"></aside>
       <section class="preview">
         <div id="canvas" class="preview-panel"></div>
       </section>

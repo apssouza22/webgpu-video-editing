@@ -1,21 +1,14 @@
 {
-  "name": "@opensource/core",
+  "name": "@opensource/sidebar",
   "version": "0.1.0",
-  "description": "GPU video editor core — integrates timeline and composition canvas",
+  "description": "Event-driven editor sidebar with media library, upload, and element properties",
   "type": "module",
-  "main": "./dist/core.js",
-  "module": "./dist/core.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
   "exports": {
-    ".": {
-      "import": "./dist/core.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./style.css": "./dist/core.css"
+    ".": "./src/index.ts",
+    "./style.css": "./src/index.css"
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -23,8 +16,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@opensource/sidebar": "*",
-    "@opensource/timeline": "*",
     "@opensource/video-canvas": "*"
   },
   "devDependencies": {

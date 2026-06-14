@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+@source '../demo';
+@source '.';
+
+@theme {
+  --color-es-bg: #0f1115;
+  --color-es-panel: #171a21;
+  --color-es-border: #2a3140;
+  --color-es-text: #f3f5f9;
+  --color-es-muted: #9aa3b2;
+  --color-es-accent: #3e8af5;
+  --color-es-accent-hover: #5b9dff;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

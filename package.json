@@ -9,6 +9,7 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "dev": "npm run dev -w @opensource/core",
+    "dev:sidebar": "npm run dev -w @opensource/sidebar",
     "dev:timeline": "npm run dev -w @opensource/timeline",
     "dev:video-canvas": "npm run dev -w @opensource/video-canvas",
     "test": "npm run test --workspaces --if-present",
