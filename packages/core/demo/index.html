@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPU Video Editor — Core Demo</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, sans-serif;
+        background: #0f1115;
+        color: #e8eaed;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-rows: minmax(240px, 1fr) 280px;
+        height: 100vh;
+      }
+
+      .preview {
+        padding: 1rem;
+        border-bottom: 1px solid #2a2f3a;
+      }
+
+      .preview-panel {
+        height: 100%;
+        border: 1px solid #2a2f3a;
+        border-radius: 0.75rem;
+        background: #171a21;
+      }
+
+      .timeline {
+        min-height: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <section class="preview">
+        <div id="canvas" class="preview-panel"></div>
+      </section>
+      <section id="timeline" class="timeline"></section>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

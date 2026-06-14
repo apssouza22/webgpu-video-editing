@@ -1,0 +1,6 @@
+[submodule "packages/timeline"]
+	path = packages/timeline
+	url = git@github.com:apssouza22/video-timeline.git
+[submodule "packages/video-canvas"]
+	path = packages/video-canvas
+	url = git@github.com:apssouza22/video-canvas.git

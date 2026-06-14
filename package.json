@@ -1,0 +1,20 @@
+{
+  "name": "gpu-video-editor",
+  "private": true,
+  "version": "0.1.0",
+  "description": "GPU-accelerated video editor assembled from independent workspace packages",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev -w @opensource/core",
+    "dev:timeline": "npm run dev -w @opensource/timeline",
+    "dev:video-canvas": "npm run dev -w @opensource/video-canvas",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
