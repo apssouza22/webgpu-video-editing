@@ -1,17 +1,6 @@
-import { VideoEditor, type MediaLibraryItem } from '@opensource/core';
+import { VideoEditor } from '@opensource/core';
 
 const DEMO_VIDEO_URL = '/demo.mp4';
-
-const demoVideoStock: MediaLibraryItem[] = [
-  {
-    id: 'stock-demo-video',
-    type: 'video',
-    name: 'demo.mp4',
-    src: DEMO_VIDEO_URL,
-    createdAt: Date.now(),
-    source: 'stock',
-  },
-];
 
 const timelineEl = document.getElementById('timeline');
 const canvasEl = document.getElementById('canvas');
@@ -35,8 +24,7 @@ const editor = new VideoEditor(
       },
     },
     sidebar: {
-      initialPanel: 'video',
-      stockMedia: demoVideoStock,
+      initialPanel: 'media',
     },
   },
 );
@@ -52,7 +40,7 @@ async function seedDemo(): Promise<void> {
     startTime: 0,
   });
   editor.canvas.selectElement(null);
-  editor.sidebar?.setActivePanel('video');
+  editor.sidebar?.setActivePanel('media');
 }
 
 void seedDemo();

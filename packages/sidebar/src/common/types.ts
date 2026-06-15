@@ -2,7 +2,7 @@ import type { CanvasElement } from '@opensource/video-canvas';
 
 export type MediaType = 'video' | 'image' | 'audio';
 
-export type SidebarPanelId = MediaType | 'text' | 'properties' | 'export' | 'transcription';
+export type SidebarPanelId = 'media' | 'text' | 'properties' | 'export' | 'transcription';
 
 export interface TranscriptionChunk {
   text: string;
@@ -41,7 +41,7 @@ export interface ExportSettings {
   outputFilename?: string;
 }
 
-export type MediaLibrarySource = 'stock' | 'upload' | 'library';
+export type MediaLibrarySource = 'upload' | 'library';
 
 export interface MediaLibraryItem {
   id: string;

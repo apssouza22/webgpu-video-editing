@@ -8,9 +8,7 @@ import { SIDEBAR_ICONS } from './sidebarIcons';
 import { UIComponent } from './UIComponent';
 
 const PANELS: Array<{ id: SidebarPanelId; label: string; icon: string }> = [
-  { id: 'video', label: 'Video', icon: SIDEBAR_ICONS.video },
-  { id: 'image', label: 'Image', icon: SIDEBAR_ICONS.image },
-  { id: 'audio', label: 'Audio', icon: SIDEBAR_ICONS.audio },
+  { id: 'media', label: 'Media', icon: SIDEBAR_ICONS.media },
   { id: 'text', label: 'Text', icon: SIDEBAR_ICONS.text },
   { id: 'properties', label: 'Properties', icon: SIDEBAR_ICONS.properties },
   { id: 'export', label: 'Export', icon: SIDEBAR_ICONS.export },
@@ -69,17 +67,13 @@ export class SidebarView extends UIComponent<Sidebar> {
     const contentHost = document.createElement('div');
     contentHost.className = 'sidebar-tab-content';
 
-    const videoPanel = new MediaLibraryPanel(this.sidebar, 'video');
-    const imagePanel = new MediaLibraryPanel(this.sidebar, 'image');
-    const audioPanel = new MediaLibraryPanel(this.sidebar, 'audio');
+    const mediaPanel = new MediaLibraryPanel(this.sidebar);
     const textPanel = this.createTextPanel();
     const propertiesPanel = new PropertiesPanel(this.sidebar);
     const exportPanel = new ExportPanel(this.sidebar);
     const transcriptionPanel = new TranscriptionPanel(this.sidebar);
 
-    panels.set('video', videoPanel.element);
-    panels.set('image', imagePanel.element);
-    panels.set('audio', audioPanel.element);
+    panels.set('media', mediaPanel.element);
     panels.set('text', textPanel);
     panels.set('properties', propertiesPanel.element);
     panels.set('export', exportPanel.element);

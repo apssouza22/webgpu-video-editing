@@ -74,7 +74,6 @@ export {
 } from './project';
 export {
   bindSidebarMediaLibrary,
-  createStockMedia,
   MediaLibrary,
   addMediaToCanvas,
   type BindSidebarMediaLibraryOptions,

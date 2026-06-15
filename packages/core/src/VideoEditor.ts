@@ -17,11 +17,7 @@ import {
   type ExportVideoOptions,
   type ExportVideoResult,
 } from './export';
-import {
-  bindSidebarMediaLibrary,
-  createStockMedia,
-  MediaLibrary,
-} from './mediaLibrary';
+import { bindSidebarMediaLibrary, MediaLibrary } from './mediaLibrary';
 import {
   bindProjectPersistence,
   type ProjectPersistenceApi,
@@ -37,15 +33,11 @@ import '@opensource/sidebar/style.css';
 import '@opensource/timeline/style.css';
 import '@opensource/video-canvas/style.css';
 
-import type { MediaLibraryItem } from '@opensource/sidebar';
-
 export interface VideoEditorOptions {
   timeline?: TimelineOptions;
   timelineClassName?: string;
   canvasClassName?: string;
-  /** Stock media shown in the library before any uploads. */
-  stockMedia?: MediaLibraryItem[];
-  sidebar?: SidebarOptions & { stockMedia?: MediaLibraryItem[] };
+  sidebar?: SidebarOptions;
   sidebarClassName?: string;
   /** When true (default), handles `export:requested` from the sidebar. */
   bindSidebarExport?: boolean;
@@ -87,9 +79,7 @@ export class VideoEditor {
     this.canvas = new CompositionCanvas(canvasContainer, {
       className: options.canvasClassName,
     });
-    this.mediaLibrary = new MediaLibrary(
-      options.stockMedia ?? options.sidebar?.stockMedia ?? createStockMedia(),
-    );
+    this.mediaLibrary = new MediaLibrary();
     this.transcription = new TranscriptionService({
       mockTranscription: options.transcription?.mockTranscription ?? false,
       language: options.transcription?.language,

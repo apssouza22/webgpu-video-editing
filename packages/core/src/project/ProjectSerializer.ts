@@ -73,7 +73,7 @@ export function captureProjectDocument(input: CaptureEditorStateInput): ProjectD
   const clips = timeline.clips.map((clip) => serializeClip(clip, mediaAssets));
   const elements = canvas.elements.map((element) => serializeCanvasElement(element, mediaAssets));
   const libraryEntries = mediaLibrary
-    .filter((item) => item.source !== 'stock' && item.assetId)
+    .filter((item) => item.assetId)
     .map((item) => serializeMediaLibraryEntry(item, mediaAssets));
 
   return {

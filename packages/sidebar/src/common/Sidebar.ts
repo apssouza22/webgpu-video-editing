@@ -25,7 +25,7 @@ export class Sidebar {
   constructor(canvas: CompositionCanvasAPI, options: SidebarOptions = {}) {
     this.canvas = canvas;
     this.mediaLibrary = options.mediaLibrary ?? null;
-    this.activePanel = options.initialPanel ?? 'video';
+    this.activePanel = options.initialPanel ?? 'media';
     this.bindCanvas();
   }
 

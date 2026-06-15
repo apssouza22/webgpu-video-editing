@@ -1,4 +1,3 @@
-import { SAMPLE_IMAGE_SRC, SAMPLE_VIDEO_SRC } from '@opensource/video-canvas';
 import type { MediaLibraryItem, ResolvedMediaInput } from '@opensource/sidebar';
 
 let nextMediaId = 0;
@@ -8,38 +7,9 @@ function createMediaId(): string {
   return `media-${nextMediaId}`;
 }
 
-export function createStockMedia(): MediaLibraryItem[] {
-  return [
-    {
-      id: createMediaId(),
-      type: 'video',
-      name: 'Sample clip',
-      src: SAMPLE_VIDEO_SRC,
-      thumbnail: SAMPLE_IMAGE_SRC,
-      createdAt: Date.now(),
-      source: 'stock',
-    },
-    {
-      id: createMediaId(),
-      type: 'image',
-      name: 'Sample image',
-      src: SAMPLE_IMAGE_SRC,
-      thumbnail: SAMPLE_IMAGE_SRC,
-      createdAt: Date.now(),
-      source: 'stock',
-    },
-  ];
-}
-
 export class MediaLibrary {
   private readonly items = new Map<string, MediaLibraryItem>();
   private readonly objectUrls = new Set<string>();
-
-  constructor(stockMedia: MediaLibraryItem[] = createStockMedia()) {
-    for (const item of stockMedia) {
-      this.items.set(item.id, item);
-    }
-  }
 
   list(type?: MediaLibraryItem['type']): MediaLibraryItem[] {
     const all = [...this.items.values()].sort((a, b) => b.createdAt - a.createdAt);

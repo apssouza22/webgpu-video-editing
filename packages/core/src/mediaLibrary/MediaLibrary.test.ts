@@ -3,10 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { MediaLibrary } from './MediaLibrary';
 
 describe('MediaLibrary', () => {
-  it('lists stock media by default', () => {
+  it('starts empty', () => {
     const library = new MediaLibrary();
-    expect(library.list()).toHaveLength(2);
-    expect(library.list('video')).toHaveLength(1);
+    expect(library.list()).toHaveLength(0);
   });
 
   it('adds uploaded files and revokes blob URLs on remove', () => {
@@ -16,7 +15,7 @@ describe('MediaLibrary', () => {
       revokeObjectURL,
     });
 
-    const library = new MediaLibrary([]);
+    const library = new MediaLibrary();
     const file = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
     const item = library.addFromFile(file);
 
@@ -32,16 +31,7 @@ describe('MediaLibrary', () => {
   });
 
   it('returns only persisted library items', () => {
-    const library = new MediaLibrary([
-      {
-        id: 'stock-1',
-        type: 'video',
-        name: 'Stock',
-        src: '/stock.mp4',
-        createdAt: 1,
-        source: 'stock',
-      },
-    ]);
+    const library = new MediaLibrary();
 
     library.addFromResolvedMedia({
       assetId: 'asset-1',
@@ -62,7 +52,7 @@ describe('MediaLibrary', () => {
   });
 
   it('replaces persisted items when loading a project', () => {
-    const library = new MediaLibrary([]);
+    const library = new MediaLibrary();
     library.addFromFile(new File(['x'], 'old.png', { type: 'image/png' }));
 
     library.loadPersistedItems([

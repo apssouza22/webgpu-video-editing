@@ -1,4 +1,4 @@
-export { MediaLibrary, createStockMedia } from './MediaLibrary';
+export { MediaLibrary } from './MediaLibrary';
 export {
   addMediaToCanvas,
   bindSidebarMediaLibrary,
