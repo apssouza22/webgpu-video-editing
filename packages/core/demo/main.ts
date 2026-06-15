@@ -8,11 +8,16 @@ if (!timelineEl || !canvasEl || !sidebarEl) {
   throw new Error('Demo layout is missing #timeline, #canvas, or #sidebar');
 }
 
-const editor = new VideoEditor({
-  timelineContainer: timelineEl,
-  canvasContainer: canvasEl,
-  sidebarContainer: sidebarEl,
-});
+const editor = new VideoEditor(
+  {
+    timelineContainer: timelineEl,
+    canvasContainer: canvasEl,
+    sidebarContainer: sidebarEl,
+  },
+  {
+    transcription: { mockTranscription: false },
+  },
+);
 
 editor.timeline.addClip({
   type: 'text',

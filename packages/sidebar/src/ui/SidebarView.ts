@@ -3,6 +3,7 @@ import type { SidebarPanelId } from '../common/types';
 import { ExportPanel } from './ExportPanel';
 import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { PropertiesPanel } from './PropertiesPanel';
+import { TranscriptionPanel } from './TranscriptionPanel';
 import { SIDEBAR_ICONS } from './sidebarIcons';
 import { UIComponent } from './UIComponent';
 
@@ -13,6 +14,7 @@ const PANELS: Array<{ id: SidebarPanelId; label: string; icon: string }> = [
   { id: 'text', label: 'Text', icon: SIDEBAR_ICONS.text },
   { id: 'properties', label: 'Properties', icon: SIDEBAR_ICONS.properties },
   { id: 'export', label: 'Export', icon: SIDEBAR_ICONS.export },
+  { id: 'transcription', label: 'Transcription', icon: SIDEBAR_ICONS.transcription },
 ];
 
 interface SidebarRefs {
@@ -73,6 +75,7 @@ export class SidebarView extends UIComponent<Sidebar> {
     const textPanel = this.createTextPanel();
     const propertiesPanel = new PropertiesPanel(this.sidebar);
     const exportPanel = new ExportPanel(this.sidebar);
+    const transcriptionPanel = new TranscriptionPanel(this.sidebar);
 
     panels.set('video', videoPanel.element);
     panels.set('image', imagePanel.element);
@@ -80,6 +83,7 @@ export class SidebarView extends UIComponent<Sidebar> {
     panels.set('text', textPanel);
     panels.set('properties', propertiesPanel.element);
     panels.set('export', exportPanel.element);
+    panels.set('transcription', transcriptionPanel.element);
 
     const refs: SidebarRefs = { panels, navButtons, contentHost };
     (shell as ShellElement)[SIDEBAR_REFS] = refs;

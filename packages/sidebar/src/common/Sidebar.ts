@@ -16,6 +16,7 @@ import type {
   MediaLibraryItem,
   SidebarOptions,
   SidebarPanelId,
+  TranscriptionResult,
 } from './types';
 
 export class Sidebar {
@@ -123,6 +124,40 @@ export class Sidebar {
     this.events.emit('export:status', { message, exporting });
   }
 
+  canTranscribe(): boolean {
+    return this.canvas
+      .getElements()
+      .some((element) => element.type === 'video' || element.type === 'audio');
+  }
+
+  requestTranscription(sourceId?: string): void {
+    this.events.emit('transcription:requested', { sourceId });
+  }
+
+  seekTranscription(timestamp: number, sourceId: string): void {
+    this.events.emit('transcription:seek', { timestamp, sourceId });
+  }
+
+  removeTranscriptionChunk(startTime: number, endTime: number, sourceId: string): void {
+    this.events.emit('transcription:chunk:removed', { startTime, endTime, sourceId });
+  }
+
+  requestTranscriptionCaptions(results: TranscriptionResult[]): void {
+    this.events.emit('transcription:captions:requested', { results });
+  }
+
+  setTranscriptionStatus(message: string, transcribing = false): void {
+    this.events.emit('transcription:status', { message, transcribing });
+  }
+
+  setTranscriptionResult(result: TranscriptionResult | null): void {
+    this.events.emit('transcription:result', { result });
+  }
+
+  highlightTranscriptionAt(time: number): void {
+    this.events.emit('transcription:highlight', { time });
+  }
+
   addTextToCanvas(content = 'New text', startTime?: number): void {
     const clip = new TextClip(content, startTime ?? this.canvas.getCurrentTime());
     this.canvas.addLayer(clip);
@@ -188,10 +223,21 @@ export class Sidebar {
       this.events.emit('export:availability', { canExport: this.canExport() });
     };
 
+    const notifyTranscriptionAvailability = (): void => {
+      this.events.emit('transcription:availability', { canTranscribe: this.canTranscribe() });
+    };
+
     this.disposables.push(
-      this.canvas.on('element:added', notifyExportAvailability),
-      this.canvas.on('element:removed', notifyExportAvailability),
+      this.canvas.on('element:added', () => {
+        notifyExportAvailability();
+        notifyTranscriptionAvailability();
+      }),
+      this.canvas.on('element:removed', () => {
+        notifyExportAvailability();
+        notifyTranscriptionAvailability();
+      }),
     );
     notifyExportAvailability();
+    notifyTranscriptionAvailability();
   }
 }

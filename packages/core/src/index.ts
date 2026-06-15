@@ -10,6 +10,11 @@ import { AnimationFrameLoop } from './animationFrameLoop';
 import { bindClipCanvasSync } from './clipCanvasSync';
 import { bindEditorPlayback } from './editorPlayback';
 import { downloadBlob, exportVideoFromCanvas, type ExportVideoOptions, type ExportVideoResult } from './export';
+import {
+  bindSidebarTranscription,
+  TranscriptionService,
+  type TranscriptionOptions,
+} from './transcription';
 
 import '@opensource/sidebar/style.css';
 import '@opensource/timeline/style.css';
@@ -23,6 +28,9 @@ export interface VideoEditorOptions {
   sidebarClassName?: string;
   /** When true (default), handles `export:requested` from the sidebar. */
   bindSidebarExport?: boolean;
+  transcription?: TranscriptionOptions;
+  /** When true (default), handles sidebar transcription events. */
+  bindSidebarTranscription?: boolean;
 }
 
 export interface VideoEditorMount {
@@ -38,6 +46,7 @@ export class VideoEditor {
   readonly timeline: Timeline;
   readonly canvas: CompositionCanvas;
   readonly sidebar: Sidebar | null;
+  readonly transcription: TranscriptionService;
   readonly frameLoop: AnimationFrameLoop;
   private readonly disposables: Array<() => void> = [];
 
@@ -53,6 +62,10 @@ export class VideoEditor {
     this.canvas = new CompositionCanvas(canvasContainer, {
       className: options.canvasClassName,
     });
+    this.transcription = new TranscriptionService({
+      mockTranscription: options.transcription?.mockTranscription ?? false,
+      language: options.transcription?.language,
+    });
 
     if (sidebarContainer) {
       if (options.sidebarClassName) {
@@ -64,6 +77,17 @@ export class VideoEditor {
 
       if (options.bindSidebarExport !== false) {
         this.disposables.push(this.bindSidebarExport());
+      }
+
+      if (options.bindSidebarTranscription !== false) {
+        this.disposables.push(
+          bindSidebarTranscription({
+            sidebar: this.sidebar,
+            timeline: this.timeline,
+            canvas: this.canvas,
+            transcription: this.transcription,
+          }),
+        );
       }
     } else {
       this.sidebar = null;
@@ -131,6 +155,7 @@ export class VideoEditor {
     }
     this.disposables.length = 0;
     this.frameLoop.destroy();
+    this.transcription.destroy();
     this.sidebar?.destroy();
     this.timeline.destroy();
     this.canvas.destroy();
@@ -180,6 +205,26 @@ export {
   type ResolvedExportSettings,
 } from './export';
 export type { ExportProgress } from '@opensource/gpu-video-encode';
+export {
+  bindSidebarTranscription,
+  configureTranscriptionEnv,
+  TranscriptionService,
+  TranscriptionEventEmitter,
+  PipelineFactory,
+  transcribe,
+  audioBufferToFloat32Array,
+  extractAudioFromMediaUrl,
+  createMockTranscriptionResult,
+  getExecDevice,
+  type BindSidebarTranscriptionOptions,
+  type TranscriptionChunk,
+  type TranscriptionEventHandler,
+  type TranscriptionEventMap,
+  type TranscriptionEventName,
+  type TranscriptionOptions,
+  type TranscriptionProgress,
+  type TranscriptionResult,
+} from './transcription';
 export {
   Sidebar,
   mountSidebar,

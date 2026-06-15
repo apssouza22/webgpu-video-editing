@@ -2,7 +2,18 @@ import type { CanvasElement } from '@opensource/video-canvas';
 
 export type MediaType = 'video' | 'image' | 'audio';
 
-export type SidebarPanelId = MediaType | 'text' | 'properties' | 'export';
+export type SidebarPanelId = MediaType | 'text' | 'properties' | 'export' | 'transcription';
+
+export interface TranscriptionChunk {
+  text: string;
+  timestamp: [number, number];
+}
+
+export interface TranscriptionResult {
+  text: string;
+  chunks: TranscriptionChunk[];
+  sourceId?: string;
+}
 
 export type ExportQuality = 'low' | 'medium' | 'high' | 'max';
 export type ExportFormat = 'mp4';
@@ -60,6 +71,18 @@ export interface SidebarEventMap {
   'export:requested': { settings: ExportSettings };
   'export:status': { message: string; exporting: boolean };
   'export:availability': { canExport: boolean };
+  'transcription:requested': { sourceId?: string };
+  'transcription:seek': { timestamp: number; sourceId: string };
+  'transcription:chunk:removed': {
+    startTime: number;
+    endTime: number;
+    sourceId: string;
+  };
+  'transcription:captions:requested': { results: TranscriptionResult[] };
+  'transcription:status': { message: string; transcribing: boolean };
+  'transcription:result': { result: TranscriptionResult | null };
+  'transcription:highlight': { time: number };
+  'transcription:availability': { canTranscribe: boolean };
 }
 
 export type SidebarEventName = keyof SidebarEventMap;

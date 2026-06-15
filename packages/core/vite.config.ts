@@ -20,6 +20,12 @@ export default defineConfig(({ command }) => {
           '@opensource/gpu-video-encode': resolve(__dirname, '../gpu-video-encode/src/index.ts'),
         },
       },
+      worker: {
+        format: 'es',
+      },
+      optimizeDeps: {
+        exclude: ['@huggingface/transformers'],
+      },
     };
   }
 
@@ -37,10 +43,12 @@ export default defineConfig(({ command }) => {
       },
       rollupOptions: {
         external: [
+          '@huggingface/transformers',
           '@opensource/gpu-video-encode',
           '@opensource/sidebar',
           '@opensource/timeline',
           '@opensource/video-canvas',
+          'mediabunny',
         ],
         output: {
           assetFileNames: 'core.[ext]',

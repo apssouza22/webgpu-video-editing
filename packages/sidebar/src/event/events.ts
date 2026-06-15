@@ -19,6 +19,14 @@ export class SidebarEventEmitter {
     'export:requested': new Set(),
     'export:status': new Set(),
     'export:availability': new Set(),
+    'transcription:requested': new Set(),
+    'transcription:seek': new Set(),
+    'transcription:chunk:removed': new Set(),
+    'transcription:captions:requested': new Set(),
+    'transcription:status': new Set(),
+    'transcription:result': new Set(),
+    'transcription:highlight': new Set(),
+    'transcription:availability': new Set(),
   };
 
   on<T extends SidebarEventName>(event: T, handler: SidebarEventHandler<T>): () => void {
