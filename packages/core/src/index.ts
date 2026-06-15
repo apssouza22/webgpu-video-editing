@@ -111,7 +111,10 @@ export class VideoEditor {
     this.timeline.pause();
     this.canvas.render(this.canvas.getCurrentTime(), { playing: false });
 
-    const result = await exportVideoFromCanvas(this.canvas, options);
+    const result = await exportVideoFromCanvas(this.canvas, {
+      ...options,
+      playbackRate: options.playbackRate ?? this.timeline.getPlaybackRate(),
+    });
     downloadBlob(result.blob, result.filename);
     return result;
   }
@@ -137,8 +140,10 @@ export class VideoEditor {
           },
         });
 
+        const speedLabel =
+          result.settings.playbackRate === 1 ? '' : ` @ ${result.settings.playbackRate}x`;
         sidebar.setExportStatus(
-          `Export complete (${result.settings.width}×${result.settings.height} @ ${result.settings.fps}fps). Download started.`,
+          `Export complete (${result.settings.width}×${result.settings.height} @ ${result.settings.fps}fps${speedLabel}). Download started.`,
           false,
         );
       } catch (error) {

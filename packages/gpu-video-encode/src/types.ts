@@ -16,6 +16,8 @@ export interface CompositionOptions {
   /** Timeline length in seconds; <= 0 derives from clips and source media. */
   duration?: number;
   outputFilename?: string;
+  /** Export speed multiplier (e.g. 2 exports half the duration at 2x). Defaults to 1. */
+  playbackRate?: number;
 }
 
 export abstract class Clip {

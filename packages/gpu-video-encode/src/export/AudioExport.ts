@@ -1,5 +1,6 @@
 import type {AudioClip, ExportProgress} from '../types';
 import {AudioEncoderService} from './AudioEncoderService';
+import {timeStretchAudioBuffer} from './timeStretchAudioBuffer';
 import {VideoEncoderService} from './VideoEncoderService';
 
 export type AudioExportProgressCallback = (progress: ExportProgress) => void;
@@ -8,6 +9,7 @@ export interface AudioExportSettings {
   audioClips: readonly AudioClip[];
   duration: number;
   totalFrames: number;
+  playbackRate: number;
   onProgress: AudioExportProgressCallback;
 }
 
@@ -30,6 +32,7 @@ export class AudioExport {
       audioBuffer = await this.createTimelineAudioBuffer(
         settings.audioClips,
         settings.duration,
+        settings.playbackRate,
       );
 
       if (!audioBuffer) {
@@ -58,6 +61,7 @@ export class AudioExport {
   private static async createTimelineAudioBuffer(
     audioClips: readonly AudioClip[],
     duration: number,
+    playbackRate: number,
   ): Promise<AudioBuffer | null> {
     const sampleRate = 48_000;
     const channels = 2;
@@ -78,23 +82,34 @@ export class AudioExport {
     let scheduledAudio = false;
 
     for (const {clip, buffer} of decodedClips) {
-      if (!buffer || clip.start >= duration) {
+      if (!buffer) {
         continue;
       }
 
-      const clipDuration = Math.min(
+      const exportStart = clip.start / playbackRate;
+      if (exportStart >= duration) {
+        continue;
+      }
+
+      const timelineDuration = Math.min(
         clip.duration,
         buffer.duration,
-        duration - clip.start,
+        duration * playbackRate - clip.start,
       );
-      if (clipDuration <= 0) {
+      if (timelineDuration <= 0) {
         continue;
       }
 
+      const exportDuration = Math.min(timelineDuration / playbackRate, duration - exportStart);
+      if (exportDuration <= 0) {
+        continue;
+      }
+
+      const stretched = timeStretchAudioBuffer(offlineContext, buffer, playbackRate);
       const source = offlineContext.createBufferSource();
-      source.buffer = buffer;
+      source.buffer = stretched;
       source.connect(offlineContext.destination);
-      source.start(clip.start, 0, clipDuration);
+      source.start(exportStart, 0, exportDuration);
       scheduledAudio = true;
     }
 

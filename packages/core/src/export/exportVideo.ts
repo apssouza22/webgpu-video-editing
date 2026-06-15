@@ -27,6 +27,7 @@ export async function exportVideoFromCanvas(
     height: settings.height,
     format: settings.format,
     outputFilename: settings.outputFilename,
+    playbackRate: settings.playbackRate,
   });
 
   const encoderOptions: CompositionExportOptions = {

@@ -19,6 +19,7 @@ export interface CanvasToCompositionOptions {
   height?: number;
   format?: ExportFormat;
   outputFilename?: string;
+  playbackRate?: number;
 }
 
 export interface CanvasToCompositionResult {
@@ -69,6 +70,7 @@ export async function canvasElementsToComposition(
   const composition = new Composition(fps, width, height, {
     duration: canvas.getDuration(),
     outputFilename: resolveOutputFilename(format, options.outputFilename),
+    playbackRate: options.playbackRate ?? 1,
   });
 
   const revokeUrls: string[] = [];

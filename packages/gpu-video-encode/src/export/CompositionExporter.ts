@@ -29,6 +29,7 @@ export class CompositionExporter {
         audioClips: composition.audioLayers,
         duration: exportDuration,
         totalFrames,
+        playbackRate: composition.playbackRate,
         onProgress,
       });
       const includeAudio = audioExport.hasAudio;

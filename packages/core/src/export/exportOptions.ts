@@ -37,6 +37,8 @@ export interface ExportVideoOptions {
   resolution?: ExportResolution;
   /** Override the downloaded filename (extension should match format). */
   outputFilename?: string;
+  /** Timeline playback speed multiplier applied to export duration and media timing. */
+  playbackRate?: number;
   onProgress?: (progress: ExportProgress) => void;
 }
 
@@ -48,6 +50,7 @@ export interface ResolvedExportSettings {
   format: ExportFormat;
   outputFilename: string;
   sourceSize: CanvasSize;
+  playbackRate: number;
 }
 
 export const DEFAULT_EXPORT_FPS = 30;
@@ -134,6 +137,14 @@ export function resolveOutputFilename(
   return `composition-export.${format}`;
 }
 
+function normalizePlaybackRate(rate: number | undefined): number {
+  if (rate == null || !Number.isFinite(rate) || rate <= 0) {
+    return 1;
+  }
+
+  return rate;
+}
+
 export function resolveExportSettings(
   canvas: CompositionCanvas,
   options: ExportVideoOptions = {},
@@ -151,5 +162,6 @@ export function resolveExportSettings(
     format,
     outputFilename: resolveOutputFilename(format, options.outputFilename),
     sourceSize,
+    playbackRate: normalizePlaybackRate(options.playbackRate),
   };
 }

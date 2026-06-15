@@ -12,11 +12,20 @@ import {
 
 export {AudioClip, ImageClip, VideoClip} from './types';
 
+function normalizePlaybackRate(rate: number | undefined): number {
+  if (rate == null || !Number.isFinite(rate) || rate <= 0) {
+    return 1;
+  }
+
+  return rate;
+}
+
 export class Composition {
   private readonly layerList: LayerClipDefinition[] = [];
   private readonly requestedDuration: number;
 
   readonly outputFilename: string;
+  readonly playbackRate: number;
 
   constructor(
     readonly fps: number,
@@ -26,6 +35,7 @@ export class Composition {
   ) {
     this.requestedDuration = options.duration ?? 0;
     this.outputFilename = options.outputFilename ?? 'composition-export.mp4';
+    this.playbackRate = normalizePlaybackRate(options.playbackRate);
   }
 
   addLayer<T extends LayerClipDefinition>(clip: T): this {
@@ -37,13 +47,22 @@ export class Composition {
     return this.layerList;
   }
 
-  get duration(): number {
+  get timelineDuration(): number {
     const clipEnds = this.layerList.map((clip) => clip.timelineEnd());
     const derivedDuration = Math.max(...clipEnds, 0);
 
     return this.requestedDuration > 0
       ? Math.max(this.requestedDuration, derivedDuration)
       : derivedDuration;
+  }
+
+  /** Exported file duration in seconds (timeline duration divided by playback rate). */
+  get duration(): number {
+    return this.timelineDuration / this.playbackRate;
+  }
+
+  toTimelineTime(exportTime: number): number {
+    return exportTime * this.playbackRate;
   }
 
   get videoLayers(): VideoClip[] {
@@ -105,12 +124,13 @@ export class Composition {
   }
 
   getFrameContextAtTime(
-    time: number,
-    frame = Math.floor(time * this.fps),
+    exportTime: number,
+    frame = Math.floor(exportTime * this.fps),
     frameDurationUs = Math.round(1_000_000 / this.fps),
   ): VideoFrameContext {
+    const timelineTime = this.toTimelineTime(exportTime);
     const layers = this.layerList
-      .map((clip) => this.createLayerContext(clip, time, frame))
+      .map((clip) => this.createLayerContext(clip, timelineTime, frame))
       .filter((clip): clip is LayerClip => clip !== null)
       .sort((left, right) => left.clip.zIndex - right.clip.zIndex);
 
@@ -119,7 +139,7 @@ export class Composition {
 
     return {
       frame,
-      time,
+      time: exportTime,
       timestampUs: frame * frameDurationUs,
       layers,
       videos,
@@ -129,18 +149,18 @@ export class Composition {
 
   private createLayerContext(
     clip: LayerClipDefinition,
-    time: number,
+    timelineTime: number,
     frame: number,
   ): LayerClip | null {
     if (clip.type === 'audio') {
       return null;
     }
 
-    if (!clip.containsTime(time)) {
+    if (!clip.containsTime(timelineTime)) {
       return null;
     }
 
-    const localTime = clip.localTimeAt(time);
+    const localTime = clip.localTimeAt(timelineTime);
 
     if (clip.type === 'video') {
       const sourceTime = clip.sourceOffset + localTime;
