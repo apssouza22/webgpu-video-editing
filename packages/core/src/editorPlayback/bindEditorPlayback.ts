@@ -21,7 +21,11 @@ export function bindEditorPlayback({
   let playbackStartedAt = timeline.getPlayhead();
 
   const renderCanvas = (time: number, playing: boolean): void => {
-    canvas.render(time, playing ? { playing: true, playbackStartedAt } : { playing: false });
+    canvas.render(time, {
+      playing,
+      playbackRate: timeline.getPlaybackRate(),
+      ...(playing ? { playbackStartedAt } : {}),
+    });
   };
 
   const syncCanvasOnScrub = ({ time }: { time: number }): void => {
@@ -43,10 +47,22 @@ export function bindEditorPlayback({
     renderCanvas(time, false);
   };
 
+  const onRateChange = (): void => {
+    const state = timeline.getState();
+    if (!state.isPlaying) {
+      renderCanvas(state.playheadPosition, false);
+      return;
+    }
+
+    playbackStartedAt = state.playheadPosition;
+    renderCanvas(playbackStartedAt, true);
+  };
+
   disposables.push(
     timeline.on('playhead:change', syncCanvasOnScrub),
     timeline.on('playhead:play', onPlay),
     timeline.on('playhead:pause', onPause),
+    timeline.on('playhead:rate', onRateChange),
     frameLoop.subscribe(({ deltaTime }) => {
       const state = timeline.getState();
       if (!state.isPlaying) {
