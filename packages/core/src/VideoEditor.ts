@@ -8,7 +8,7 @@ import {
 } from '@opensource/sidebar';
 
 import { AnimationFrameLoop } from './animationFrameLoop';
-import { bindClipCanvasSync } from './clipCanvasSync';
+import { bindClipCanvasSync, ClipCanvasSync } from './clipCanvasSync';
 import { bindEditorPlayback } from './editorPlayback';
 import {
   bindSidebarExport,
@@ -17,6 +17,11 @@ import {
   type ExportVideoOptions,
   type ExportVideoResult,
 } from './export';
+import {
+  bindProjectPersistence,
+  type ProjectPersistenceApi,
+  type ProjectPersistenceOptions,
+} from './project';
 import {
   bindSidebarTranscription,
   TranscriptionService,
@@ -38,6 +43,7 @@ export interface VideoEditorOptions {
   transcription?: TranscriptionOptions;
   /** When true (default), handles sidebar transcription events. */
   bindSidebarTranscription?: boolean;
+  project?: ProjectPersistenceOptions;
 }
 
 export interface VideoEditorMount {
@@ -55,6 +61,8 @@ export class VideoEditor {
   readonly sidebar: Sidebar | null;
   readonly transcription: TranscriptionService;
   readonly frameLoop: AnimationFrameLoop;
+  readonly clipCanvasSync: ClipCanvasSync;
+  projectPersistence?: ProjectPersistenceApi;
   private readonly disposables: Array<() => void> = [];
 
   constructor(
@@ -106,6 +114,8 @@ export class VideoEditor {
     }
 
     this.frameLoop = new AnimationFrameLoop();
+    const clipCanvasBinding = bindClipCanvasSync({ timeline: this.timeline, canvas: this.canvas });
+    this.clipCanvasSync = clipCanvasBinding.sync;
     this.disposables.push(
       bindEditorPlayback({
         timeline: this.timeline,
@@ -113,7 +123,17 @@ export class VideoEditor {
         frameLoop: this.frameLoop,
       }),
     );
-    this.disposables.push(bindClipCanvasSync({ timeline: this.timeline, canvas: this.canvas }));
+    this.disposables.push(() => clipCanvasBinding.dispose());
+
+    if (options.project) {
+      this.disposables.push(
+        bindProjectPersistence({
+          editor: this,
+          clipCanvasSync: this.clipCanvasSync,
+          ...options.project,
+        }),
+      );
+    }
   }
 
   /**

@@ -1,6 +1,6 @@
 import { SAMPLE_IMAGE_SRC, SAMPLE_VIDEO_SRC } from '@opensource/video-canvas';
 
-import type { MediaLibraryItem } from './types';
+import type { MediaLibraryItem, ResolvedMediaInput } from './types';
 
 let nextMediaId = 0;
 
@@ -79,6 +79,50 @@ export class MediaLibrary {
     });
   }
 
+  addFromResolvedMedia(input: ResolvedMediaInput): MediaLibraryItem {
+    if (input.src.startsWith('blob:')) {
+      this.objectUrls.add(input.src);
+    }
+
+    return this.add({
+      id: input.id,
+      assetId: input.assetId,
+      type: input.type,
+      name: input.name,
+      src: input.src,
+      thumbnail: input.thumbnail,
+      source: 'library',
+    });
+  }
+
+  loadPersistedItems(items: MediaLibraryItem[]): void {
+    for (const item of this.items.values()) {
+      if (item.source === 'upload' || item.source === 'library') {
+        if (item.src.startsWith('blob:')) {
+          URL.revokeObjectURL(item.src);
+          this.objectUrls.delete(item.src);
+        }
+      }
+    }
+
+    for (const [id, item] of [...this.items.entries()]) {
+      if (item.source === 'upload' || item.source === 'library') {
+        this.items.delete(id);
+      }
+    }
+
+    for (const item of items) {
+      if (item.src.startsWith('blob:')) {
+        this.objectUrls.add(item.src);
+      }
+      this.items.set(item.id, item);
+    }
+  }
+
+  getPersistedItems(): MediaLibraryItem[] {
+    return this.list().filter((item) => item.source === 'library' && item.assetId);
+  }
+
   remove(id: string): MediaLibraryItem | undefined {
     const item = this.items.get(id);
     if (!item) {
@@ -87,6 +131,10 @@ export class MediaLibrary {
 
     if (item.source === 'upload' && item.src.startsWith('blob:')) {
       URL.revokeObjectURL(item.src);
+      this.objectUrls.delete(item.src);
+    }
+
+    if (item.source === 'library' && item.src.startsWith('blob:')) {
       this.objectUrls.delete(item.src);
     }
 

@@ -27,6 +27,7 @@ export class ClipCanvasSync {
   private readonly canvas: CompositionCanvas;
   private readonly disposables: Array<() => void> = [];
   private source: SyncSource | null = null;
+  private paused = false;
   private pendingElementId: string | null = null;
   private readonly elementToClip = new Map<string, string>();
   private readonly clipToElement = new Map<string, string>();
@@ -65,10 +66,65 @@ export class ClipCanvasSync {
     this.clipToElement.clear();
     this.pendingElementId = null;
     this.source = null;
+    this.paused = false;
+  }
+
+  pause(): void {
+    this.paused = true;
+  }
+
+  resume(): void {
+    this.paused = false;
+  }
+
+  rebuildMappings(): void {
+    this.elementToClip.clear();
+    this.clipToElement.clear();
+
+    const elements = this.canvas.getElements();
+    const clips = this.timeline.getState().clips;
+    const usedElements = new Set<string>();
+
+    for (const clip of clips) {
+      const element = elements.find((candidate) => {
+        if (usedElements.has(candidate.id)) {
+          return false;
+        }
+        return this.matchesClip(candidate, clip);
+      });
+
+      if (element) {
+        this.register(element.id, clip.id);
+        usedElements.add(element.id);
+      }
+    }
+  }
+
+  private matchesClip(element: CanvasElement, clip: Clip): boolean {
+    if (element.type !== clip.type) {
+      return false;
+    }
+
+    if (Math.abs(element.startTime - clip.startTime) > 0.001) {
+      return false;
+    }
+
+    if (Math.abs(element.duration - clip.duration) > 0.001) {
+      return false;
+    }
+
+    if (element.type === 'text') {
+      const content = element.content.trim() || element.name;
+      const clipText = clip.textContent?.trim() || clip.name;
+      return content === clipText;
+    }
+
+    const clipUrl = clip.url ?? '';
+    return element.src === clipUrl;
   }
 
   private onCanvasElementAdded(element: CanvasElement): void {
-    if (this.source === 'timeline') {
+    if (this.paused || this.source === 'timeline') {
       return;
     }
 
@@ -84,7 +140,7 @@ export class ClipCanvasSync {
   }
 
   private onCanvasElementRemoved(elementId: string): void {
-    if (this.source === 'timeline') {
+    if (this.paused || this.source === 'timeline') {
       return;
     }
 
@@ -109,7 +165,7 @@ export class ClipCanvasSync {
     id: string;
     patch: Partial<{ startTime: number; duration: number }>;
   }): void {
-    if (this.source === 'timeline') {
+    if (this.paused || this.source === 'timeline') {
       return;
     }
 
@@ -121,7 +177,7 @@ export class ClipCanvasSync {
   }
 
   private onCanvasSelectionChanged(selectedId: string | null): void {
-    if (this.source === 'timeline') {
+    if (this.paused || this.source === 'timeline') {
       return;
     }
 
@@ -143,6 +199,10 @@ export class ClipCanvasSync {
   }
 
   private onTimelineClipAdd(clips: Clip[]): void {
+    if (this.paused) {
+      return;
+    }
+
     if (this.source === 'canvas') {
       if (this.pendingElementId && clips.length > 0) {
         const primary = clips.find((clip) => !isLinkedAudioCompanion(clip, clips)) ?? clips[0];
@@ -197,7 +257,7 @@ export class ClipCanvasSync {
   }
 
   private onTimelineClipRemove(clipIds: string[]): void {
-    if (this.source === 'canvas') {
+    if (this.paused || this.source === 'canvas') {
       return;
     }
 
@@ -235,10 +295,18 @@ export class ClipCanvasSync {
     trackId: string;
     linkedClipId?: string;
   }): void {
+    if (this.paused) {
+      return;
+    }
+
     this.syncTimelineClipsToCanvas([clipId, linkedClipId]);
   }
 
   private onTimelineClipTrimmed({ clipId }: { clipId: string }): void {
+    if (this.paused) {
+      return;
+    }
+
     const clip = this.timeline.getState().clips.find((item) => item.id === clipId);
     if (!clip) {
       return;
@@ -255,7 +323,7 @@ export class ClipCanvasSync {
     newClipIds: [string, string];
     time: number;
   }): void {
-    if (this.source === 'canvas') {
+    if (this.paused || this.source === 'canvas') {
       return;
     }
 
@@ -292,7 +360,7 @@ export class ClipCanvasSync {
   }
 
   private onTimelineClipSelect(primaryId: string | null): void {
-    if (this.source === 'canvas') {
+    if (this.paused || this.source === 'canvas') {
       return;
     }
 
@@ -310,6 +378,10 @@ export class ClipCanvasSync {
   }
 
   private syncTimelineClipsToCanvas(clipIds: Array<string | undefined>): void {
+    if (this.paused) {
+      return;
+    }
+
     const uniqueIds = [...new Set(clipIds.filter((id): id is string => Boolean(id)))];
     if (uniqueIds.length === 0) {
       return;
@@ -375,7 +447,7 @@ export class ClipCanvasSync {
   }
 
   private syncAllZIndicesFromTimeline(): void {
-    if (this.source === 'canvas') {
+    if (this.paused || this.source === 'canvas') {
       return;
     }
 
@@ -506,7 +578,17 @@ export class ClipCanvasSync {
   }
 }
 
-export function bindClipCanvasSync(options: ClipCanvasSyncOptions): () => void {
+export function bindClipCanvasSync(options: ClipCanvasSyncOptions): {
+  dispose: () => void;
+  sync: ClipCanvasSync;
+} {
   const sync = new ClipCanvasSync(options);
-  return sync.bind();
+  const unbind = sync.bind();
+  return {
+    sync,
+    dispose: () => {
+      unbind();
+      sync.destroy();
+    },
+  };
 }

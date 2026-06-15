@@ -10,6 +10,7 @@ export type {
   MediaLibraryItem,
   MediaLibrarySource,
   MediaType,
+  ResolvedMediaInput,
   SidebarEventHandler,
   SidebarEventMap,
   SidebarEventName,

@@ -14,6 +14,7 @@ import type {
   AddMediaFromFileOptions,
   ExportSettings,
   MediaLibraryItem,
+  ResolvedMediaInput,
   SidebarOptions,
   SidebarPanelId,
   TranscriptionResult,
@@ -103,6 +104,31 @@ export class Sidebar {
     }
 
     return item;
+  }
+
+  addFromResolvedMedia(
+    input: ResolvedMediaInput,
+    options: AddMediaFromFileOptions = {},
+  ): MediaLibraryItem {
+    const item = this.library.addFromResolvedMedia(input);
+    this.events.emit('media:added', { item });
+
+    if (options.addToCanvas !== false) {
+      this.addMediaToCanvas(item, options.startTime);
+    }
+
+    return item;
+  }
+
+  loadPersistedMedia(items: MediaLibraryItem[]): void {
+    this.library.loadPersistedItems(items);
+    for (const item of items) {
+      this.events.emit('media:added', { item });
+    }
+  }
+
+  getPersistedMedia(): MediaLibraryItem[] {
+    return this.library.getPersistedItems();
   }
 
   selectMediaItem(item: MediaLibraryItem): void {

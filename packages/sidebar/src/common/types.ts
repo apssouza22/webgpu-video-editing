@@ -51,6 +51,17 @@ export interface MediaLibraryItem {
   thumbnail?: string;
   createdAt: number;
   source: MediaLibrarySource;
+  /** Stable reference to a persisted project media asset. */
+  assetId?: string;
+}
+
+export interface ResolvedMediaInput {
+  assetId: string;
+  type: MediaType;
+  name: string;
+  src: string;
+  thumbnail?: string;
+  id?: string;
 }
 
 export interface SidebarEventMap {

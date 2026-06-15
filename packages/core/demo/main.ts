@@ -29,6 +29,11 @@ const editor = new VideoEditor(
   },
   {
     transcription: { mockTranscription: false },
+    project: {
+      onStatus: (status) => {
+        console.debug('[project]', status);
+      },
+    },
     sidebar: {
       initialPanel: 'video',
       stockMedia: demoVideoStock,
@@ -51,6 +56,18 @@ async function seedDemo(): Promise<void> {
 }
 
 void seedDemo();
+
+document.getElementById('new-project')?.addEventListener('click', () => {
+  void editor.projectPersistence?.createProject('Untitled project');
+});
+
+document.getElementById('open-project')?.addEventListener('click', () => {
+  void editor.projectPersistence?.openProject();
+});
+
+document.getElementById('import-media')?.addEventListener('click', () => {
+  void editor.projectPersistence?.importMedia();
+});
 
 editor.sidebar?.on('property:changed', (payload) => {
   console.debug('[sidebar] property:changed', {
