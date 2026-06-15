@@ -18,6 +18,11 @@ import {
   type ExportVideoResult,
 } from './export';
 import {
+  bindSidebarMediaLibrary,
+  createStockMedia,
+  MediaLibrary,
+} from './mediaLibrary';
+import {
   bindProjectPersistence,
   type ProjectPersistenceApi,
   type ProjectPersistenceOptions,
@@ -32,11 +37,15 @@ import '@opensource/sidebar/style.css';
 import '@opensource/timeline/style.css';
 import '@opensource/video-canvas/style.css';
 
+import type { MediaLibraryItem } from '@opensource/sidebar';
+
 export interface VideoEditorOptions {
   timeline?: TimelineOptions;
   timelineClassName?: string;
   canvasClassName?: string;
-  sidebar?: SidebarOptions;
+  /** Stock media shown in the library before any uploads. */
+  stockMedia?: MediaLibraryItem[];
+  sidebar?: SidebarOptions & { stockMedia?: MediaLibraryItem[] };
   sidebarClassName?: string;
   /** When true (default), handles `export:requested` from the sidebar. */
   bindSidebarExport?: boolean;
@@ -58,6 +67,7 @@ export interface VideoEditorMount {
 export class VideoEditor {
   readonly timeline: Timeline;
   readonly canvas: CompositionCanvas;
+  readonly mediaLibrary: MediaLibrary;
   readonly sidebar: Sidebar | null;
   readonly transcription: TranscriptionService;
   readonly frameLoop: AnimationFrameLoop;
@@ -77,6 +87,9 @@ export class VideoEditor {
     this.canvas = new CompositionCanvas(canvasContainer, {
       className: options.canvasClassName,
     });
+    this.mediaLibrary = new MediaLibrary(
+      options.stockMedia ?? options.sidebar?.stockMedia ?? createStockMedia(),
+    );
     this.transcription = new TranscriptionService({
       mockTranscription: options.transcription?.mockTranscription ?? false,
       language: options.transcription?.language,
@@ -86,9 +99,20 @@ export class VideoEditor {
       if (options.sidebarClassName) {
         sidebarContainer.classList.add(...options.sidebarClassName.split(/\s+/).filter(Boolean));
       }
-      this.sidebar = new Sidebar(this.canvas, options.sidebar);
+      this.sidebar = new Sidebar(this.canvas, {
+        ...options.sidebar,
+        mediaLibrary: this.mediaLibrary,
+      });
       const unmountSidebar = mountSidebar(sidebarContainer, this.sidebar);
       this.disposables.push(unmountSidebar);
+
+      this.disposables.push(
+        bindSidebarMediaLibrary({
+          sidebar: this.sidebar,
+          canvas: this.canvas,
+          mediaLibrary: this.mediaLibrary,
+        }),
+      );
 
       if (options.bindSidebarExport !== false) {
         this.disposables.push(
@@ -158,6 +182,7 @@ export class VideoEditor {
     this.disposables.length = 0;
     this.frameLoop.destroy();
     this.transcription.destroy();
+    this.mediaLibrary.destroy();
     this.sidebar?.destroy();
     this.timeline.destroy();
     this.canvas.destroy();

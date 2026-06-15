@@ -1,20 +1,15 @@
 import {
-  AudioClip,
-  ImageClip,
   TextClip,
-  VideoClip,
   type CompositionCanvasAPI,
   type CanvasElement,
 } from '@opensource/video-canvas';
 
 import { SidebarEventEmitter } from '../event/events';
 import type { SidebarEventHandler, SidebarEventName } from './types';
-import { createStockMedia, MediaLibrary } from './mediaLibrary';
 import type {
-  AddMediaFromFileOptions,
   ExportSettings,
+  MediaLibraryHost,
   MediaLibraryItem,
-  ResolvedMediaInput,
   SidebarOptions,
   SidebarPanelId,
   TranscriptionResult,
@@ -23,13 +18,13 @@ import type {
 export class Sidebar {
   readonly events = new SidebarEventEmitter();
   private readonly canvas: CompositionCanvasAPI;
-  private readonly library: MediaLibrary;
+  private readonly mediaLibrary: MediaLibraryHost | null;
   private readonly disposables: Array<() => void> = [];
   private activePanel: SidebarPanelId;
 
   constructor(canvas: CompositionCanvasAPI, options: SidebarOptions = {}) {
     this.canvas = canvas;
-    this.library = new MediaLibrary(options.stockMedia ?? createStockMedia());
+    this.mediaLibrary = options.mediaLibrary ?? null;
     this.activePanel = options.initialPanel ?? 'video';
     this.bindCanvas();
   }
@@ -75,65 +70,30 @@ export class Sidebar {
   }
 
   getMediaLibrary(type?: MediaLibraryItem['type']): MediaLibraryItem[] {
-    return this.library.list(type);
+    return this.mediaLibrary?.list(type) ?? [];
   }
 
-  addMediaItem(item: Omit<MediaLibraryItem, 'id' | 'createdAt'>): MediaLibraryItem {
-    const entry = this.library.add(item);
-    this.events.emit('media:added', { item: entry });
-    return entry;
-  }
-
-  removeMediaItem(id: string): MediaLibraryItem | undefined {
-    const item = this.library.remove(id);
-    if (item) {
-      this.events.emit('media:removed', { id });
-    }
-    return item;
-  }
-
-  addMediaFromFile(
+  requestMediaUpload(
     file: File,
-    options: AddMediaFromFileOptions = {},
-  ): MediaLibraryItem {
-    const item = this.library.addFromFile(file);
+    options: { addToCanvas?: boolean; startTime?: number } = {},
+  ): void {
+    this.events.emit('media:upload:requested', { file, ...options });
+  }
+
+  requestMediaRemove(id: string): void {
+    this.events.emit('media:remove:requested', { id });
+  }
+
+  selectMediaItem(item: MediaLibraryItem, startTime?: number): void {
+    this.events.emit('media:selected', { item, startTime });
+  }
+
+  notifyMediaAdded(item: MediaLibraryItem): void {
     this.events.emit('media:added', { item });
-
-    if (options.addToCanvas !== false) {
-      this.addMediaToCanvas(item, options.startTime);
-    }
-
-    return item;
   }
 
-  addFromResolvedMedia(
-    input: ResolvedMediaInput,
-    options: AddMediaFromFileOptions = {},
-  ): MediaLibraryItem {
-    const item = this.library.addFromResolvedMedia(input);
-    this.events.emit('media:added', { item });
-
-    if (options.addToCanvas !== false) {
-      this.addMediaToCanvas(item, options.startTime);
-    }
-
-    return item;
-  }
-
-  loadPersistedMedia(items: MediaLibraryItem[]): void {
-    this.library.loadPersistedItems(items);
-    for (const item of items) {
-      this.events.emit('media:added', { item });
-    }
-  }
-
-  getPersistedMedia(): MediaLibraryItem[] {
-    return this.library.getPersistedItems();
-  }
-
-  selectMediaItem(item: MediaLibraryItem): void {
-    this.events.emit('media:selected', { item });
-    this.addMediaToCanvas(item);
+  notifyMediaRemoved(id: string): void {
+    this.events.emit('media:removed', { id });
   }
 
   canExport(): boolean {
@@ -189,22 +149,6 @@ export class Sidebar {
     this.canvas.addLayer(clip);
   }
 
-  addMediaToCanvas(item: MediaLibraryItem, startTime?: number): void {
-    const at = startTime ?? this.canvas.getCurrentTime();
-
-    if (item.type === 'video') {
-      this.canvas.addLayer(new VideoClip(item.src, at));
-      return;
-    }
-
-    if (item.type === 'image') {
-      this.canvas.addLayer(new ImageClip(item.src, at));
-      return;
-    }
-
-    this.canvas.addLayer(new AudioClip(item.src, at));
-  }
-
   on<T extends SidebarEventName>(event: T, handler: SidebarEventHandler<T>): () => void {
     return this.events.on(event, handler);
   }
@@ -218,7 +162,6 @@ export class Sidebar {
       unsubscribe();
     }
     this.disposables.length = 0;
-    this.library.destroy();
   }
 
   private bindCanvas(): void {

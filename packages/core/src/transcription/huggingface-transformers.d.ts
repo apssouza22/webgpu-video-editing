@@ -4,11 +4,7 @@ declare module '@huggingface/transformers' {
     allowRemoteModels: boolean;
     remoteHost: string;
     useBrowserCache: boolean;
-    backends: {
-      onnx: {
-        wasm?: Record<string, unknown>;
-      };
-    };
+    backends: Record<string, unknown>;
   }
 
   export const env: TransformersEnvironment;

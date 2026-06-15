@@ -16,6 +16,7 @@ export function bindProjectPersistence({
     timeline: editor.timeline,
     canvas: editor.canvas,
     sidebar: editor.sidebar,
+    mediaLibrary: editor.mediaLibrary,
   });
   const disposables: Array<() => void> = [];
 
@@ -39,7 +40,7 @@ export function bindProjectPersistence({
   }
 
   const flush = (): void => {
-  void session.flushSave(editor.timeline, editor.canvas, editor.sidebar);
+    void session.flushSave(editor.timeline, editor.canvas, editor.sidebar, editor.mediaLibrary);
   };
 
   const beforeUnload = (): void => {
@@ -56,17 +57,25 @@ export function bindProjectPersistence({
     },
     async openProject(directoryHandle?: FileSystemDirectoryHandle) {
       const document = await session.openProject(directoryHandle);
-      await session.hydrate(editor.timeline, editor.canvas, editor.sidebar, clipCanvasSync);
+      await session.hydrate(
+        editor.timeline,
+        editor.canvas,
+        editor.sidebar,
+        editor.mediaLibrary,
+        clipCanvasSync,
+      );
       return document;
     },
     importMedia() {
-      if (!editor.sidebar) {
-        throw new Error('Sidebar is required to import media.');
-      }
-      return session.pickAndImportMedia(editor.sidebar);
+      return session.pickAndImportMedia(editor.mediaLibrary, editor.sidebar);
     },
     save() {
-      return session.flushSave(editor.timeline, editor.canvas, editor.sidebar);
+      return session.flushSave(
+        editor.timeline,
+        editor.canvas,
+        editor.sidebar,
+        editor.mediaLibrary,
+      );
     },
   };
 

@@ -78,7 +78,9 @@ export interface SidebarEventMap {
   'panel:changed': { panel: SidebarPanelId };
   'media:added': { item: MediaLibraryItem };
   'media:removed': { id: string };
-  'media:selected': { item: MediaLibraryItem };
+  'media:selected': { item: MediaLibraryItem; startTime?: number };
+  'media:upload:requested': { file: File } & AddMediaFromFileOptions;
+  'media:remove:requested': { id: string };
   'export:requested': { settings: ExportSettings };
   'export:status': { message: string; exporting: boolean };
   'export:availability': { canExport: boolean };
@@ -105,11 +107,16 @@ export type SidebarEventHandler<T extends SidebarEventName> = (
 export interface SidebarOptions {
   /** Initial sidebar panel. */
   initialPanel?: SidebarPanelId;
-  /** Stock media shown before any uploads. */
-  stockMedia?: MediaLibraryItem[];
+  /** Media library data source for UI panels. */
+  mediaLibrary?: MediaLibraryHost;
 }
 
 export interface AddMediaFromFileOptions {
   addToCanvas?: boolean;
   startTime?: number;
+}
+
+/** Read-only media library access for sidebar UI panels. */
+export interface MediaLibraryHost {
+  list(type?: MediaType): MediaLibraryItem[];
 }

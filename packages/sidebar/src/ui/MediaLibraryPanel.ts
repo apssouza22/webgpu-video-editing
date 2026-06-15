@@ -80,7 +80,7 @@ export class MediaLibraryPanel {
     this.fileInput.addEventListener('change', () => {
       const file = this.fileInput.files?.[0];
       if (file) {
-        this.sidebar.addMediaFromFile(file);
+        this.sidebar.requestMediaUpload(file);
         this.libraryTab = 'library';
         this.setTabState(stockTab, libraryTab);
         this.renderItems();

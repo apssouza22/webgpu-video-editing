@@ -3,6 +3,7 @@ import type { CompositionCanvas } from '@opensource/video-canvas';
 import type { Sidebar } from '@opensource/sidebar';
 
 import type { ClipCanvasSync } from '../clipCanvasSync';
+import type { MediaLibrary } from '../mediaLibrary';
 import { FileSystemProjectStore } from './FileSystemProjectStore';
 import { IndexedDbProjectIndex } from './IndexedDbProjectIndex';
 import { MediaAssetService } from './MediaAssetService';
@@ -36,6 +37,7 @@ export class ProjectSession {
     timeline: Timeline;
     canvas: CompositionCanvas;
     sidebar: Sidebar | null;
+    mediaLibrary: MediaLibrary;
   } | null = null;
 
   constructor(private readonly options: ProjectSessionOptions = {}) {
@@ -46,6 +48,7 @@ export class ProjectSession {
     timeline: Timeline;
     canvas: CompositionCanvas;
     sidebar: Sidebar | null;
+    mediaLibrary: MediaLibrary;
   }): void {
     this.saveContext = context;
   }
@@ -106,7 +109,10 @@ export class ProjectSession {
     return document;
   }
 
-  async pickAndImportMedia(sidebar: Sidebar): Promise<void> {
+  async pickAndImportMedia(
+    mediaLibrary: MediaLibrary,
+    sidebar: Sidebar | null,
+  ): Promise<void> {
     if (!this.store || !this.mediaAssets || !this.document) {
       throw new Error('Open a project before importing media.');
     }
@@ -121,12 +127,13 @@ export class ProjectSession {
 
     for (const handle of handles) {
       const imported = await this.mediaAssets.importFromHandle(handle);
-      sidebar.addFromResolvedMedia({
+      const item = mediaLibrary.addFromResolvedMedia({
         assetId: imported.asset.id,
         type: imported.type,
         name: imported.asset.name,
         src: imported.url,
-      }, { addToCanvas: false });
+      });
+      sidebar?.notifyMediaAdded(item);
     }
 
     this.scheduleSave();
@@ -142,6 +149,7 @@ export class ProjectSession {
     timeline: Timeline,
     canvas: CompositionCanvas,
     sidebar: Sidebar | null,
+    mediaLibrary: MediaLibrary,
     clipCanvasSync: ClipCanvasSync,
   ): Promise<void> {
     if (!this.document || !this.mediaAssets) {
@@ -159,7 +167,12 @@ export class ProjectSession {
       canvas.loadState(resolved.canvas);
 
       if (sidebar) {
-        sidebar.loadPersistedMedia(resolved.mediaLibrary);
+        mediaLibrary.loadPersistedItems(resolved.mediaLibrary);
+        for (const item of resolved.mediaLibrary) {
+          sidebar.notifyMediaAdded(item);
+        }
+      } else {
+        mediaLibrary.loadPersistedItems(resolved.mediaLibrary);
       }
 
       clipCanvasSync.rebuildMappings();
@@ -189,17 +202,18 @@ export class ProjectSession {
   async flushSave(
     timeline?: Timeline,
     canvas?: CompositionCanvas,
-    sidebar?: Sidebar | null,
+    _sidebar?: Sidebar | null,
+    mediaLibrary?: MediaLibrary,
   ): Promise<void> {
     const resolvedTimeline = timeline ?? this.saveContext?.timeline;
     const resolvedCanvas = canvas ?? this.saveContext?.canvas;
-    const resolvedSidebar = sidebar ?? this.saveContext?.sidebar ?? null;
+    const resolvedMediaLibrary = mediaLibrary ?? this.saveContext?.mediaLibrary;
 
     if (!this.pendingSave || !this.store || !this.mediaAssets || !this.document) {
       return;
     }
 
-    if (!resolvedTimeline || !resolvedCanvas) {
+    if (!resolvedTimeline || !resolvedCanvas || !resolvedMediaLibrary) {
       return;
     }
 
@@ -212,12 +226,12 @@ export class ProjectSession {
     });
 
     try {
-      const mediaLibrary = resolvedSidebar?.getPersistedMedia() ?? [];
+      const libraryItems = resolvedMediaLibrary.getPersistedItems();
       this.document = captureProjectDocument({
         meta: this.document.meta,
         timeline: resolvedTimeline.getState(),
         canvas: resolvedCanvas.getState(),
-        mediaLibrary,
+        mediaLibrary: libraryItems,
         mediaAssets: this.mediaAssets,
         transcription: this.document.transcription,
       });

@@ -1,6 +1,5 @@
 import { SAMPLE_IMAGE_SRC, SAMPLE_VIDEO_SRC } from '@opensource/video-canvas';
-
-import type { MediaLibraryItem, ResolvedMediaInput } from './types';
+import type { MediaLibraryItem, ResolvedMediaInput } from '@opensource/sidebar';
 
 let nextMediaId = 0;
 

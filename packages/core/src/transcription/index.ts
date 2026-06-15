@@ -10,7 +10,6 @@ export {
 } from './audioTransform';
 export { extractAudioFromMediaUrl, type ExtractAudioOptions } from './extractAudio';
 export { createMockTranscriptionResult } from './mockTranscription';
-export { getExecDevice } from './device';
 export type {
   ModelParams,
   Pipeline,

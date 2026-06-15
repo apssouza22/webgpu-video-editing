@@ -2,6 +2,7 @@ import '@opensource/sidebar/style.css';
 import '@opensource/video-canvas/style.css';
 
 import { CompositionCanvas } from '@opensource/video-canvas';
+import { bindSidebarMediaLibrary, createStockMedia, MediaLibrary } from '@opensource/core';
 import { Sidebar, mountSidebar } from '@opensource/sidebar';
 
 const app = document.getElementById('app');
@@ -21,11 +22,15 @@ main.className = 'min-w-0 min-h-0';
 app.append(sidebarEl, main);
 
 const canvas = new CompositionCanvas(main);
-const sidebar = new Sidebar(canvas);
+const mediaLibrary = new MediaLibrary(createStockMedia());
+const sidebar = new Sidebar(canvas, { mediaLibrary });
+const unmountMediaLibrary = bindSidebarMediaLibrary({ sidebar, canvas, mediaLibrary });
 const unmountSidebar = mountSidebar(sidebarEl, sidebar);
 
 window.addEventListener('beforeunload', () => {
   unmountSidebar();
+  unmountMediaLibrary();
   sidebar.destroy();
+  mediaLibrary.destroy();
   canvas.destroy();
 });

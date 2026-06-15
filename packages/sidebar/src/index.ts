@@ -1,5 +1,4 @@
 export { Sidebar } from './common/Sidebar';
-export { MediaLibrary, createStockMedia } from './common/mediaLibrary';
 export type {
   AddMediaFromFileOptions,
   ExportFormat,
@@ -7,6 +6,7 @@ export type {
   ExportResolution,
   ExportResolutionPreset,
   ExportSettings,
+  MediaLibraryHost,
   MediaLibraryItem,
   MediaLibrarySource,
   MediaType,

@@ -73,6 +73,13 @@ export {
   type ProjectPersistenceStatus,
 } from './project';
 export {
+  bindSidebarMediaLibrary,
+  createStockMedia,
+  MediaLibrary,
+  addMediaToCanvas,
+  type BindSidebarMediaLibraryOptions,
+} from './mediaLibrary';
+export {
   bindSidebarTranscription,
   configureTranscriptionEnv,
   TranscriptionService,
@@ -82,7 +89,6 @@ export {
   audioBufferToFloat32Array,
   extractAudioFromMediaUrl,
   createMockTranscriptionResult,
-  getExecDevice,
   type BindSidebarTranscriptionOptions,
   type TranscriptionChunk,
   type TranscriptionEventHandler,
@@ -104,6 +110,7 @@ export type {
   SidebarEventName,
   SidebarEventHandler,
   ExportSettings,
+  MediaLibraryHost,
   MediaLibraryItem,
   ResolvedMediaInput,
   SidebarPanelId,
