@@ -1,5 +1,9 @@
 export { Composition } from './composition';
-export { CompositionExporter, type ProgressCallback } from './export/CompositionExporter';
+export {
+  CompositionExporter,
+  type CompositionExportOptions,
+  type ProgressCallback,
+} from './export/CompositionExporter';
 export {
   AudioClip,
   ImageClip,

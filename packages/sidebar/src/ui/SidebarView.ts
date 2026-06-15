@@ -2,14 +2,15 @@ import type { Sidebar } from '../common/Sidebar';
 import type { SidebarPanelId } from '../common/types';
 import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { PropertiesPanel } from './PropertiesPanel';
+import { SIDEBAR_ICONS } from './sidebarIcons';
 import { UIComponent } from './UIComponent';
 
 const PANELS: Array<{ id: SidebarPanelId; label: string; icon: string }> = [
-  { id: 'video', label: 'Video', icon: '▶' },
-  { id: 'image', label: 'Image', icon: '▣' },
-  { id: 'audio', label: 'Audio', icon: '♪' },
-  { id: 'text', label: 'Text', icon: 'T' },
-  { id: 'properties', label: 'Properties', icon: '⚙' },
+  { id: 'video', label: 'Video', icon: SIDEBAR_ICONS.video },
+  { id: 'image', label: 'Image', icon: SIDEBAR_ICONS.image },
+  { id: 'audio', label: 'Audio', icon: SIDEBAR_ICONS.audio },
+  { id: 'text', label: 'Text', icon: SIDEBAR_ICONS.text },
+  { id: 'properties', label: 'Properties', icon: SIDEBAR_ICONS.properties },
 ];
 
 interface SidebarRefs {
@@ -40,29 +41,29 @@ export class SidebarView extends UIComponent<Sidebar> {
     const navButtons = new Map<SidebarPanelId, HTMLButtonElement>();
 
     const shell = document.createElement('div');
-    shell.className =
-      'grid grid-cols-[56px_minmax(0,1fr)] h-full min-h-0 bg-es-panel text-es-text';
+    shell.className = 'sidebar-shell';
 
-    const rail = document.createElement('nav');
-    rail.className =
-      'flex flex-col items-center gap-1 py-3 border-r border-es-border bg-[#12161d]';
-    rail.setAttribute('aria-label', 'Editor sidebar');
+    const tabHeader = document.createElement('nav');
+    tabHeader.className = 'sidebar-tab-header';
+    tabHeader.setAttribute('aria-label', 'Editor sidebar');
 
     for (const panel of PANELS) {
       const button = document.createElement('button');
       button.type = 'button';
       button.title = panel.label;
       button.dataset.panel = panel.id;
-      button.className =
-        'w-10 h-10 rounded-lg border border-transparent text-es-muted hover:text-es-text hover:bg-white/[0.04] cursor-pointer flex items-center justify-center text-sm';
-      button.innerHTML = `<span aria-hidden="true">${panel.icon}</span><span class="sr-only">${panel.label}</span>`;
+      button.className = 'sidebar-tab-button';
+      button.innerHTML = `${panel.icon}<span class="sr-only">${panel.label}</span>`;
       button.addEventListener('click', () => this.sidebar.setActivePanel(panel.id));
       navButtons.set(panel.id, button);
-      rail.append(button);
+      tabHeader.append(button);
     }
 
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'sidebar-tab-content-wrapper';
+
     const contentHost = document.createElement('div');
-    contentHost.className = 'min-h-0 overflow-y-auto p-4 flex flex-col gap-4';
+    contentHost.className = 'sidebar-tab-content';
 
     const videoPanel = new MediaLibraryPanel(this.sidebar, 'video');
     const imagePanel = new MediaLibraryPanel(this.sidebar, 'image');
@@ -79,7 +80,8 @@ export class SidebarView extends UIComponent<Sidebar> {
     const refs: SidebarRefs = { panels, navButtons, contentHost };
     (shell as ShellElement)[SIDEBAR_REFS] = refs;
 
-    shell.append(rail, contentHost);
+    contentWrapper.append(contentHost);
+    shell.append(tabHeader, contentWrapper);
     this.applyPanel(this.sidebar.getActivePanel(), refs);
     return shell;
   }
@@ -113,41 +115,39 @@ export class SidebarView extends UIComponent<Sidebar> {
     refs.contentHost.replaceChildren(node);
 
     for (const [id, button] of refs.navButtons) {
-      const active = id === panel;
-      button.className = active
-        ? 'w-10 h-10 rounded-lg border border-es-accent bg-[rgba(62,138,245,0.15)] text-es-accent cursor-pointer flex items-center justify-center text-sm'
-        : 'w-10 h-10 rounded-lg border border-transparent text-es-muted hover:text-es-text hover:bg-white/[0.04] cursor-pointer flex items-center justify-center text-sm';
-      button.setAttribute('aria-current', active ? 'page' : 'false');
+      button.classList.toggle('is-active', id === panel);
+      button.setAttribute('aria-current', id === panel ? 'page' : 'false');
     }
   }
 
   private createTextPanel(): HTMLElement {
     const panel = document.createElement('div');
-    panel.className = 'flex flex-col gap-3';
+    panel.className = 'flex flex-col gap-4';
 
-    panel.innerHTML = `
-      <div class="flex flex-col gap-1">
-        <h2 class="m-0 text-lg font-semibold">Text</h2>
-        <p class="m-0 text-es-muted text-sm">Add a text layer at the current playhead position.</p>
-      </div>
-    `;
+    const title = document.createElement('div');
+    title.className = 'sidebar-section-title';
+    title.textContent = 'Add Text Layer';
+
+    const description = document.createElement('p');
+    description.className = 'm-0 text-es-muted text-sm';
+    description.textContent = 'Add a text layer at the current playhead position.';
 
     const textarea = document.createElement('textarea');
-    textarea.className =
-      'border border-es-border rounded-lg px-3 py-2 bg-[#11151d] text-es-text min-h-24 resize-y';
+    textarea.className = 'sidebar-textarea';
+    textarea.placeholder = 'Enter your text here…';
+    textarea.rows = 3;
     textarea.value = 'Your title here';
 
     const addButton = document.createElement('button');
     addButton.type = 'button';
-    addButton.className =
-      'border border-es-border rounded-lg px-3 py-2 bg-es-accent text-white cursor-pointer hover:bg-es-accent-hover';
+    addButton.className = 'sidebar-action-button sidebar-action-button--primary';
     addButton.textContent = 'Add text to canvas';
 
     addButton.addEventListener('click', () => {
       this.sidebar.addTextToCanvas(textarea.value.trim() || 'New text');
     });
 
-    panel.append(textarea, addButton);
+    panel.append(title, description, textarea, addButton);
     return panel;
   }
 }

@@ -48,7 +48,7 @@ export class MediaLibraryPanel {
     const header = document.createElement('div');
     header.className = 'flex flex-col gap-1';
     header.innerHTML = `
-      <h2 class="m-0 text-lg font-semibold">${copy.title}</h2>
+      <h2 class="sidebar-section-title">${copy.title}</h2>
       <p class="m-0 text-es-muted text-sm">Stock and your library — click an item to add it to the canvas.</p>
     `;
 

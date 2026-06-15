@@ -6,11 +6,18 @@ import {
 } from '@opensource/gpu-video-encode';
 import type { CompositionCanvas, CanvasElement, CanvasSize } from '@opensource/video-canvas';
 import { rasterizeTextElement } from './rasterizeTextElement';
-
-const DEFAULT_EXPORT_FPS = 30;
+import {
+  DEFAULT_EXPORT_FPS,
+  DEFAULT_EXPORT_FORMAT,
+  resolveOutputFilename,
+  type ExportFormat,
+} from './exportOptions';
 
 export interface CanvasToCompositionOptions {
   fps?: number;
+  width?: number;
+  height?: number;
+  format?: ExportFormat;
   outputFilename?: string;
 }
 
@@ -55,9 +62,13 @@ export async function canvasElementsToComposition(
   }
 
   const fps = options.fps ?? DEFAULT_EXPORT_FPS;
-  const composition = new Composition(fps, playerSize.width, playerSize.height, {
+  const width = options.width ?? playerSize.width;
+  const height = options.height ?? playerSize.height;
+  const format = options.format ?? DEFAULT_EXPORT_FORMAT;
+
+  const composition = new Composition(fps, width, height, {
     duration: canvas.getDuration(),
-    outputFilename: options.outputFilename ?? 'composition-export.mp4',
+    outputFilename: resolveOutputFilename(format, options.outputFilename),
   });
 
   const revokeUrls: string[] = [];

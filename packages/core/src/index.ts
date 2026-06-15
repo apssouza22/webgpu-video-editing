@@ -9,7 +9,7 @@ import {
 import { AnimationFrameLoop } from './animationFrameLoop';
 import { bindClipCanvasSync } from './clipCanvasSync';
 import { bindEditorPlayback } from './editorPlayback';
-import { downloadBlob, exportVideoFromCanvas, type ExportVideoOptions } from './export';
+import { downloadBlob, exportVideoFromCanvas, type ExportVideoOptions, type ExportVideoResult } from './export';
 
 import '@opensource/sidebar/style.css';
 import '@opensource/timeline/style.css';
@@ -77,13 +77,13 @@ export class VideoEditor {
   /**
    * Renders the current canvas composition with WebGPU and encodes an MP4 download.
    */
-  async exportVideo(options: ExportVideoOptions = {}): Promise<Blob> {
+  async exportVideo(options: ExportVideoOptions = {}): Promise<ExportVideoResult> {
     this.timeline.pause();
     this.canvas.render(this.canvas.getCurrentTime(), { playing: false });
 
     const result = await exportVideoFromCanvas(this.canvas, options);
     downloadBlob(result.blob, result.filename);
-    return result.blob;
+    return result;
   }
 
   destroy(): void {
@@ -122,10 +122,23 @@ export {
   downloadBlob,
   exportVideoFromCanvas,
   rasterizeTextElement,
+  DEFAULT_EXPORT_FORMAT,
+  DEFAULT_EXPORT_FPS,
+  DEFAULT_EXPORT_QUALITY,
+  EXPORT_FPS_OPTIONS,
+  EXPORT_QUALITY_BITRATES,
+  resolveExportDimensions,
+  resolveExportSettings,
+  resolveOutputFilename,
   type CanvasToCompositionOptions,
   type CanvasToCompositionResult,
+  type ExportFormat,
+  type ExportQuality,
+  type ExportResolution,
+  type ExportResolutionPreset,
   type ExportVideoOptions,
   type ExportVideoResult,
+  type ResolvedExportSettings,
 } from './export';
 export type { ExportProgress } from '@opensource/gpu-video-encode';
 export {

@@ -28,7 +28,7 @@ export class PropertiesPanel {
     if (!selected) {
       this.mountedId = null;
       this.root.innerHTML = `
-        <h2 class="m-0 text-base font-semibold">Properties</h2>
+        <h2 class="sidebar-section-title">Properties</h2>
         <p class="m-0 text-es-muted text-sm leading-snug">Select an element on the canvas to edit its properties.</p>
       `;
       return;
@@ -72,7 +72,7 @@ export class PropertiesPanel {
     const fragment = document.createDocumentFragment();
 
     const title = document.createElement('h2');
-    title.className = 'm-0 text-base font-semibold';
+    title.className = 'sidebar-section-title';
     title.textContent = element.name;
 
     const type = document.createElement('p');

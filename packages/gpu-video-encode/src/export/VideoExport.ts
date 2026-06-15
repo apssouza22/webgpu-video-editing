@@ -4,6 +4,7 @@ import {ExporterCanvas} from '../gpu/ExporterCanvas';
 import {GpuCompositor} from '../gpu/GpuCompositor';
 import {FrameRender} from './FrameRender';
 import {VideoEncoderService} from './VideoEncoderService';
+import type {CompositionExportOptions} from './CompositionExporter';
 
 export type VideoExportProgressCallback = (progress: ExportProgress) => void;
 
@@ -68,12 +69,13 @@ export class VideoExport {
   static async createEncoder(
     composition: Composition,
     hasAudio: boolean,
+    options: CompositionExportOptions = {},
   ): Promise<VideoEncoderService> {
     const videoEncoder = new VideoEncoderService({
       width: composition.width,
       height: composition.height,
       fps: composition.fps,
-      bitrate: 8_000_000,
+      bitrate: options.bitrate ?? 8_000_000,
       hasAudio,
     });
     await videoEncoder.init();

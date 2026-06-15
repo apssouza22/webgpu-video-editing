@@ -1,10 +1,16 @@
-import { VideoEditor } from '@opensource/core';
+import {
+  VideoEditor,
+  type ExportFormat,
+  type ExportQuality,
+  type ExportResolutionPreset,
+} from '@opensource/core';
 
 const timelineEl = document.getElementById('timeline');
 const canvasEl = document.getElementById('canvas');
 const sidebarEl = document.getElementById('sidebar');
 const exportButton = document.getElementById('export-button') as HTMLButtonElement | null;
 const exportStatusEl = document.getElementById('export-status');
+const exportOptionsForm = document.getElementById('export-options') as HTMLFormElement | null;
 
 if (!timelineEl || !canvasEl || !sidebarEl) {
   throw new Error('Demo layout is missing #timeline, #canvas, or #sidebar');
@@ -38,6 +44,21 @@ function setExportStatus(message: string): void {
   console.log(message);
 }
 
+function readExportOptions() {
+  const formData = exportOptionsForm
+    ? new FormData(exportOptionsForm)
+    : new FormData();
+
+  return {
+    quality: (formData.get('quality') as ExportQuality | null) ?? 'high',
+    fps: Number(formData.get('fps') ?? 30),
+    format: (formData.get('format') as ExportFormat | null) ?? 'mp4',
+    resolution: {
+      preset: (formData.get('resolution') as ExportResolutionPreset | null) ?? 'source',
+    },
+  };
+}
+
 function updateExportButtonState(): void {
   if (!exportButton) {
     return;
@@ -61,18 +82,23 @@ exportButton?.addEventListener('click', async () => {
     return;
   }
 
+  const exportOptions = readExportOptions();
   exportButton.disabled = true;
   setExportStatus('Starting GPU export (WebCodecs + MediaBunny)…');
 
   try {
-    await editor.exportVideo({
+    const result = await editor.exportVideo({
+      ...exportOptions,
       onProgress: (progress) => {
         setExportStatus(
           `[${progress.phase}] ${progress.percent.toFixed(1)}% — ${progress.message}`,
         );
       },
     });
-    setExportStatus('Export complete. Your MP4 download should start automatically.');
+
+    setExportStatus(
+      `Export complete (${result.settings.width}×${result.settings.height} @ ${result.settings.fps}fps). Download started.`,
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     setExportStatus(`Export failed: ${message}`);

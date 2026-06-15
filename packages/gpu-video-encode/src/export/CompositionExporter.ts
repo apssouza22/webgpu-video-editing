@@ -5,9 +5,18 @@ import {VideoExport} from './VideoExport';
 
 export type ProgressCallback = (progress: ExportProgress) => void;
 
+export interface CompositionExportOptions {
+  /** Video encoder bitrate in bits per second. */
+  bitrate?: number;
+}
+
 export class CompositionExporter {
 
-  async export(composition: Composition, onProgress: ProgressCallback): Promise<Blob> {
+  async export(
+    composition: Composition,
+    onProgress: ProgressCallback,
+    options: CompositionExportOptions = {},
+  ): Promise<Blob> {
     let videoExport: VideoExport | null = null;
 
     try {
@@ -23,7 +32,7 @@ export class CompositionExporter {
         onProgress,
       });
       const includeAudio = audioExport.hasAudio;
-      const videoEncoder = await VideoExport.createEncoder(composition, includeAudio);
+      const videoEncoder = await VideoExport.createEncoder(composition, includeAudio, options);
       await audioExport.encodeInto(videoEncoder);
 
       videoExport = await VideoExport.create({
