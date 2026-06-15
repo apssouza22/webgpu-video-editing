@@ -1,4 +1,17 @@
-import { VideoEditor } from '@opensource/core';
+import { VideoEditor, type MediaLibraryItem } from '@opensource/core';
+
+const DEMO_VIDEO_URL = '/demo.mp4';
+
+const demoVideoStock: MediaLibraryItem[] = [
+  {
+    id: 'stock-demo-video',
+    type: 'video',
+    name: 'demo.mp4',
+    src: DEMO_VIDEO_URL,
+    createdAt: Date.now(),
+    source: 'stock',
+  },
+];
 
 const timelineEl = document.getElementById('timeline');
 const canvasEl = document.getElementById('canvas');
@@ -16,15 +29,28 @@ const editor = new VideoEditor(
   },
   {
     transcription: { mockTranscription: false },
+    sidebar: {
+      initialPanel: 'video',
+      stockMedia: demoVideoStock,
+    },
   },
 );
 
-editor.timeline.addClip({
-  type: 'text',
-  name: 'Title',
-  duration: 5,
-  textContent: 'GPU Video Editor',
-});
+async function seedDemo(): Promise<void> {
+  const duration = await probeUrlDuration(DEMO_VIDEO_URL);
+  editor.timeline.addClip({
+    type: 'video',
+    name: 'demo.mp4',
+    duration,
+    url: DEMO_VIDEO_URL,
+    hasAudio: true,
+    startTime: 0,
+  });
+  editor.canvas.selectElement(null);
+  editor.sidebar?.setActivePanel('video');
+}
+
+void seedDemo();
 
 editor.sidebar?.on('property:changed', (payload) => {
   console.debug('[sidebar] property:changed', {
@@ -37,3 +63,15 @@ editor.sidebar?.on('property:changed', (payload) => {
 window.addEventListener('beforeunload', () => {
   editor.destroy();
 });
+
+function probeUrlDuration(url: string): Promise<number> {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      resolve(Number.isFinite(video.duration) ? video.duration : 5);
+    };
+    video.onerror = () => resolve(5);
+    video.src = url;
+  });
+}

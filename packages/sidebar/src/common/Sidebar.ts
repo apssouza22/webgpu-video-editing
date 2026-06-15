@@ -196,13 +196,25 @@ export class Sidebar {
   }
 
   private bindCanvas(): void {
+    let skipNextPropertiesPanel = false;
+
     this.disposables.push(
+      this.canvas.on('element:added', () => {
+        skipNextPropertiesPanel = true;
+      }),
       this.canvas.on('selection:changed', ({ selectedId, selectedElement }) => {
         this.events.emit('selection:changed', { selectedId, selectedElement });
-        if (selectedElement) {
-          this.activePanel = 'properties';
-          this.events.emit('panel:changed', { panel: 'properties' });
+        if (!selectedElement) {
+          return;
         }
+
+        if (skipNextPropertiesPanel) {
+          skipNextPropertiesPanel = false;
+          return;
+        }
+
+        this.activePanel = 'properties';
+        this.events.emit('panel:changed', { panel: 'properties' });
       }),
     );
 

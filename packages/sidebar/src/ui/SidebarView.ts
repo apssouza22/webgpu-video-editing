@@ -100,14 +100,6 @@ export class SidebarView extends UIComponent<Sidebar> {
         this.showPanel(panel);
       }),
     );
-
-    this.track(
-      this.sidebar.on('selection:changed', ({ selectedElement }) => {
-        if (selectedElement) {
-          this.showPanel('properties');
-        }
-      }),
-    );
   }
 
   private showPanel(panel: SidebarPanelId): void {
