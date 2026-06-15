@@ -147,6 +147,14 @@ git checkout -b my-feature
 - Put timeline-only logic in `packages/timeline`, canvas-only logic in `packages/video-canvas`, integration in `packages/core`.
 - When touching a submodule, commit and push in the submodule repo, then pin the SHA in the assembly repo.
 - Build submodule packages before relying on their `dist/` artifacts.
+- Organize code by domain package, not by technical layer
+- Write domain tests in the domain packages
+- Tests should try to cover domain logic, not implementation details
+- Prefer object oriented patterns over functional patterns
+- Prefer composition over inheritance
+- Assume that webgpu is available
+
+
 
 ### Ask first
 
@@ -166,3 +174,21 @@ git checkout -b my-feature
 - TypeScript, Vite, Tailwind CSS v4
 - Vitest in timeline and video-canvas
 - Framework-agnostic packages (no React in the public APIs)
+
+
+# Task execution plan
+Important: Always plan the task step by step before writing code. Ask for permission to proceed with the plan.
+Important: Before proceed with the plan, create a new file named `.agents/plans/name-of-the-task.md`.
+Based on the approved plan, list all necessary implementation steps as GitHub-style checkboxes (`- [ ] Step Description`). Use sub-bullets for granular details within each main step.
+
+
+- Plans should be detailed enough to execute without ambiguity
+- Each task in the plan must include at least one validation test to verify it works. Preferably an integration test.
+- Assess complexity and single-pass feasibility - can an agent realistically complete this in one go?
+- Include a complexity indicator at the top of each plan:
+  ✅ Simple - Single-pass executable, low risk
+  ⚠️ Medium - May need iteration, some complexity
+  🔴 Complex - Break into sub-plans before executing
+
+**CRITICAL: After you successfully complete each step, you MUST update the `.agents/plans/name-of-the-task.md` file by changing the corresponding checkbox from `- [ ]` to `- [x]`.**
+Only proceed to the *next* unchecked item after confirming the previous one is checked off in the file. Announce which step you are starting.

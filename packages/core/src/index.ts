@@ -1,171 +1,4 @@
-import { CompositionCanvas } from '@opensource/video-canvas';
-import type { TimelineOptions } from '@opensource/timeline';
-import { Timeline } from '@opensource/timeline';
-import {
-  Sidebar,
-  mountSidebar,
-  type SidebarOptions,
-} from '@opensource/sidebar';
-import { AnimationFrameLoop } from './animationFrameLoop';
-import { bindClipCanvasSync } from './clipCanvasSync';
-import { bindEditorPlayback } from './editorPlayback';
-import { downloadBlob, exportVideoFromCanvas, type ExportVideoOptions, type ExportVideoResult } from './export';
-import {
-  bindSidebarTranscription,
-  TranscriptionService,
-  type TranscriptionOptions,
-} from './transcription';
-
-import '@opensource/sidebar/style.css';
-import '@opensource/timeline/style.css';
-import '@opensource/video-canvas/style.css';
-
-export interface VideoEditorOptions {
-  timeline?: TimelineOptions;
-  timelineClassName?: string;
-  canvasClassName?: string;
-  sidebar?: SidebarOptions;
-  sidebarClassName?: string;
-  /** When true (default), handles `export:requested` from the sidebar. */
-  bindSidebarExport?: boolean;
-  transcription?: TranscriptionOptions;
-  /** When true (default), handles sidebar transcription events. */
-  bindSidebarTranscription?: boolean;
-}
-
-export interface VideoEditorMount {
-  timelineContainer: HTMLElement;
-  canvasContainer: HTMLElement;
-  sidebarContainer?: HTMLElement;
-}
-
-/**
- * Wires the timeline transport to the composition canvas preview.
- */
-export class VideoEditor {
-  readonly timeline: Timeline;
-  readonly canvas: CompositionCanvas;
-  readonly sidebar: Sidebar | null;
-  readonly transcription: TranscriptionService;
-  readonly frameLoop: AnimationFrameLoop;
-  private readonly disposables: Array<() => void> = [];
-
-  constructor(
-    { timelineContainer, canvasContainer, sidebarContainer }: VideoEditorMount,
-    options: VideoEditorOptions = {},
-  ) {
-    if (options.timelineClassName) {
-      timelineContainer.classList.add(...options.timelineClassName.split(/\s+/).filter(Boolean));
-    }
-
-    this.timeline = new Timeline(timelineContainer, options.timeline);
-    this.canvas = new CompositionCanvas(canvasContainer, {
-      className: options.canvasClassName,
-    });
-    this.transcription = new TranscriptionService({
-      mockTranscription: options.transcription?.mockTranscription ?? false,
-      language: options.transcription?.language,
-    });
-
-    if (sidebarContainer) {
-      if (options.sidebarClassName) {
-        sidebarContainer.classList.add(...options.sidebarClassName.split(/\s+/).filter(Boolean));
-      }
-      this.sidebar = new Sidebar(this.canvas, options.sidebar);
-      const unmountSidebar = mountSidebar(sidebarContainer, this.sidebar);
-      this.disposables.push(unmountSidebar);
-
-      if (options.bindSidebarExport !== false) {
-        this.disposables.push(this.bindSidebarExport());
-      }
-
-      if (options.bindSidebarTranscription !== false) {
-        this.disposables.push(
-          bindSidebarTranscription({
-            sidebar: this.sidebar,
-            timeline: this.timeline,
-            canvas: this.canvas,
-            transcription: this.transcription,
-          }),
-        );
-      }
-    } else {
-      this.sidebar = null;
-    }
-
-    this.frameLoop = new AnimationFrameLoop();
-    this.disposables.push(
-      bindEditorPlayback({
-        timeline: this.timeline,
-        canvas: this.canvas,
-        frameLoop: this.frameLoop,
-      }),
-    );
-    this.disposables.push(bindClipCanvasSync({ timeline: this.timeline, canvas: this.canvas }));
-  }
-
-  /**
-   * Renders the current canvas composition with WebGPU and encodes an MP4 download.
-   */
-  async exportVideo(options: ExportVideoOptions = {}): Promise<ExportVideoResult> {
-    this.timeline.pause();
-    this.canvas.render(this.canvas.getCurrentTime(), { playing: false });
-
-    const result = await exportVideoFromCanvas(this.canvas, {
-      ...options,
-      playbackRate: options.playbackRate ?? this.timeline.getPlaybackRate(),
-    });
-    downloadBlob(result.blob, result.filename);
-    return result;
-  }
-
-  private bindSidebarExport(): () => void {
-    if (!this.sidebar) {
-      return () => {};
-    }
-
-    const sidebar = this.sidebar;
-
-    return sidebar.on('export:requested', async ({ settings }) => {
-      sidebar.setExportStatus('Starting GPU export (WebCodecs + MediaBunny)…', true);
-
-      try {
-        const result = await this.exportVideo({
-          ...settings,
-          onProgress: (progress) => {
-            sidebar.setExportStatus(
-              `[${progress.phase}] ${progress.percent.toFixed(1)}% — ${progress.message}`,
-              true,
-            );
-          },
-        });
-
-        const speedLabel =
-          result.settings.playbackRate === 1 ? '' : ` @ ${result.settings.playbackRate}x`;
-        sidebar.setExportStatus(
-          `Export complete (${result.settings.width}×${result.settings.height} @ ${result.settings.fps}fps${speedLabel}). Download started.`,
-          false,
-        );
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        sidebar.setExportStatus(`Export failed: ${message}`, false);
-        console.error(error);
-      }
-    });
-  }
-
-  destroy(): void {
-    for (const unsubscribe of this.disposables) {
-      unsubscribe();
-    }
-    this.disposables.length = 0;
-    this.frameLoop.destroy();
-    this.transcription.destroy();
-    this.sidebar?.destroy();
-    this.timeline.destroy();
-    this.canvas.destroy();
-  }
-}
+export { VideoEditor, type VideoEditorMount, type VideoEditorOptions } from './VideoEditor';
 
 export { Timeline } from '@opensource/timeline';
 export type { TimelineOptions, TimelineState } from '@opensource/timeline';
@@ -185,8 +18,13 @@ export {
   type FrameCallback,
   type FrameContext,
 } from './animationFrameLoop';
-export { bindEditorPlayback, type EditorPlaybackOptions } from './editorPlayback';
 export {
+  bindEditorPlayback,
+  EditorPlayback,
+  type EditorPlaybackOptions,
+} from './editorPlayback';
+export {
+  bindSidebarExport,
   canvasElementsToComposition,
   downloadBlob,
   exportVideoFromCanvas,
@@ -199,6 +37,7 @@ export {
   resolveExportDimensions,
   resolveExportSettings,
   resolveOutputFilename,
+  type BindSidebarExportOptions,
   type CanvasToCompositionOptions,
   type CanvasToCompositionResult,
   type ExportFormat,

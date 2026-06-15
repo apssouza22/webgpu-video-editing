@@ -1,3 +1,4 @@
+export { bindSidebarExport, type BindSidebarExportOptions } from './bindSidebarExport';
 export { canvasElementsToComposition, type CanvasToCompositionOptions, type CanvasToCompositionResult } from './canvasToComposition';
 export { downloadBlob } from './downloadBlob';
 export { exportVideoFromCanvas, type ExportVideoResult } from './exportVideo';

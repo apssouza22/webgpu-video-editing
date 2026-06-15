@@ -1,1 +1,1 @@
-export { bindEditorPlayback, type EditorPlaybackOptions } from './bindEditorPlayback';
+export { bindEditorPlayback, EditorPlayback, type EditorPlaybackOptions } from './EditorPlayback';
