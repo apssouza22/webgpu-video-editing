@@ -1,6 +1,6 @@
 import type { Timeline } from '@opensource/timeline';
 import type { CompositionCanvas } from '@opensource/video-canvas';
-import type { Sidebar } from '@opensource/sidebar';
+import type { MediaLibraryItem, Sidebar } from '@opensource/sidebar';
 
 import type { ClipCanvasSync } from '../clipCanvasSync';
 import type { MediaLibrary } from '../mediaLibrary';
@@ -9,15 +9,21 @@ import { IndexedDbProjectIndex } from './IndexedDbProjectIndex';
 import { MediaAssetService } from './MediaAssetService';
 import {
   captureProjectDocument,
-  createEmptyProjectDocument,
   resolveProjectDocument,
 } from './ProjectSerializer';
 import { pickMediaFiles, pickProjectDirectory } from './fileSystemAccess';
+import { remapCanvasStateUrls, remapTimelineStateUrls } from './remapEditorUrls';
 import type {
   ProjectDocument,
   ProjectMetadata,
   ProjectPersistenceStatus,
 } from './types';
+
+async function fetchMediaAsFile(src: string, name: string): Promise<File> {
+  const response = await fetch(src);
+  const blob = await response.blob();
+  return new File([blob], name, { type: blob.type || 'application/octet-stream' });
+}
 
 export interface ProjectSessionOptions {
   debounceMs?: number;
@@ -70,16 +76,59 @@ export class ProjectSession {
     directoryHandle: FileSystemDirectoryHandle,
     timeline: Timeline,
     canvas: CompositionCanvas,
+    mediaLibrary: MediaLibrary,
+    sidebar: Sidebar | null,
+    clipCanvasSync?: ClipCanvasSync,
   ): Promise<ProjectDocument> {
     this.emitStatus({ phase: 'loading', message: 'Creating project…' });
 
     const store = new FileSystemProjectStore(directoryHandle);
     await store.ensureAccess();
 
-    const document = createEmptyProjectDocument(name, timeline.getState(), canvas.getState());
+    const now = Date.now();
+    const meta: ProjectMetadata = {
+      id: `project-${crypto.randomUUID()}`,
+      name,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.mediaAssets?.destroy();
+    this.store = store;
+    this.mediaAssets = new MediaAssetService(store, this.index, meta.id);
+
+    const urlMap = await this.importCurrentMediaLibrary(mediaLibrary, sidebar);
+    clipCanvasSync?.pause();
+
+    try {
+      const timelineState = remapTimelineStateUrls(timeline.getState(), urlMap);
+      const canvasState = remapCanvasStateUrls(canvas.getState(), urlMap);
+      timeline.loadState(timelineState);
+      canvas.loadState(canvasState);
+      clipCanvasSync?.rebuildMappings();
+      canvas.render(canvas.getCurrentTime(), { playing: false });
+    } finally {
+      clipCanvasSync?.resume();
+    }
+
+    const document = captureProjectDocument({
+      meta,
+      timeline: timeline.getState(),
+      canvas: canvas.getState(),
+      mediaLibrary: mediaLibrary.getPersistedItems(),
+      mediaAssets: this.mediaAssets,
+    });
     await store.writeDocument(document);
 
-    await this.openWithDocument(store, document);
+    this.document = document;
+    await this.index.upsertProject({
+      projectId: document.meta.id,
+      name: document.meta.name,
+      directoryHandle: store.getDirectoryHandle(),
+      updatedAt: document.meta.updatedAt,
+      lastOpenedAt: Date.now(),
+    });
+
     this.emitStatus({
       phase: 'ready',
       message: 'Project created.',
@@ -267,6 +316,53 @@ export class ProjectSession {
     this.mediaAssets = null;
     this.store = null;
     this.document = null;
+  }
+
+  private async importCurrentMediaLibrary(
+    mediaLibrary: MediaLibrary,
+    sidebar: Sidebar | null,
+  ): Promise<Map<string, string>> {
+    if (!this.mediaAssets) {
+      throw new Error('Media assets are not initialized.');
+    }
+
+    const urlMap = new Map<string, string>();
+    const updatedItems: MediaLibraryItem[] = [];
+
+    for (const item of mediaLibrary.list()) {
+      const sourceFile = await fetchMediaAsFile(item.src, item.name);
+      const imported = await this.mediaAssets.importFromFile(sourceFile, item.name);
+
+      if (item.src !== imported.url) {
+        urlMap.set(item.src, imported.url);
+      }
+
+      let thumbnail = item.thumbnail;
+      if (item.thumbnail && item.thumbnail !== item.src) {
+        const thumbnailFile = await fetchMediaAsFile(item.thumbnail, `${item.name}-thumb`);
+        const importedThumbnail = await this.mediaAssets.importFromFile(
+          thumbnailFile,
+          `${item.name}-thumb`,
+        );
+        if (item.thumbnail !== importedThumbnail.url) {
+          urlMap.set(item.thumbnail, importedThumbnail.url);
+        }
+        thumbnail = importedThumbnail.url;
+      }
+
+      updatedItems.push({
+        ...item,
+        assetId: imported.asset.id,
+        src: imported.url,
+        thumbnail,
+        source: 'library',
+      });
+    }
+
+    mediaLibrary.loadPersistedItems(updatedItems);
+    sidebar?.notifyMediaLibraryChanged();
+
+    return urlMap;
   }
 
   private async openWithDocument(

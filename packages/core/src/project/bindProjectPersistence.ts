@@ -1,7 +1,12 @@
 import type { VideoEditor } from '../VideoEditor';
 import { ProjectSession } from './ProjectSession';
+import { bindSidebarProject } from './bindSidebarProject';
 import { pickProjectDirectory } from './fileSystemAccess';
-import type { BindProjectPersistenceOptions } from './types';
+import type { BindProjectPersistenceOptions, ProjectPersistenceStatus } from './types';
+
+function isBusyPhase(phase: ProjectPersistenceStatus['phase']): boolean {
+  return phase === 'loading' || phase === 'saving' || phase === 'importing';
+}
 
 export function bindProjectPersistence({
   editor,
@@ -11,7 +16,18 @@ export function bindProjectPersistence({
   onStatus,
   onError,
 }: BindProjectPersistenceOptions): () => void {
-  const session = new ProjectSession({ onStatus, onError, debounceMs });
+  const session = new ProjectSession({
+    onStatus: (status) => {
+      onStatus?.(status);
+      editor.sidebar?.setProjectStatus(status.message ?? '', {
+        busy: isBusyPhase(status.phase),
+        projectName: status.projectName,
+        isOpen: session.isOpen(),
+      });
+    },
+    onError,
+    debounceMs,
+  });
   session.setSaveContext({
     timeline: editor.timeline,
     canvas: editor.canvas,
@@ -53,7 +69,15 @@ export function bindProjectPersistence({
     session,
     async createProject(name: string, directoryHandle?: FileSystemDirectoryHandle) {
       const handle = directoryHandle ?? (await pickProjectDirectory());
-      return session.createProject(name, handle, editor.timeline, editor.canvas);
+      return session.createProject(
+        name,
+        handle,
+        editor.timeline,
+        editor.canvas,
+        editor.mediaLibrary,
+        editor.sidebar,
+        clipCanvasSync,
+      );
     },
     async openProject(directoryHandle?: FileSystemDirectoryHandle) {
       const document = await session.openProject(directoryHandle);
@@ -80,6 +104,15 @@ export function bindProjectPersistence({
   };
 
   editor.projectPersistence = persistenceApi;
+
+  if (editor.sidebar) {
+    disposables.push(
+      bindSidebarProject({
+        sidebar: editor.sidebar,
+        persistence: persistenceApi,
+      }),
+    );
+  }
 
   return () => {
     flush();

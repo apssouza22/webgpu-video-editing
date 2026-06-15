@@ -56,18 +56,23 @@ export class MediaAssetService {
 
   async importFromHandle(fileHandle: FileSystemFileHandle): Promise<ImportMediaResult> {
     const sourceFile = await fileHandle.getFile();
+    return this.importFromFile(sourceFile);
+  }
+
+  async importFromFile(sourceFile: File | Blob, fileName?: string): Promise<ImportMediaResult> {
+    const name = fileName ?? (sourceFile instanceof File ? sourceFile.name : 'media');
     const assetId = createAssetId();
-    const relativePath = this.store.buildMediaRelativePath(assetId, sourceFile.name);
+    const relativePath = this.store.buildMediaRelativePath(assetId, name);
 
     await this.store.writeMediaFile(relativePath, sourceFile);
 
     const asset: PersistedMediaAsset = {
       id: assetId,
       relativePath,
-      name: sourceFile.name,
+      name,
       mimeType: sourceFile.type || 'application/octet-stream',
       size: sourceFile.size,
-      lastModified: sourceFile.lastModified,
+      lastModified: sourceFile instanceof File ? sourceFile.lastModified : Date.now(),
     };
 
     const projectFileHandle = await this.store.getMediaFileHandle(relativePath);

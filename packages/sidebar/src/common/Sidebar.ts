@@ -96,6 +96,38 @@ export class Sidebar {
     this.events.emit('media:removed', { id });
   }
 
+  notifyMediaLibraryChanged(): void {
+    this.events.emit('media:library:changed', {});
+  }
+
+  canManageProject(): boolean {
+    return 'showDirectoryPicker' in window;
+  }
+
+  requestCreateProject(name: string): void {
+    this.events.emit('project:create:requested', { name });
+  }
+
+  requestOpenProject(): void {
+    this.events.emit('project:open:requested', {});
+  }
+
+  setProjectStatus(
+    message: string,
+    options: { busy?: boolean; projectName?: string; isOpen?: boolean } = {},
+  ): void {
+    this.events.emit('project:status', {
+      message,
+      busy: options.busy ?? false,
+      projectName: options.projectName,
+      isOpen: options.isOpen,
+    });
+  }
+
+  setProjectAvailability(canManage: boolean): void {
+    this.events.emit('project:availability', { canManage });
+  }
+
   canExport(): boolean {
     return this.canvas
       .getElements()

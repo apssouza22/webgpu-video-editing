@@ -67,6 +67,7 @@ export class MediaLibraryPanel {
 
     this.sidebar.on('media:added', () => this.renderItems());
     this.sidebar.on('media:removed', () => this.renderItems());
+    this.sidebar.on('media:library:changed', () => this.renderItems());
 
     this.root.append(header, this.searchInput, uploadButton, this.fileInput, this.grid, this.emptyState);
     this.renderItems();

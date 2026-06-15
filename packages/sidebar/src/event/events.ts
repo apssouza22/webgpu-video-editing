@@ -15,6 +15,7 @@ export class SidebarEventEmitter {
     'panel:changed': new Set(),
     'media:added': new Set(),
     'media:removed': new Set(),
+    'media:library:changed': new Set(),
     'media:selected': new Set(),
     'media:upload:requested': new Set(),
     'media:remove:requested': new Set(),
@@ -29,6 +30,10 @@ export class SidebarEventEmitter {
     'transcription:result': new Set(),
     'transcription:highlight': new Set(),
     'transcription:availability': new Set(),
+    'project:create:requested': new Set(),
+    'project:open:requested': new Set(),
+    'project:status': new Set(),
+    'project:availability': new Set(),
   };
 
   on<T extends SidebarEventName>(event: T, handler: SidebarEventHandler<T>): () => void {

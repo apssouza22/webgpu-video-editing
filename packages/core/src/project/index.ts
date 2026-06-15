@@ -1,4 +1,5 @@
 export { bindProjectPersistence } from './bindProjectPersistence';
+export { bindSidebarProject } from './bindSidebarProject';
 export type { ProjectPersistenceApi } from './bindProjectPersistence';
 export { FileSystemProjectStore } from './FileSystemProjectStore';
 export { IndexedDbProjectIndex } from './IndexedDbProjectIndex';
