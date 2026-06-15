@@ -21,6 +21,8 @@ export interface VideoEditorOptions {
   canvasClassName?: string;
   sidebar?: SidebarOptions;
   sidebarClassName?: string;
+  /** When true (default), handles `export:requested` from the sidebar. */
+  bindSidebarExport?: boolean;
 }
 
 export interface VideoEditorMount {
@@ -59,6 +61,10 @@ export class VideoEditor {
       this.sidebar = new Sidebar(this.canvas, options.sidebar);
       const unmountSidebar = mountSidebar(sidebarContainer, this.sidebar);
       this.disposables.push(unmountSidebar);
+
+      if (options.bindSidebarExport !== false) {
+        this.disposables.push(this.bindSidebarExport());
+      }
     } else {
       this.sidebar = null;
     }
@@ -84,6 +90,39 @@ export class VideoEditor {
     const result = await exportVideoFromCanvas(this.canvas, options);
     downloadBlob(result.blob, result.filename);
     return result;
+  }
+
+  private bindSidebarExport(): () => void {
+    if (!this.sidebar) {
+      return () => {};
+    }
+
+    const sidebar = this.sidebar;
+
+    return sidebar.on('export:requested', async ({ settings }) => {
+      sidebar.setExportStatus('Starting GPU export (WebCodecs + MediaBunny)…', true);
+
+      try {
+        const result = await this.exportVideo({
+          ...settings,
+          onProgress: (progress) => {
+            sidebar.setExportStatus(
+              `[${progress.phase}] ${progress.percent.toFixed(1)}% — ${progress.message}`,
+              true,
+            );
+          },
+        });
+
+        sidebar.setExportStatus(
+          `Export complete (${result.settings.width}×${result.settings.height} @ ${result.settings.fps}fps). Download started.`,
+          false,
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        sidebar.setExportStatus(`Export failed: ${message}`, false);
+        console.error(error);
+      }
+    });
   }
 
   destroy(): void {
@@ -152,6 +191,7 @@ export type {
   SidebarEventMap,
   SidebarEventName,
   SidebarEventHandler,
+  ExportSettings,
   MediaLibraryItem,
   SidebarPanelId,
 } from '@opensource/sidebar';

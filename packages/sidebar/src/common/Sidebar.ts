@@ -12,6 +12,7 @@ import type { SidebarEventHandler, SidebarEventName } from './types';
 import { createStockMedia, MediaLibrary } from './mediaLibrary';
 import type {
   AddMediaFromFileOptions,
+  ExportSettings,
   MediaLibraryItem,
   SidebarOptions,
   SidebarPanelId,
@@ -108,6 +109,20 @@ export class Sidebar {
     this.addMediaToCanvas(item);
   }
 
+  canExport(): boolean {
+    return this.canvas
+      .getElements()
+      .some((element) => element.type !== 'audio');
+  }
+
+  requestExport(settings: ExportSettings): void {
+    this.events.emit('export:requested', { settings });
+  }
+
+  setExportStatus(message: string, exporting = false): void {
+    this.events.emit('export:status', { message, exporting });
+  }
+
   addTextToCanvas(content = 'New text', startTime?: number): void {
     const clip = new TextClip(content, startTime ?? this.canvas.getCurrentTime());
     this.canvas.addLayer(clip);
@@ -168,5 +183,15 @@ export class Sidebar {
         }
       }),
     );
+
+    const notifyExportAvailability = (): void => {
+      this.events.emit('export:availability', { canExport: this.canExport() });
+    };
+
+    this.disposables.push(
+      this.canvas.on('element:added', notifyExportAvailability),
+      this.canvas.on('element:removed', notifyExportAvailability),
+    );
+    notifyExportAvailability();
   }
 }

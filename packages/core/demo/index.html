@@ -19,13 +19,12 @@
 
       .layout {
         display: grid;
-        grid-template-columns: 320px minmax(0, 1fr);
+        grid-template-columns: 40% 60%;
         grid-template-rows: minmax(240px, 1fr) 280px;
         height: 100vh;
       }
 
       .sidebar {
-        grid-row: 1 / span 2;
         min-height: 0;
         border-right: 1px solid #2a2f3a;
       }
@@ -55,68 +54,6 @@
         color: #c5cad3;
       }
 
-      .export-button {
-        appearance: none;
-        border: 1px solid #3d4658;
-        border-radius: 0.5rem;
-        background: #2563eb;
-        color: #fff;
-        font: inherit;
-        font-size: 0.875rem;
-        font-weight: 600;
-        padding: 0.5rem 0.9rem;
-        cursor: pointer;
-      }
-
-      .export-button:hover:not(:disabled) {
-        background: #1d4ed8;
-      }
-
-      .export-button:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-      }
-
-      .export-status {
-        margin: 0;
-        font-size: 0.8rem;
-        color: #9aa3b2;
-        min-height: 1.2rem;
-      }
-
-      .export-options {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        align-items: end;
-      }
-
-      .export-field {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-        min-width: 7rem;
-      }
-
-      .export-field label {
-        font-size: 0.72rem;
-        font-weight: 600;
-        color: #9aa3b2;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      .export-field select {
-        appearance: none;
-        border: 1px solid #3d4658;
-        border-radius: 0.45rem;
-        background: #171a21;
-        color: #e8eaed;
-        font: inherit;
-        font-size: 0.85rem;
-        padding: 0.4rem 0.55rem;
-      }
-
       .preview-panel {
         flex: 1;
         min-height: 0;
@@ -126,6 +63,8 @@
       }
 
       .timeline {
+        grid-column: 1 / -1;
+        width: 100%;
         min-height: 0;
       }
 
@@ -136,10 +75,13 @@
         }
 
         .sidebar {
-          grid-row: auto;
           border-right: none;
           border-bottom: 1px solid #2a2f3a;
           max-height: 320px;
+        }
+
+        .timeline {
+          grid-column: auto;
         }
       }
     </style>
@@ -150,47 +92,7 @@
       <section class="preview">
         <div class="preview-toolbar">
           <h2>Preview</h2>
-          <button id="export-button" class="export-button" type="button" disabled>
-            Export video
-          </button>
         </div>
-        <form id="export-options" class="export-options" aria-label="Export settings">
-          <div class="export-field">
-            <label for="export-quality">Quality</label>
-            <select id="export-quality" name="quality">
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high" selected>High</option>
-              <option value="max">Max</option>
-            </select>
-          </div>
-          <div class="export-field">
-            <label for="export-fps">FPS</label>
-            <select id="export-fps" name="fps">
-              <option value="24">24</option>
-              <option value="30" selected>30</option>
-              <option value="60">60</option>
-            </select>
-          </div>
-          <div class="export-field">
-            <label for="export-format">Format</label>
-            <select id="export-format" name="format">
-              <option value="mp4" selected>MP4</option>
-            </select>
-          </div>
-          <div class="export-field">
-            <label for="export-resolution">Resolution</label>
-            <select id="export-resolution" name="resolution">
-              <option value="source" selected>Source</option>
-              <option value="480p">480p</option>
-              <option value="720p">720p</option>
-              <option value="1080p">1080p</option>
-              <option value="1440p">1440p</option>
-              <option value="4k">4K</option>
-            </select>
-          </div>
-        </form>
-        <p id="export-status" class="export-status" aria-live="polite"></p>
         <div id="canvas" class="preview-panel"></div>
       </section>
       <section id="timeline" class="timeline"></section>
