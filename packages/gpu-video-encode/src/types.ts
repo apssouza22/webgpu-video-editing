@@ -31,6 +31,10 @@ export abstract class Clip {
     readonly y: number,
     readonly width: number,
     readonly height: number,
+    readonly zIndex = 0,
+    /** Clockwise rotation in degrees. */
+    readonly rotation = 0,
+    readonly opacity = 1,
   ) {}
 
   containsTime(time: number, duration = this.duration): boolean {
@@ -63,8 +67,12 @@ export class VideoClip extends Clip {
     y = 0,
     width = 1,
     height = 1,
+    readonly sourceOffset = 0,
+    zIndex = 0,
+    rotation = 0,
+    opacity = 1,
   ) {
-    super(url, start, duration, x, y, width, height);
+    super(url, start, duration, x, y, width, height, zIndex, rotation, opacity);
   }
 
   async openVideoSource(): Promise<MediaBunnyVideoFrameSource> {
@@ -152,9 +160,11 @@ export class ImageClip extends Clip {
     y = 0,
     width = 1,
     height = 1,
-    readonly opacity = 1,
+    opacity = 1,
+    zIndex = 0,
+    rotation = 0,
   ) {
-    super(url, start, duration, x, y, width, height);
+    super(url, start, duration, x, y, width, height, zIndex, rotation, opacity);
   }
 
   async loadImageElement(): Promise<HTMLImageElement> {
@@ -179,6 +189,7 @@ export class AudioClip extends Clip {
     url: string,
     start: number,
     duration = 0,
+    readonly sourceOffset = 0,
   ) {
     super(url, start, duration, 0, 0, 0, 0);
   }
@@ -219,7 +230,7 @@ export class AudioClip extends Clip {
 
     const sampleRate = audioTrack.sampleRate;
     const channels = Math.min(2, Math.max(1, audioTrack.numberOfChannels));
-    const startTime = 0;
+    const startTime = this.sourceOffset;
     const endTime = startTime + this.duration;
     const frameCount = Math.ceil(this.duration * sampleRate);
 

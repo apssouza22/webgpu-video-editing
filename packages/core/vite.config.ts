@@ -17,6 +17,7 @@ export default defineConfig(({ command }) => {
           '@opensource/timeline': resolve(__dirname, '../timeline/src/common/index.ts'),
           '@opensource/video-canvas/style.css': resolve(__dirname, '../video-canvas/src/index.css'),
           '@opensource/video-canvas': resolve(__dirname, '../video-canvas/src/index.ts'),
+          '@opensource/gpu-video-encode': resolve(__dirname, '../gpu-video-encode/src/index.ts'),
         },
       },
     };
@@ -36,6 +37,7 @@ export default defineConfig(({ command }) => {
       },
       rollupOptions: {
         external: [
+          '@opensource/gpu-video-encode',
           '@opensource/sidebar',
           '@opensource/timeline',
           '@opensource/video-canvas',

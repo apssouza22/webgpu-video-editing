@@ -1,6 +1,6 @@
 import type { VideoFrameContext } from '../types';
 import { ExporterCanvas } from '../gpu/ExporterCanvas';
-import { GpuCompositor } from '../gpu/GpuCompositor';
+import { GpuCompositor, type CompositorLayer } from '../gpu/GpuCompositor';
 import { VideoEncoderService } from './VideoEncoderService';
 import type { DecodedVideoFrame } from '../media/VideoFrameSource';
 
@@ -31,45 +31,48 @@ export class FrameRender {
   }
 
   async renderAndEncode(frameContext: VideoFrameContext): Promise<void> {
-    if (frameContext.videos.length === 0) {
-      throw new Error(`No video clip is active at ${frameContext.time.toFixed(3)}s`);
-    }
-
-    const sourceFrames = await this.nextSourceFrames(frameContext);
+    const decodedFrames: DecodedVideoFrame[] = [];
 
     try {
-      await this.renderFrame(frameContext, sourceFrames);
+      const compositorLayers = await this.buildCompositorLayers(frameContext, decodedFrames);
+      await this.gpuCompositor.renderFrame(this.canvasContext, {
+        time: frameContext.time,
+        layers: compositorLayers,
+      });
       await this.encodeFrame(frameContext);
     } finally {
-      for (const sourceFrame of sourceFrames) {
+      for (const sourceFrame of decodedFrames) {
         sourceFrame.close();
       }
     }
   }
 
-  private async nextSourceFrames(context: VideoFrameContext): Promise<DecodedVideoFrame[]> {
-    return Promise.all(context.videos.map((videoLayer) => videoLayer.nextSourceFrame()));
-  }
-
-  private async renderFrame(
+  private async buildCompositorLayers(
     context: VideoFrameContext,
-    sourceFrames: DecodedVideoFrame[],
-  ): Promise<void> {
-    const overlays = await Promise.all(
-      context.images.map(async ({ clip }) => ({
-        image: await clip.loadImageElement(),
-        imageClip: clip,
-      })),
-    );
+    decodedFrames: DecodedVideoFrame[],
+  ): Promise<CompositorLayer[]> {
+    const layers: CompositorLayer[] = [];
 
-    await this.gpuCompositor.renderFrame(this.canvasContext, {
-      time: context.time,
-      videoLayers: context.videos.map((videoLayer, index) => ({
-        videoFrame: sourceFrames[index].frame,
-        videoClip: videoLayer.clip,
-      })),
-      imageLayers: overlays,
-    });
+    for (const layer of context.layers) {
+      if (layer.type === 'video') {
+        const sourceFrame = await layer.nextSourceFrame();
+        decodedFrames.push(sourceFrame);
+        layers.push({
+          type: 'video',
+          videoFrame: sourceFrame.frame,
+          videoClip: layer.clip,
+        });
+        continue;
+      }
+
+      layers.push({
+        type: 'image',
+        image: await layer.clip.loadImageElement(),
+        imageClip: layer.clip,
+      });
+    }
+
+    return layers;
   }
 
   private async encodeFrame(context: VideoFrameContext): Promise<void> {

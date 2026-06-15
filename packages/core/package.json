@@ -23,6 +23,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@opensource/gpu-video-encode": "*",
     "@opensource/sidebar": "*",
     "@opensource/timeline": "*",
     "@opensource/video-canvas": "*"

@@ -1,9 +1,7 @@
 import videoShader from '../shaders/video.wgsl?raw';
-import type { VideoClip } from '../types';
 import { AbstractGpuRenderer, type FragmentTargetOptions } from './AbstractGpuRenderer';
-import {VideoLayerInput} from "./GpuCompositor";
-
-const UNIFORM_SIZE = 20;
+import { createLayerUniformData, LAYER_UNIFORM_SIZE } from './layerUniform';
+import type { VideoLayerInput } from './GpuCompositor';
 
 const ALPHA_BLEND_TARGET: FragmentTargetOptions = {
   blend: {
@@ -29,6 +27,7 @@ export class GpuVideoRenderer extends AbstractGpuRenderer {
     sampler: GPUSampler,
     bindGroupLayout: GPUBindGroupLayout,
     uniformBuffer: GPUBuffer,
+    private readonly aspectRatio: number,
   ) {
     super(device, pipeline, sampler, bindGroupLayout);
     this.uniformBuffer = uniformBuffer;
@@ -37,6 +36,7 @@ export class GpuVideoRenderer extends AbstractGpuRenderer {
   static async create(
     device: GPUDevice,
     canvasFormat: GPUTextureFormat,
+    aspectRatio: number,
   ): Promise<GpuVideoRenderer> {
     const shaderModule = await AbstractGpuRenderer.loadShader(device, videoShader, 'video-shader');
 
@@ -57,7 +57,7 @@ export class GpuVideoRenderer extends AbstractGpuRenderer {
     );
 
     const uniformBuffer = device.createBuffer({
-      size: UNIFORM_SIZE,
+      size: LAYER_UNIFORM_SIZE,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
@@ -67,6 +67,7 @@ export class GpuVideoRenderer extends AbstractGpuRenderer {
       AbstractGpuRenderer.createLinearSampler(device),
       bindGroupLayout,
       uniformBuffer,
+      aspectRatio,
     );
   }
 
@@ -77,13 +78,7 @@ export class GpuVideoRenderer extends AbstractGpuRenderer {
   ): void {
     const videoClip = videoLayerInput.videoClip;
     const videoFrame = videoLayerInput.videoFrame;
-    const uniformData = new Float32Array([
-      1,
-      videoClip.x,
-      videoClip.y,
-      videoClip.x + videoClip.width,
-      videoClip.y + videoClip.height,
-    ]);
+    const uniformData = createLayerUniformData(videoClip, this.aspectRatio);
     // @ts-ignore — writeBuffer accepts ArrayBufferView
     this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
 

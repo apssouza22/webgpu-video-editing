@@ -111,7 +111,8 @@ export class Composition {
   ): VideoFrameContext {
     const layers = this.layerList
       .map((clip) => this.createLayerContext(clip, time, frame))
-      .filter((clip): clip is LayerClip => clip !== null);
+      .filter((clip): clip is LayerClip => clip !== null)
+      .sort((left, right) => left.clip.zIndex - right.clip.zIndex);
 
     const videos = layers.filter((clip): clip is VideoLayerClip => clip.type === 'video');
     const images = layers.filter((clip): clip is ImageLayerClip => clip.type === 'image');
@@ -142,12 +143,13 @@ export class Composition {
     const localTime = clip.localTimeAt(time);
 
     if (clip.type === 'video') {
+      const sourceTime = clip.sourceOffset + localTime;
       return {
         type: 'video',
         clip,
         localTime,
-        sourceTime: localTime,
-        nextSourceFrame: () => clip.nextSourceFrame(localTime, frame),
+        sourceTime,
+        nextSourceFrame: () => clip.nextSourceFrame(sourceTime, frame),
       };
     }
 

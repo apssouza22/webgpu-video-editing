@@ -34,7 +34,12 @@ export class VideoExport {
       const composition = settings.composition;
       const frameDurationUs = Math.round(1_000_000 / composition.fps);
       const canvasContext = exportCanvas.init(device, composition.width, composition.height);
-      compositor = await GpuCompositor.create(device, exportCanvas.getFormat());
+      compositor = await GpuCompositor.create(
+        device,
+        exportCanvas.getFormat(),
+        composition.width,
+        composition.height,
+      );
       const frameRender = new FrameRender({
         frameDurationUs,
         compositor,

@@ -9,6 +9,7 @@ import {
 import { AnimationFrameLoop } from './animationFrameLoop';
 import { bindClipCanvasSync } from './clipCanvasSync';
 import { bindEditorPlayback } from './editorPlayback';
+import { downloadBlob, exportVideoFromCanvas, type ExportVideoOptions } from './export';
 
 import '@opensource/sidebar/style.css';
 import '@opensource/timeline/style.css';
@@ -73,6 +74,18 @@ export class VideoEditor {
     this.disposables.push(bindClipCanvasSync({ timeline: this.timeline, canvas: this.canvas }));
   }
 
+  /**
+   * Renders the current canvas composition with WebGPU and encodes an MP4 download.
+   */
+  async exportVideo(options: ExportVideoOptions = {}): Promise<Blob> {
+    this.timeline.pause();
+    this.canvas.render(this.canvas.getCurrentTime(), { playing: false });
+
+    const result = await exportVideoFromCanvas(this.canvas, options);
+    downloadBlob(result.blob, result.filename);
+    return result.blob;
+  }
+
   destroy(): void {
     for (const unsubscribe of this.disposables) {
       unsubscribe();
@@ -104,6 +117,17 @@ export {
   type FrameContext,
 } from './animationFrameLoop';
 export { bindEditorPlayback, type EditorPlaybackOptions } from './editorPlayback';
+export {
+  canvasElementsToComposition,
+  downloadBlob,
+  exportVideoFromCanvas,
+  rasterizeTextElement,
+  type CanvasToCompositionOptions,
+  type CanvasToCompositionResult,
+  type ExportVideoOptions,
+  type ExportVideoResult,
+} from './export';
+export type { ExportProgress } from '@opensource/gpu-video-encode';
 export {
   Sidebar,
   mountSidebar,

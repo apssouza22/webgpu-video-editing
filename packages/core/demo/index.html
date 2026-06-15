@@ -35,10 +35,58 @@
         border-bottom: 1px solid #2a2f3a;
         min-width: 0;
         min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .preview-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .preview-toolbar h2 {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #c5cad3;
+      }
+
+      .export-button {
+        appearance: none;
+        border: 1px solid #3d4658;
+        border-radius: 0.5rem;
+        background: #2563eb;
+        color: #fff;
+        font: inherit;
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 0.5rem 0.9rem;
+        cursor: pointer;
+      }
+
+      .export-button:hover:not(:disabled) {
+        background: #1d4ed8;
+      }
+
+      .export-button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .export-status {
+        margin: 0;
+        font-size: 0.8rem;
+        color: #9aa3b2;
+        min-height: 1.2rem;
       }
 
       .preview-panel {
-        height: 100%;
+        flex: 1;
+        min-height: 0;
         border: 1px solid #2a2f3a;
         border-radius: 0.75rem;
         background: #171a21;
@@ -67,6 +115,13 @@
     <div class="layout">
       <aside id="sidebar" class="sidebar"></aside>
       <section class="preview">
+        <div class="preview-toolbar">
+          <h2>Preview</h2>
+          <button id="export-button" class="export-button" type="button" disabled>
+            Export video
+          </button>
+        </div>
+        <p id="export-status" class="export-status" aria-live="polite"></p>
         <div id="canvas" class="preview-panel"></div>
       </section>
       <section id="timeline" class="timeline"></section>

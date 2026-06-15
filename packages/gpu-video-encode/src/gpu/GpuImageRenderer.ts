@@ -1,13 +1,12 @@
 import imageShader from '../shaders/image.wgsl?raw';
 import type { ImageClip } from '../types';
 import { AbstractGpuRenderer, type FragmentTargetOptions } from './AbstractGpuRenderer';
+import { createLayerUniformData, LAYER_UNIFORM_SIZE } from './layerUniform';
 
 const TEXTURE_USAGE =
   GPUTextureUsage.TEXTURE_BINDING |
   GPUTextureUsage.COPY_DST |
   GPUTextureUsage.RENDER_ATTACHMENT;
-
-const UNIFORM_SIZE = 20;
 
 const ALPHA_BLEND_TARGET: FragmentTargetOptions = {
   blend: {
@@ -34,6 +33,7 @@ export class GpuImageRenderer extends AbstractGpuRenderer {
     sampler: GPUSampler,
     bindGroupLayout: GPUBindGroupLayout,
     uniformBuffer: GPUBuffer,
+    private readonly aspectRatio: number,
   ) {
     super(device, pipeline, sampler, bindGroupLayout);
     this.uniformBuffer = uniformBuffer;
@@ -42,6 +42,7 @@ export class GpuImageRenderer extends AbstractGpuRenderer {
   static async create(
     device: GPUDevice,
     canvasFormat: GPUTextureFormat,
+    aspectRatio: number,
   ): Promise<GpuImageRenderer> {
     const shaderModule = await AbstractGpuRenderer.loadShader(device, imageShader, 'image-shader');
 
@@ -62,7 +63,7 @@ export class GpuImageRenderer extends AbstractGpuRenderer {
     );
 
     const uniformBuffer = device.createBuffer({
-      size: UNIFORM_SIZE,
+      size: LAYER_UNIFORM_SIZE,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
@@ -72,6 +73,7 @@ export class GpuImageRenderer extends AbstractGpuRenderer {
       AbstractGpuRenderer.createLinearSampler(device),
       bindGroupLayout,
       uniformBuffer,
+      aspectRatio,
     );
   }
 
@@ -86,13 +88,7 @@ export class GpuImageRenderer extends AbstractGpuRenderer {
       return false;
     }
 
-    const uniformData = new Float32Array([
-      imageClip.opacity,
-      imageClip.x,
-      imageClip.y,
-      imageClip.x + imageClip.width,
-      imageClip.y + imageClip.height,
-    ]);
+    const uniformData = createLayerUniformData(imageClip, this.aspectRatio);
     // @ts-ignore — writeBuffer accepts ArrayBufferView
     this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
 
