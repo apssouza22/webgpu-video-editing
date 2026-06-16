@@ -149,10 +149,11 @@ git checkout -b my-feature
 - Build submodule packages before relying on their `dist/` artifacts.
 - Organize code by domain package, not by technical layer
 - Write domain tests in the domain packages
-- Tests should try to cover domain logic, not implementation details
+- Tests should cover domain logic, not implementation details
 - Prefer object oriented patterns over functional patterns
-- Prefer composition over inheritance
 - Assume that webgpu is available
+- Highly decoupled components by using events and commands
+- Ensure strong boundaries between packages
 
 
 

@@ -101,6 +101,13 @@ export class VideoEditor {
           sidebar: this.sidebar,
           canvas: this.canvas,
           mediaLibrary: this.mediaLibrary,
+          importUploadedFile: async (file) => {
+            const persistence = this.projectPersistence;
+            if (!persistence?.session.isOpen()) {
+              return null;
+            }
+            return persistence.importUploadedFile(file);
+          },
         }),
       );
 

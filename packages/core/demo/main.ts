@@ -22,6 +22,11 @@ const editor = new VideoEditor(
       onStatus: (status) => {
         console.debug('[project]', status);
       },
+      onReady: (restored) => {
+        if (!restored) {
+          void seedDemo();
+        }
+      },
     },
     sidebar: {
       initialPanel: 'media',
@@ -42,8 +47,6 @@ async function seedDemo(): Promise<void> {
   editor.canvas.selectElement(null);
   editor.sidebar?.setActivePanel('media');
 }
-
-void seedDemo();
 
 editor.sidebar?.on('property:changed', (payload) => {
   console.debug('[sidebar] property:changed', {

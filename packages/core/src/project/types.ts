@@ -120,9 +120,11 @@ export interface ProjectPersistenceStatus {
 
 export interface ProjectPersistenceOptions {
   autoSave?: boolean;
+  autoRestore?: boolean;
   debounceMs?: number;
   onStatus?: (status: ProjectPersistenceStatus) => void;
   onError?: (error: Error) => void;
+  onReady?: (restored: boolean) => void;
 }
 
 export interface BindProjectPersistenceOptions extends ProjectPersistenceOptions {

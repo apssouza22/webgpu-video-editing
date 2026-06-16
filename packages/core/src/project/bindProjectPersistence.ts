@@ -12,9 +12,11 @@ export function bindProjectPersistence({
   editor,
   clipCanvasSync,
   autoSave = true,
+  autoRestore = true,
   debounceMs = 1000,
   onStatus,
   onError,
+  onReady,
 }: BindProjectPersistenceOptions): () => void {
   const session = new ProjectSession({
     onStatus: (status) => {
@@ -90,6 +92,18 @@ export function bindProjectPersistence({
       );
       return document;
     },
+    async restoreLastProject() {
+      return session.restoreLastProject(
+        editor.timeline,
+        editor.canvas,
+        editor.sidebar,
+        editor.mediaLibrary,
+        clipCanvasSync,
+      );
+    },
+    importUploadedFile(file: File) {
+      return session.importUploadedFile(file, editor.mediaLibrary, editor.sidebar);
+    },
     importMedia() {
       return session.pickAndImportMedia(editor.mediaLibrary, editor.sidebar);
     },
@@ -104,6 +118,17 @@ export function bindProjectPersistence({
   };
 
   editor.projectPersistence = persistenceApi;
+
+  if (autoRestore) {
+    void persistenceApi.restoreLastProject().then((document) => {
+      onReady?.(document !== null);
+    }).catch((error) => {
+      onReady?.(false);
+      onError?.(error instanceof Error ? error : new Error(String(error)));
+    });
+  } else {
+    onReady?.(false);
+  }
 
   if (editor.sidebar) {
     disposables.push(
@@ -130,6 +155,8 @@ export type ProjectPersistenceApi = {
   session: ProjectSession;
   createProject: (name: string, directoryHandle?: FileSystemDirectoryHandle) => Promise<unknown>;
   openProject: (directoryHandle?: FileSystemDirectoryHandle) => Promise<unknown>;
+  restoreLastProject: () => Promise<unknown>;
+  importUploadedFile: (file: File) => Promise<import('@opensource/sidebar').MediaLibraryItem>;
   importMedia: () => Promise<void>;
   save: () => Promise<void>;
 };

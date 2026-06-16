@@ -11,7 +11,11 @@ import {
   captureProjectDocument,
   resolveProjectDocument,
 } from './ProjectSerializer';
-import { pickMediaFiles, pickProjectDirectory } from './fileSystemAccess';
+import {
+  ensureDirectoryPermission,
+  pickMediaFiles,
+  pickProjectDirectory,
+} from './fileSystemAccess';
 import { remapCanvasStateUrls, remapTimelineStateUrls } from './remapEditorUrls';
 import type {
   ProjectDocument,
@@ -156,6 +160,81 @@ export class ProjectSession {
       projectName: document.meta.name,
     });
     return document;
+  }
+
+  async restoreLastProject(
+    timeline: Timeline,
+    canvas: CompositionCanvas,
+    sidebar: Sidebar | null,
+    mediaLibrary: MediaLibrary,
+    clipCanvasSync: ClipCanvasSync,
+  ): Promise<ProjectDocument | null> {
+    const record = await this.index.getLastOpenedProject();
+    if (!record) {
+      return null;
+    }
+
+    this.emitStatus({ phase: 'loading', message: 'Restoring last project…' });
+
+    const granted = await ensureDirectoryPermission(record.directoryHandle, 'readwrite');
+    if (!granted) {
+      this.emitStatus({
+        phase: 'idle',
+        message: 'Last project found. Open it to restore your work.',
+      });
+      return null;
+    }
+
+    const store = new FileSystemProjectStore(record.directoryHandle);
+    const document = await store.readDocument();
+    if (!document) {
+      this.emitStatus({
+        phase: 'idle',
+        message: 'Last project folder is missing project.json.',
+      });
+      return null;
+    }
+
+    await this.openWithDocument(store, document);
+    await this.hydrate(timeline, canvas, sidebar, mediaLibrary, clipCanvasSync);
+    return document;
+  }
+
+  async importUploadedFile(
+    file: File,
+    mediaLibrary: MediaLibrary,
+    sidebar: Sidebar | null,
+  ): Promise<MediaLibraryItem> {
+    if (!this.store || !this.mediaAssets || !this.document) {
+      throw new Error('Open a project before uploading media.');
+    }
+
+    this.emitStatus({ phase: 'importing', message: 'Saving media to project…' });
+
+    const imported = await this.mediaAssets.importFromFile(file);
+    const item = mediaLibrary.addFromResolvedMedia({
+      assetId: imported.asset.id,
+      type: imported.type,
+      name: imported.asset.name,
+      src: imported.url,
+    });
+    sidebar?.notifyMediaAdded(item);
+
+    this.pendingSave = true;
+    await this.flushSave(
+      this.saveContext?.timeline,
+      this.saveContext?.canvas,
+      this.saveContext?.sidebar ?? null,
+      this.saveContext?.mediaLibrary,
+    );
+
+    this.emitStatus({
+      phase: 'ready',
+      message: 'Media saved to project.',
+      projectId: this.document.meta.id,
+      projectName: this.document.meta.name,
+    });
+    return item;
   }
 
   async pickAndImportMedia(

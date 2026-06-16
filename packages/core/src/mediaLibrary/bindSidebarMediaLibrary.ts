@@ -12,18 +12,30 @@ export interface BindSidebarMediaLibraryOptions {
   sidebar: Sidebar;
   canvas: CompositionCanvasAPI;
   mediaLibrary: MediaLibrary;
+  /** When set, uploads are routed through project persistence when a project is open. */
+  importUploadedFile?: (file: File) => Promise<MediaLibraryItem | null>;
 }
 
 export function bindSidebarMediaLibrary({
   sidebar,
   canvas,
   mediaLibrary,
+  importUploadedFile,
 }: BindSidebarMediaLibraryOptions): () => void {
   const disposers: Array<() => void> = [];
 
   disposers.push(
-    sidebar.on('media:upload:requested', ({ file, addToCanvas, startTime }) => {
-      const item = mediaLibrary.addFromFile(file);
+    sidebar.on('media:upload:requested', async ({ file, addToCanvas, startTime }) => {
+      let item: MediaLibraryItem | null = null;
+
+      if (importUploadedFile) {
+        item = await importUploadedFile(file);
+      }
+
+      if (!item) {
+        item = mediaLibrary.addFromFile(file);
+      }
+
       sidebar.notifyMediaAdded(item);
 
       if (addToCanvas !== false) {

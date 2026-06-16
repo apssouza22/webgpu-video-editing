@@ -100,6 +100,17 @@ export class IndexedDbProjectIndex {
     });
   }
 
+  async getLastOpenedProject(): Promise<IndexedDbProjectRecord | null> {
+    const projects = await this.listProjects();
+    if (projects.length === 0) {
+      return null;
+    }
+
+    return projects.reduce((latest, project) =>
+      project.lastOpenedAt > latest.lastOpenedAt ? project : latest,
+    );
+  }
+
   async upsertMediaAsset(record: IndexedDbMediaAssetRecord): Promise<void> {
     await runTransaction('readwrite', [IDB_MEDIA_ASSETS_STORE], (stores) => {
       stores[IDB_MEDIA_ASSETS_STORE].put(record);
