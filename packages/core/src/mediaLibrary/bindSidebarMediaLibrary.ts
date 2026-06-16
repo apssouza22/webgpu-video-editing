@@ -28,17 +28,22 @@ export function bindSidebarMediaLibrary({
     sidebar.on('media:upload:requested', async ({ file, addToCanvas, startTime }) => {
       let item: MediaLibraryItem | null = null;
 
-      if (importUploadedFile) {
-        item = await importUploadedFile(file);
-      }
+      try {
+        if (importUploadedFile) {
+          item = await importUploadedFile(file);
+        }
 
-      if (!item) {
-        item = mediaLibrary.addFromFile(file);
+        if (!item) {
+          item = mediaLibrary.addFromFile(file);
+        }
+      } catch (error) {
+        console.error('Media upload failed:', error);
+        return;
       }
 
       sidebar.notifyMediaAdded(item);
 
-      if (addToCanvas !== false) {
+      if (addToCanvas === true) {
         addMediaToCanvas(canvas, item, startTime);
       }
     }),

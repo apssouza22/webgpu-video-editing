@@ -123,6 +123,7 @@ export function bindProjectPersistence({
     void persistenceApi.restoreLastProject().then((document) => {
       onReady?.(document !== null);
     }).catch((error) => {
+      editor.sidebar?.setProjectStatus('Failed to restore project.', { busy: false });
       onReady?.(false);
       onError?.(error instanceof Error ? error : new Error(String(error)));
     });

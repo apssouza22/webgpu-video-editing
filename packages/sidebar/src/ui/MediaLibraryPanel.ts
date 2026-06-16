@@ -47,7 +47,6 @@ export class MediaLibraryPanel {
         for (const file of files) {
           this.sidebar.requestMediaUpload(file);
         }
-        this.renderItems();
       }
       this.fileInput.value = '';
     });

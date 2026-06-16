@@ -42,6 +42,7 @@ export class ProjectSession {
   private document: ProjectDocument | null = null;
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingSave = false;
+  private phase: ProjectPersistenceStatus['phase'] = 'idle';
   private readonly debounceMs: number;
   private saveContext: {
     timeline: Timeline;
@@ -72,7 +73,11 @@ export class ProjectSession {
   }
 
   isOpen(): boolean {
-    return this.document !== null && this.store !== null;
+    return this.document !== null && this.store !== null && this.mediaAssets !== null;
+  }
+
+  isBusy(): boolean {
+    return this.phase === 'loading' || this.phase === 'saving' || this.phase === 'importing';
   }
 
   async createProject(
@@ -176,34 +181,39 @@ export class ProjectSession {
 
     this.emitStatus({ phase: 'loading', message: 'Restoring last project…' });
 
-    const granted = await ensureDirectoryPermission(record.directoryHandle, 'readwrite');
-    if (!granted) {
-      this.emitStatus({
-        phase: 'idle',
-        message: 'Last project found. Open it to restore your work.',
-      });
+    try {
+      const granted = await ensureDirectoryPermission(record.directoryHandle, 'readwrite');
+      if (!granted) {
+        this.emitStatus({
+          phase: 'idle',
+          message: 'Last project found. Open it to restore your work.',
+        });
+        return null;
+      }
+
+      const store = new FileSystemProjectStore(record.directoryHandle);
+      const document = await store.readDocument();
+      if (!document) {
+        this.emitStatus({
+          phase: 'idle',
+          message: 'Last project folder is missing project.json.',
+        });
+        return null;
+      }
+
+      await this.openWithDocument(store, document);
+      await this.hydrate(timeline, canvas, sidebar, mediaLibrary, clipCanvasSync);
+      return document;
+    } catch (error) {
+      this.handleError(error);
       return null;
     }
-
-    const store = new FileSystemProjectStore(record.directoryHandle);
-    const document = await store.readDocument();
-    if (!document) {
-      this.emitStatus({
-        phase: 'idle',
-        message: 'Last project folder is missing project.json.',
-      });
-      return null;
-    }
-
-    await this.openWithDocument(store, document);
-    await this.hydrate(timeline, canvas, sidebar, mediaLibrary, clipCanvasSync);
-    return document;
   }
 
   async importUploadedFile(
     file: File,
     mediaLibrary: MediaLibrary,
-    sidebar: Sidebar | null,
+    _sidebar: Sidebar | null,
   ): Promise<MediaLibraryItem> {
     if (!this.store || !this.mediaAssets || !this.document) {
       throw new Error('Open a project before uploading media.');
@@ -218,15 +228,8 @@ export class ProjectSession {
       name: imported.asset.name,
       src: imported.url,
     });
-    sidebar?.notifyMediaAdded(item);
 
-    this.pendingSave = true;
-    await this.flushSave(
-      this.saveContext?.timeline,
-      this.saveContext?.canvas,
-      this.saveContext?.sidebar ?? null,
-      this.saveContext?.mediaLibrary,
-    );
+    this.scheduleSave();
 
     this.emitStatus({
       phase: 'ready',
@@ -288,19 +291,26 @@ export class ProjectSession {
     clipCanvasSync.pause();
 
     try {
+      const inFlightLibraryItems = mediaLibrary.getPersistedItems();
+
       await this.mediaAssets.hydrate(this.document.media);
       const resolved = resolveProjectDocument(this.document, this.mediaAssets);
+
+      const resolvedIds = new Set(resolved.mediaLibrary.map((item) => item.id));
+      const mergedMediaLibrary = [
+        ...resolved.mediaLibrary,
+        ...inFlightLibraryItems.filter((item) => !resolvedIds.has(item.id)),
+      ];
 
       timeline.loadState(resolved.timeline);
       canvas.loadState(resolved.canvas);
 
+      mediaLibrary.loadPersistedItems(mergedMediaLibrary);
+
       if (sidebar) {
-        mediaLibrary.loadPersistedItems(resolved.mediaLibrary);
-        for (const item of resolved.mediaLibrary) {
+        for (const item of mergedMediaLibrary) {
           sidebar.notifyMediaAdded(item);
         }
-      } else {
-        mediaLibrary.loadPersistedItems(resolved.mediaLibrary);
       }
 
       clipCanvasSync.rebuildMappings();
@@ -463,6 +473,7 @@ export class ProjectSession {
   }
 
   private emitStatus(status: ProjectPersistenceStatus): void {
+    this.phase = status.phase;
     this.options.onStatus?.(status);
   }
 

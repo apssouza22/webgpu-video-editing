@@ -150,6 +150,7 @@ describe('ProjectSession', () => {
 
     const file = new File(['video-bytes'], 'upload.mp4', { type: 'video/mp4' });
     const item = await session.importUploadedFile(file, mediaLibrary, null);
+    await session.flushSave(timeline as never, canvas as never, null, mediaLibrary);
 
     expect(item.source).toBe('library');
     expect(item.assetId).toBeDefined();

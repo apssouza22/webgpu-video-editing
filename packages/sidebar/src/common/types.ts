@@ -122,6 +122,7 @@ export interface SidebarOptions {
 }
 
 export interface AddMediaFromFileOptions {
+  /** When true, also inserts the uploaded media on the canvas at the playhead. */
   addToCanvas?: boolean;
   startTime?: number;
 }

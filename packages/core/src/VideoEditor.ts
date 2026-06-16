@@ -103,7 +103,7 @@ export class VideoEditor {
           mediaLibrary: this.mediaLibrary,
           importUploadedFile: async (file) => {
             const persistence = this.projectPersistence;
-            if (!persistence?.session.isOpen()) {
+            if (!persistence?.session.isOpen() || persistence.session.isBusy()) {
               return null;
             }
             return persistence.importUploadedFile(file);
