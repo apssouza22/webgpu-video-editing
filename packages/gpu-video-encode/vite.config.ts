@@ -15,7 +15,8 @@ export default defineConfig(({ command, mode }) => {
           }
         : undefined,
       server: {
-        port: 5180,
+        port: 5555,
+        strictPort: true,
       },
       resolve: {
         alias: {

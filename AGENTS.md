@@ -131,10 +131,11 @@ git checkout -b my-feature
 | Command | What it does |
 |---------|----------------|
 | `npm install` | Install and link all workspaces (run at repo root) |
-| `npm run dev` | Core demo — timeline + canvas integrated preview |
-| `npm run dev:timeline` | Timeline package demo |
-| `npm run dev:video-canvas` | Video canvas demo (port 5555) |
-| `npm run dev:gpu-video-encode` | GPU video encode/export demo (port 5180) |
+| `npm run dev` | Core demo — timeline + canvas integrated preview (port 5551) |
+| `npm run dev:sidebar` | Sidebar package demo (port 5552) |
+| `npm run dev:timeline` | Timeline package demo (port 5553) |
+| `npm run dev:video-canvas` | Video canvas demo (port 5554) |
+| `npm run dev:gpu-video-encode` | GPU video encode/export demo (port 5555) |
 | `npm run build` | Build all packages |
 | `npm run test` | Test all packages |
 | `npm run typecheck` | Typecheck all packages |

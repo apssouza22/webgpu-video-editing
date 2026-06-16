@@ -30,6 +30,10 @@ export default defineConfig(({ command }) => {
       optimizeDeps: {
         exclude: ['@huggingface/transformers'],
       },
+      server: {
+        port: 5551,
+        strictPort: true,
+      },
     };
   }
 

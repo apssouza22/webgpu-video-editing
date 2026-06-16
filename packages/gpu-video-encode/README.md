@@ -96,7 +96,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5180. The app checks sample media, loads the preview player, then enables **Export composition**. Press the button to render and download the MP4.
+Open http://localhost:5555. The app checks sample media, loads the preview player, then enables **Export composition**. Press the button to render and download the MP4.
 
 ## License
 

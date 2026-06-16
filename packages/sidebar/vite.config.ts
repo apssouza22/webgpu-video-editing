@@ -15,6 +15,10 @@ export default defineConfig(({ command }) => {
           '@opensource/video-canvas': resolve(__dirname, '../video-canvas/src/index.ts'),
         },
       },
+      server: {
+        port: 5552,
+        strictPort: true,
+      },
     };
   }
 
