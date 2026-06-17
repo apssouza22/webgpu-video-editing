@@ -3,7 +3,7 @@ import type {
   AspectRatioId,
   CanvasElement,
   CanvasSize,
-} from '@opensource/video-canvas';
+} from '@opensource/video-preview';
 import type { MediaLibraryItem, TranscriptionResult } from '@opensource/sidebar';
 
 export const PROJECT_DOCUMENT_VERSION = 1 as const;
@@ -129,5 +129,5 @@ export interface ProjectPersistenceOptions {
 
 export interface BindProjectPersistenceOptions extends ProjectPersistenceOptions {
   editor: import('../VideoEditor').VideoEditor;
-  clipCanvasSync: import('../clipCanvasSync').TimelinePreviewSyncer;
+  clipPreviewSync: import('../clipPreviewSync').TimelinePreviewSyncer;
 }

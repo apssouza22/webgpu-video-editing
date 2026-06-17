@@ -6,39 +6,39 @@ import {
   type Timeline,
 } from '@opensource/timeline';
 import type { Clip } from '@opensource/timeline';
-import type { CompositionCanvas, CanvasElement } from '@opensource/video-canvas';
+import type { CompositionPreview, CanvasElement } from '@opensource/video-preview';
 
 import {
   getTimelineClipZIndex,
   timelineClipToCanvasElement,
 } from './converters';
 
-type SyncSource = 'canvas' | 'timeline';
+type SyncSource = 'preview' | 'timeline';
 
-export interface ClipCanvasSyncOptions {
+export interface ClipPreviewSyncOptions {
   timeline: Timeline;
-  canvas: CompositionCanvas;
+  preview: CompositionPreview;
 }
 
 export class TimelinePreviewSyncer {
   private readonly timeline: Timeline;
-  private readonly canvas: CompositionCanvas;
+  private readonly preview: CompositionPreview;
   private readonly disposables: Array<() => void> = [];
   private source: SyncSource | null = null;
   private paused = false;
   private readonly elementToClip = new Map<string, string>();
   private readonly clipToElement = new Map<string, string>();
 
-  constructor({ timeline, canvas }: ClipCanvasSyncOptions) {
+  constructor({ timeline, preview }: ClipPreviewSyncOptions) {
     this.timeline = timeline;
-    this.canvas = canvas;
+    this.preview = preview;
   }
 
   bind(): () => void {
     this.disposables.push(
-      this.canvas.on('element:removed', (payload) => this.onCanvasElementRemoved(payload.id)),
-      this.canvas.on('element:updated', (payload) => this.onCanvasElementUpdated(payload)),
-      this.canvas.on('selection:changed', (payload) => this.onCanvasSelectionChanged(payload.selectedId)),
+      this.preview.on('element:removed', (payload) => this.onCanvasElementRemoved(payload.id)),
+      this.preview.on('element:updated', (payload) => this.onCanvasElementUpdated(payload)),
+      this.preview.on('selection:changed', (payload) => this.onCanvasSelectionChanged(payload.selectedId)),
       this.timeline.on('clip:add', (payload) => this.onTimelineClipAdd(payload.clips)),
       this.timeline.on('clip:remove', (payload) => this.onTimelineClipRemove(payload.clipIds)),
       this.timeline.on('clip:drag', (payload) => this.onTimelineClipMoved(payload)),
@@ -76,7 +76,7 @@ export class TimelinePreviewSyncer {
     this.elementToClip.clear();
     this.clipToElement.clear();
 
-    const elements = this.canvas.getElements();
+    const elements = this.preview.getElements();
     const clips = this.timeline.getState().clips;
     const usedElements = new Set<string>();
 
@@ -128,7 +128,7 @@ export class TimelinePreviewSyncer {
       return;
     }
 
-    this.source = 'canvas';
+    this.source = 'preview';
     try {
       this.timeline.removeClip(clipId, { removeLinked: true });
       this.unmapElement(elementId);
@@ -169,7 +169,7 @@ export class TimelinePreviewSyncer {
       return;
     }
 
-    this.source = 'canvas';
+    this.source = 'preview';
     try {
       this.timeline.loadState(state);
     } finally {
@@ -193,7 +193,7 @@ export class TimelinePreviewSyncer {
   }
 
   private onTimelineClipRemove(clipIds: string[]): void {
-    if (this.paused || this.source === 'canvas') {
+    if (this.paused || this.source === 'preview') {
       return;
     }
 
@@ -213,7 +213,7 @@ export class TimelinePreviewSyncer {
           continue;
         }
 
-        this.canvas.removeElement(elementId);
+        this.preview.removeElement(elementId);
         this.unmapElement(elementId);
         removedElements.add(elementId);
       }
@@ -259,7 +259,7 @@ export class TimelinePreviewSyncer {
     newClipIds: [string, string];
     time: number;
   }): void {
-    if (this.paused || this.source === 'canvas') {
+    if (this.paused || this.source === 'preview') {
       return;
     }
 
@@ -296,18 +296,18 @@ export class TimelinePreviewSyncer {
   }
 
   private onTimelineClipSelect(primaryId: string | null): void {
-    if (this.paused || this.source === 'canvas') {
+    if (this.paused || this.source === 'preview') {
       return;
     }
 
     const elementId = primaryId ? this.clipToElement.get(primaryId) ?? null : null;
-    if (elementId === this.canvas.getSelectedId()) {
+    if (elementId === this.preview.getSelectedId()) {
       return;
     }
 
     this.source = 'timeline';
     try {
-      this.canvas.selectElement(elementId);
+      this.preview.selectElement(elementId);
     } finally {
       this.source = null;
     }
@@ -357,9 +357,9 @@ export class TimelinePreviewSyncer {
     const { tracks } = this.timeline.getState();
     const element = timelineClipToCanvasElement(clip, {
       zIndex: getTimelineClipZIndex(clip, tracks),
-      playerSize: this.canvas.getPlayerSize(),
+      playerSize: this.preview.getPlayerSize(),
     });
-    const elementId = this.canvas.addElement(element);
+    const elementId = this.preview.addElement(element);
     this.register(elementId, clip.id);
   }
 
@@ -376,7 +376,7 @@ export class TimelinePreviewSyncer {
       }
     }
 
-    this.canvas.updateElement(targetId, {
+    this.preview.updateElement(targetId, {
       startTime: clip.startTime,
       duration: clip.duration,
       sourceOffset: clip.inPoint,
@@ -385,7 +385,7 @@ export class TimelinePreviewSyncer {
   }
 
   private syncAllZIndicesFromTimeline(): void {
-    if (this.paused || this.source === 'canvas') {
+    if (this.paused || this.source === 'preview') {
       return;
     }
 
@@ -399,7 +399,7 @@ export class TimelinePreviewSyncer {
           continue;
         }
 
-        this.canvas.updateElement(elementId, {
+        this.preview.updateElement(elementId, {
           zIndex: getTimelineClipZIndex(clip, tracks),
         });
       }
@@ -419,7 +419,7 @@ export class TimelinePreviewSyncer {
       return;
     }
 
-    this.canvas.render(this.canvas.getCurrentTime(), { playing: false });
+    this.preview.render(this.preview.getCurrentTime(), { playing: false });
   }
 
   private updateTimelineTiming(
@@ -478,7 +478,7 @@ export class TimelinePreviewSyncer {
       };
     }
 
-    this.source = 'canvas';
+    this.source = 'preview';
     try {
       this.timeline.loadState(state);
     } finally {
@@ -516,7 +516,7 @@ export class TimelinePreviewSyncer {
   }
 }
 
-export function bindClipCanvasSync(options: ClipCanvasSyncOptions): {
+export function bindClipPreviewSync(options: ClipPreviewSyncOptions): {
   dispose: () => void;
   sync: TimelinePreviewSyncer;
 } {

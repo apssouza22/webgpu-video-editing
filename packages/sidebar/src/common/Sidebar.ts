@@ -1,4 +1,4 @@
-import type { CompositionCanvasAPI, CanvasElement } from '@opensource/video-canvas';
+import type { CompositionPreviewAPI, CanvasElement } from '@opensource/video-preview';
 
 import { SidebarEventEmitter } from '../event/events';
 import type { SidebarEventHandler, SidebarEventName } from './types';
@@ -13,13 +13,13 @@ import type {
 
 export class Sidebar {
   readonly events = new SidebarEventEmitter();
-  private readonly canvas: CompositionCanvasAPI;
+  private readonly preview: CompositionPreviewAPI;
   private readonly mediaLibrary: MediaLibraryHost | null;
   private readonly disposables: Array<() => void> = [];
   private activePanel: SidebarPanelId;
 
-  constructor(canvas: CompositionCanvasAPI, options: SidebarOptions = {}) {
-    this.canvas = canvas;
+  constructor(preview: CompositionPreviewAPI, options: SidebarOptions = {}) {
+    this.preview = preview;
     this.mediaLibrary = options.mediaLibrary ?? null;
     this.activePanel = options.initialPanel ?? 'media';
     this.bindCanvas();
@@ -38,19 +38,19 @@ export class Sidebar {
   }
 
   selectElement(id: string | null): void {
-    this.canvas.selectElement(id);
+    this.preview.selectElement(id);
   }
 
   getSelectedElement(): CanvasElement | null {
-    return this.canvas.getSelectedElement();
+    return this.preview.getSelectedElement();
   }
 
   getSelectedId(): string | null {
-    return this.canvas.getSelectedId();
+    return this.preview.getSelectedId();
   }
 
   updateElement(id: string, patch: Partial<CanvasElement>): void {
-    this.canvas.updateElement(id, patch);
+    this.preview.updateElement(id, patch);
   }
 
   updateProperty<K extends keyof CanvasElement>(
@@ -58,11 +58,11 @@ export class Sidebar {
     key: K,
     value: CanvasElement[K],
   ): void {
-    this.canvas.updateElement(id, { [key]: value } as Partial<CanvasElement>);
+    this.preview.updateElement(id, { [key]: value } as Partial<CanvasElement>);
   }
 
   getElement(id: string): CanvasElement | undefined {
-    return this.canvas.getElement(id);
+    return this.preview.getElement(id);
   }
 
   getMediaLibrary(type?: MediaLibraryItem['type']): MediaLibraryItem[] {
@@ -125,7 +125,7 @@ export class Sidebar {
   }
 
   canExport(): boolean {
-    return this.canvas
+    return this.preview
       .getElements()
       .some((element) => element.type !== 'audio');
   }
@@ -139,7 +139,7 @@ export class Sidebar {
   }
 
   canTranscribe(): boolean {
-    return this.canvas
+    return this.preview
       .getElements()
       .some((element) => element.type === 'video' || element.type === 'audio');
   }
@@ -175,7 +175,7 @@ export class Sidebar {
   addTextToCanvas(content = 'New text', startTime?: number): void {
     this.events.emit('text:add:requested', {
       content,
-      startTime: startTime ?? this.canvas.getCurrentTime(),
+      startTime: startTime ?? this.preview.getCurrentTime(),
     });
   }
 
@@ -198,10 +198,10 @@ export class Sidebar {
     let skipNextPropertiesPanel = false;
 
     this.disposables.push(
-      this.canvas.on('element:added', () => {
+      this.preview.on('element:added', () => {
         skipNextPropertiesPanel = true;
       }),
-      this.canvas.on('selection:changed', ({ selectedId, selectedElement }) => {
+      this.preview.on('selection:changed', ({ selectedId, selectedElement }) => {
         this.events.emit('selection:changed', { selectedId, selectedElement });
         if (!selectedElement) {
           return;
@@ -218,7 +218,7 @@ export class Sidebar {
     );
 
     this.disposables.push(
-      this.canvas.on('element:updated', ({ id, patch, element }) => {
+      this.preview.on('element:updated', ({ id, patch, element }) => {
         for (const [key, value] of Object.entries(patch)) {
           this.events.emit('property:changed', {
             id,
@@ -239,11 +239,11 @@ export class Sidebar {
     };
 
     this.disposables.push(
-      this.canvas.on('element:added', () => {
+      this.preview.on('element:added', () => {
         notifyExportAvailability();
         notifyTranscriptionAvailability();
       }),
-      this.canvas.on('element:removed', () => {
+      this.preview.on('element:removed', () => {
         notifyExportAvailability();
         notifyTranscriptionAvailability();
       }),

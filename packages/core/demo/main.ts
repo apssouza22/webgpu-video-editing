@@ -13,7 +13,7 @@ if (!timelineEl || !canvasEl || !sidebarEl) {
 const editor = new VideoEditor(
   {
     timelineContainer: timelineEl,
-    canvasContainer: canvasEl,
+    previewContainer: canvasEl,
     sidebarContainer: sidebarEl,
   },
   {
@@ -44,7 +44,7 @@ async function seedDemo(): Promise<void> {
     hasAudio: true,
     startTime: 0,
   });
-  editor.canvas.selectElement(null);
+  editor.preview.selectElement(null);
   editor.sidebar?.setActivePanel('media');
 }
 

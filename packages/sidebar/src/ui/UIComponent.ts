@@ -1,4 +1,4 @@
-import type { Disposable } from '@opensource/video-canvas';
+import type { Disposable } from '@opensource/video-preview';
 
 export abstract class UIComponent<TContext = void> implements Disposable {
   readonly element: HTMLElement;

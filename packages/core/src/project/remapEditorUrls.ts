@@ -1,5 +1,5 @@
 import type { TimelineState } from '@opensource/timeline';
-import type { CanvasState } from '@opensource/video-canvas';
+import type { CanvasState } from '@opensource/video-preview';
 
 export function remapTimelineStateUrls(
   state: TimelineState,

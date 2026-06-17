@@ -13,7 +13,7 @@ gpu-video-editor/              ← assembly root (this repo)
 ├── AGENTS.md
 └── packages/
     ├── timeline/              ← submodule → apssouza22/video-timeline
-    ├── video-canvas/          ← submodule → apssouza22/video-canvas
+    ├── video-preview/          ← submodule → apssouza22/video-preview
     └── core/                  ← lives in this repo (@opensource/core)
 ```
 
@@ -21,21 +21,21 @@ gpu-video-editor/              ← assembly root (this repo)
 |------------|--------|
 | Assembly | [apssouza22/webgpu-video-editing](https://github.com/apssouza22/webgpu-video-editing) |
 | Timeline | [apssouza22/video-timeline](https://github.com/apssouza22/video-timeline) |
-| Video canvas | [apssouza22/video-canvas](https://github.com/apssouza22/video-canvas) |
+| Video preview | [apssouza22/video-canvas](https://github.com/apssouza22/video-canvas) |
 
-`timeline` and `video-canvas` are [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules). Each keeps its own history and can be developed independently. The assembly root tracks which commit of each submodule is pinned.
+`timeline` and `video-preview` are [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules). Each keeps its own history and can be developed independently. The assembly root tracks which commit of each submodule is pinned.
 
 ## Architecture
 
 ```
 @opensource/timeline  ──┐
                         ├──► @opensource/core  ──► VideoEditor (integration + demo)
-@opensource/video-canvas ┘
+@opensource/video-preview ┘
 ```
 
 - **Timeline** — framework-agnostic, event-driven video timeline editor.
-- **Video canvas** — composition canvas for layering and previewing video, image, audio, and text elements.
-- **Core** — wires timeline transport to the composition canvas; exports `VideoEditor`.
+- **Video preview** — composition preview for layering and previewing video, image, audio, and text elements.
+- **Core** — wires timeline transport to the composition preview; exports `VideoEditor`.
 
 ## Prerequisites
 
@@ -69,7 +69,7 @@ Always run `npm install` from the **repo root** so workspaces link correctly und
 | `npm run dev` | Core demo — integrated timeline + canvas preview (http://localhost:5551) |
 | `npm run dev:sidebar` | Sidebar package demo (http://localhost:5552) |
 | `npm run dev:timeline` | Timeline package demo (http://localhost:5553) |
-| `npm run dev:video-canvas` | Video canvas package demo (http://localhost:5554) |
+| `npm run dev:video-preview` | Video preview package demo (http://localhost:5554) |
 | `npm run dev:gpu-video-encode` | GPU video encode demo (http://localhost:5555) |
 | `npm run build` | Build all packages |
 | `npm run test` | Run tests in all packages |
@@ -79,7 +79,7 @@ Target a single workspace:
 
 ```bash
 npm run build -w @opensource/timeline
-npm run test -w @opensource/video-canvas
+npm run test -w @opensource/video-preview
 ```
 
 ### Where to edit
@@ -87,16 +87,16 @@ npm run test -w @opensource/video-canvas
 | Change | Location |
 |--------|----------|
 | Timeline behavior, UI, or API | `packages/timeline/` (submodule repo) |
-| Canvas rendering or composition API | `packages/video-canvas/` (submodule repo) |
+| Preview rendering or composition API | `packages/video-preview/` (submodule repo) |
 | Integration, `VideoEditor`, core demo | `packages/core/` (this repo) |
 
-When running `npm run dev`, core's Vite config resolves submodule imports to **source files**, so changes in `packages/timeline` and `packages/video-canvas` hot-reload without rebuilding those packages.
+When running `npm run dev`, core's Vite config resolves submodule imports to **source files**, so changes in `packages/timeline` and `packages/video-preview` hot-reload without rebuilding those packages.
 
 For production builds or publishing, build submodules first so `dist/` is up to date:
 
 ```bash
 npm run build -w @opensource/timeline
-npm run build -w @opensource/video-canvas
+npm run build -w @opensource/video-preview
 npm run build -w @opensource/core
 ```
 
@@ -106,13 +106,13 @@ npm run build -w @opensource/core
 
 Framework-agnostic, event-driven video timeline editor.
 
-### `@opensource/video-canvas` (submodule)
+### `@opensource/video-preview` (submodule)
 
-Composition canvas for layering and previewing video, image, audio, and text elements. Exposes TypeScript source in `exports` so npm workspaces can consume it during development without a pre-build.
+Composition preview for layering video, image, audio, and text elements. Exposes TypeScript source in `exports` so npm workspaces can consume it during development without a pre-build.
 
 ### `@opensource/core` (assembly repo)
 
-Integrates timeline transport with the composition canvas. Exports `VideoEditor`, which syncs playhead changes to canvas rendering.
+Integrates timeline transport with the composition preview. Exports `VideoEditor`, which syncs playhead changes to preview rendering.
 
 ```typescript
 import { VideoEditor } from '@opensource/core';
@@ -120,7 +120,7 @@ import '@opensource/core/style.css';
 
 const editor = new VideoEditor({
   timelineContainer: document.getElementById('timeline')!,
-  canvasContainer: document.getElementById('canvas')!,
+  previewContainer: document.getElementById('canvas')!,
 });
 
 editor.timeline.addClip({
@@ -143,7 +143,7 @@ git submodule update --init --recursive
 
 ```bash
 git submodule update --remote packages/timeline
-git submodule update --remote packages/video-canvas
+git submodule update --remote packages/video-preview
 ```
 
 Test locally, then commit the updated submodule SHAs in the assembly repo.
@@ -170,7 +170,7 @@ Open PRs in the submodule repository for package changes, and in the assembly re
 
 | Symptom | Fix |
 |---------|-----|
-| `packages/timeline` or `packages/video-canvas` is empty | `git submodule update --init --recursive` |
+| `packages/timeline` or `packages/video-preview` is empty | `git submodule update --init --recursive` |
 | `@opensource/timeline` not found after install | Run `npm install` from repo root, not inside a package |
 | Submodule changes not visible in `npm run dev` | Confirm you edited files under `packages/<name>/`, not `node_modules/` |
 | Detached HEAD when committing in submodule | `git checkout -b <branch>` before committing |

@@ -2,16 +2,16 @@ export { VideoEditor, type VideoEditorMount, type VideoEditorOptions } from './V
 
 export { Timeline } from '@opensource/timeline';
 export type { TimelineOptions, TimelineState } from '@opensource/timeline';
-export { CompositionCanvas } from '@opensource/video-canvas';
-export type { CompositionCanvasOptions } from '@opensource/video-canvas';
+export { CompositionPreview } from '@opensource/video-preview';
+export type { CompositionPreviewOptions } from '@opensource/video-preview';
 export {
-  bindClipCanvasSync,
+  bindClipPreviewSync,
   TimelinePreviewSyncer,
   fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
   timelineClipToCanvasElement,
-} from './clipCanvasSync';
-export type { ClipCanvasSyncOptions } from './clipCanvasSync';
+} from './clipPreviewSync';
+export type { ClipPreviewSyncOptions } from './clipPreviewSync';
 export {
   AnimationFrameLoop,
   bindEditorPlayback,
@@ -23,9 +23,9 @@ export {
 } from './loop';
 export {
   bindSidebarExport,
-  canvasElementsToComposition,
+  previewElementsToComposition,
   downloadBlob,
-  exportVideoFromCanvas,
+  exportVideoFromPreview,
   rasterizeTextElement,
   DEFAULT_EXPORT_FORMAT,
   DEFAULT_EXPORT_FPS,
@@ -36,8 +36,8 @@ export {
   resolveExportSettings,
   resolveOutputFilename,
   type BindSidebarExportOptions,
-  type CanvasToCompositionOptions,
-  type CanvasToCompositionResult,
+  type PreviewToCompositionOptions,
+  type PreviewToCompositionResult,
   type ExportFormat,
   type ExportQuality,
   type ExportResolution,

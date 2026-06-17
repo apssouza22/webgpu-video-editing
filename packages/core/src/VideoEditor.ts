@@ -1,4 +1,4 @@
-import { CompositionCanvas } from '@opensource/video-canvas';
+import { CompositionPreview } from '@opensource/video-preview';
 import type { TimelineOptions } from '@opensource/timeline';
 import { Timeline } from '@opensource/timeline';
 import {
@@ -8,11 +8,11 @@ import {
 } from '@opensource/sidebar';
 
 import { AnimationFrameLoop, bindEditorPlayback } from './loop';
-import { bindClipCanvasSync, TimelinePreviewSyncer } from './clipCanvasSync';
+import { bindClipPreviewSync, TimelinePreviewSyncer } from './clipPreviewSync';
 import {
   bindSidebarExport,
   downloadBlob,
-  exportVideoFromCanvas,
+  exportVideoFromPreview,
   type ExportVideoOptions,
   type ExportVideoResult,
 } from './export';
@@ -30,12 +30,12 @@ import {
 
 import '@opensource/sidebar/style.css';
 import '@opensource/timeline/style.css';
-import '@opensource/video-canvas/style.css';
+import '@opensource/video-preview/style.css';
 
 export interface VideoEditorOptions {
   timeline?: TimelineOptions;
   timelineClassName?: string;
-  canvasClassName?: string;
+  previewClassName?: string;
   sidebar?: SidebarOptions;
   sidebarClassName?: string;
   /** When true (default), handles `export:requested` from the sidebar. */
@@ -48,7 +48,7 @@ export interface VideoEditorOptions {
 
 export interface VideoEditorMount {
   timelineContainer: HTMLElement;
-  canvasContainer: HTMLElement;
+  previewContainer: HTMLElement;
   sidebarContainer?: HTMLElement;
 }
 
@@ -57,17 +57,17 @@ export interface VideoEditorMount {
  */
 export class VideoEditor {
   readonly timeline: Timeline;
-  readonly canvas: CompositionCanvas;
+  readonly preview: CompositionPreview;
   readonly mediaLibrary: MediaLibrary;
   readonly sidebar: Sidebar | null;
   readonly transcription: TranscriptionService;
   readonly frameLoop: AnimationFrameLoop;
-  readonly clipCanvasSync: TimelinePreviewSyncer;
+  readonly clipPreviewSync: TimelinePreviewSyncer;
   projectPersistence?: ProjectPersistenceApi;
   private readonly disposables: Array<() => void> = [];
 
   constructor(
-    { timelineContainer, canvasContainer, sidebarContainer }: VideoEditorMount,
+    { timelineContainer, previewContainer, sidebarContainer }: VideoEditorMount,
     options: VideoEditorOptions = {},
   ) {
     if (options.timelineClassName) {
@@ -75,8 +75,8 @@ export class VideoEditor {
     }
 
     this.timeline = new Timeline(timelineContainer, options.timeline);
-    this.canvas = new CompositionCanvas(canvasContainer, {
-      className: options.canvasClassName,
+    this.preview = new CompositionPreview(previewContainer, {
+      className: options.previewClassName,
     });
     this.mediaLibrary = new MediaLibrary();
     this.transcription = new TranscriptionService({
@@ -88,7 +88,7 @@ export class VideoEditor {
       if (options.sidebarClassName) {
         sidebarContainer.classList.add(...options.sidebarClassName.split(/\s+/).filter(Boolean));
       }
-      this.sidebar = new Sidebar(this.canvas, {
+      this.sidebar = new Sidebar(this.preview, {
         ...options.sidebar,
         mediaLibrary: this.mediaLibrary,
       });
@@ -99,7 +99,7 @@ export class VideoEditor {
         bindSidebarMediaLibrary({
           sidebar: this.sidebar,
           timeline: this.timeline,
-          canvas: this.canvas,
+          preview: this.preview,
           mediaLibrary: this.mediaLibrary,
           importUploadedFile: async (file) => {
             const persistence = this.projectPersistence;
@@ -125,7 +125,7 @@ export class VideoEditor {
           bindSidebarTranscription({
             sidebar: this.sidebar,
             timeline: this.timeline,
-            canvas: this.canvas,
+            preview: this.preview,
             transcription: this.transcription,
           }),
         );
@@ -135,16 +135,16 @@ export class VideoEditor {
     }
 
     this.frameLoop = new AnimationFrameLoop();
-    const clipCanvasBinding = bindClipCanvasSync({ timeline: this.timeline, canvas: this.canvas });
-    this.clipCanvasSync = clipCanvasBinding.sync;
+    const clipPreviewBinding = bindClipPreviewSync({ timeline: this.timeline, preview: this.preview });
+    this.clipPreviewSync = clipPreviewBinding.sync;
     this.disposables.push(
       bindEditorPlayback({
         timeline: this.timeline,
-        canvas: this.canvas,
+        preview: this.preview,
         frameLoop: this.frameLoop,
       }),
     );
-    this.disposables.push(() => clipCanvasBinding.dispose());
+    this.disposables.push(() => clipPreviewBinding.dispose());
 
     if (this.sidebar) {
       this.disposables.push(
@@ -164,7 +164,7 @@ export class VideoEditor {
       this.disposables.push(
         bindProjectPersistence({
           editor: this,
-          clipCanvasSync: this.clipCanvasSync,
+          clipPreviewSync: this.clipPreviewSync,
           ...options.project,
         }),
       );
@@ -176,9 +176,9 @@ export class VideoEditor {
    */
   async exportVideo(options: ExportVideoOptions = {}): Promise<ExportVideoResult> {
     this.timeline.pause();
-    this.canvas.render(this.canvas.getCurrentTime(), { playing: false });
+    this.preview.render(this.preview.getCurrentTime(), { playing: false });
 
-    const result = await exportVideoFromCanvas(this.canvas, {
+    const result = await exportVideoFromPreview(this.preview, {
       ...options,
       playbackRate: options.playbackRate ?? this.timeline.getPlaybackRate(),
     });
@@ -196,6 +196,6 @@ export class VideoEditor {
     this.mediaLibrary.destroy();
     this.sidebar?.destroy();
     this.timeline.destroy();
-    this.canvas.destroy();
+    this.preview.destroy();
   }
 }

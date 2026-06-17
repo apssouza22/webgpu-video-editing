@@ -1,7 +1,7 @@
-import type { CompositionCanvas } from '@opensource/video-canvas';
+import type { CompositionPreview } from '@opensource/video-preview';
 import type { Sidebar } from '@opensource/sidebar';
 import type { Timeline } from '@opensource/timeline';
-import type { CanvasElement } from '@opensource/video-canvas';
+import type { CanvasElement } from '@opensource/video-preview';
 
 import type { TranscriptionService } from './TranscriptionService';
 import type { TranscriptionResult } from './types';
@@ -9,21 +9,21 @@ import type { TranscriptionResult } from './types';
 export interface BindSidebarTranscriptionOptions {
   sidebar: Sidebar;
   timeline: Timeline;
-  canvas: CompositionCanvas;
+  preview: CompositionPreview;
   transcription: TranscriptionService;
 }
 
 export function bindSidebarTranscription({
   sidebar,
   timeline,
-  canvas,
+  preview,
   transcription,
 }: BindSidebarTranscriptionOptions): () => void {
   const disposers: Array<() => void> = [];
 
   disposers.push(
     sidebar.on('transcription:requested', async ({ sourceId }) => {
-      const source = findTranscriptionSource(canvas, sourceId);
+      const source = findTranscriptionSource(preview, sourceId);
       if (!source) {
         sidebar.setTranscriptionStatus(
           'Add a video or audio layer before transcribing.',
@@ -95,23 +95,23 @@ export function bindSidebarTranscription({
 }
 
 function findTranscriptionSource(
-  canvas: CompositionCanvas,
+  preview: CompositionPreview,
   sourceId?: string,
 ): CanvasElement | null {
   if (sourceId) {
-    const selected = canvas.getElement(sourceId);
+    const selected = preview.getElement(sourceId);
     if (selected && (selected.type === 'video' || selected.type === 'audio')) {
       return selected;
     }
   }
 
-  const selected = canvas.getSelectedElement();
+  const selected = preview.getSelectedElement();
   if (selected && (selected.type === 'video' || selected.type === 'audio')) {
     return selected;
   }
 
   return (
-    canvas
+    preview
       .getElements()
       .find((element) => element.type === 'video' || element.type === 'audio') ?? null
   );

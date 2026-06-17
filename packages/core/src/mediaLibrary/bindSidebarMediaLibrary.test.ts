@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { CompositionCanvasAPI } from '@opensource/video-canvas';
+import type { CompositionPreviewAPI } from '@opensource/video-preview';
 import type { MediaLibraryItem, Sidebar } from '@opensource/sidebar';
 import type { Timeline } from '@opensource/timeline';
 
@@ -25,11 +25,11 @@ function createSidebarStub(): Sidebar & {
   };
 }
 
-function createCanvasStub(): CompositionCanvasAPI {
+function createCanvasStub(): CompositionPreviewAPI {
   return {
     getCurrentTime: () => 2,
     addElement: vi.fn(),
-  } as unknown as CompositionCanvasAPI;
+  } as unknown as CompositionPreviewAPI;
 }
 
 function createTimelineStub(): Timeline {
@@ -49,7 +49,7 @@ describe('bindSidebarMediaLibrary', () => {
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
     const mediaLibrary = new MediaLibrary();
-    const dispose = bindSidebarMediaLibrary({ sidebar, timeline, canvas, mediaLibrary });
+    const dispose = bindSidebarMediaLibrary({ sidebar, timeline, preview: canvas, mediaLibrary });
 
     const uploadHandler = [...(sidebar.handlers.get('media:upload:requested') ?? [])][0];
     const file = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
@@ -77,7 +77,7 @@ describe('bindSidebarMediaLibrary', () => {
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
     const mediaLibrary = new MediaLibrary();
-    const dispose = bindSidebarMediaLibrary({ sidebar, timeline, canvas, mediaLibrary });
+    const dispose = bindSidebarMediaLibrary({ sidebar, timeline, preview: canvas, mediaLibrary });
 
     const uploadHandler = [...(sidebar.handlers.get('media:upload:requested') ?? [])][0];
     const file = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
@@ -121,7 +121,7 @@ describe('bindSidebarMediaLibrary', () => {
     const dispose = bindSidebarMediaLibrary({
       sidebar,
       timeline,
-      canvas,
+      preview: canvas,
       mediaLibrary,
       importUploadedFile: async () => persistedItem,
     });
@@ -149,7 +149,7 @@ describe('bindSidebarMediaLibrary', () => {
     const dispose = bindSidebarMediaLibrary({
       sidebar,
       timeline,
-      canvas,
+      preview: canvas,
       mediaLibrary,
       importUploadedFile: async () => {
         throw new Error('Save failed');

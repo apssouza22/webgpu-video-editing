@@ -1,4 +1,4 @@
-import type { CanvasElement } from '@opensource/video-canvas';
+import type { CanvasElement } from '@opensource/video-preview';
 
 export type MediaType = 'video' | 'image' | 'audio';
 

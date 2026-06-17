@@ -13,7 +13,7 @@ gpu-video-editor/                 ← this repo (assembly)
 ├── AGENTS.md                     ← you are here
 └── packages/
     ├── timeline/                 ← git submodule → apssouza22/video-timeline
-    ├── video-canvas/             ← git submodule → apssouza22/video-canvas
+    ├── video-preview/             ← git submodule → apssouza22/video-preview
     ├── core/                     ← lives in this repo (@opensource/core)
     ├── sidebar/                  ← lives in this repo (@opensource/sidebar)
     └── gpu-video-encode/         ← lives in this repo (@opensource/gpu-video-encode)
@@ -22,12 +22,12 @@ gpu-video-editor/                 ← this repo (assembly)
 | Package | Scope | Repository |
 |---------|-------|------------|
 | `@opensource/timeline` | Submodule | [apssouza22/video-timeline](https://github.com/apssouza22/video-timeline) |
-| `@opensource/video-canvas` | Submodule | [apssouza22/video-canvas](https://github.com/apssouza22/video-canvas) |
+| `@opensource/video-preview` | Submodule | [apssouza22/video-canvas](https://github.com/apssouza22/video-canvas) |
 | `@opensource/core` | Assembly repo | [apssouza22/webgpu-video-editing](https://github.com/apssouza22/webgpu-video-editing) |
 | `@opensource/sidebar` | Assembly repo | same |
 | `@opensource/gpu-video-encode` | Assembly repo | same — WebGPU export pipeline (WebCodecs + MediaBunny); library in `src/`, preview player in `demo/` |
 
-Package-specific notes live in `packages/timeline/AGENTS.md` and `packages/video-canvas/AGENTS.md`.
+Package-specific notes live in `packages/timeline/AGENTS.md` and `packages/video-preview/AGENTS.md`.
 
 ## npm workspaces
 
@@ -40,40 +40,40 @@ The root `package.json` declares:
 Effects:
 
 - A single `npm install` at the repo root links all packages under `node_modules/@opensource/*`.
-- Workspace packages reference each other with `"*"` versions (e.g. core depends on `@opensource/timeline` and `@opensource/video-canvas`).
+- Workspace packages reference each other with `"*"` versions (e.g. core depends on `@opensource/timeline` and `@opensource/video-preview`).
 - Root scripts fan out to workspaces: `build`, `test`, and `typecheck` run in every package; `dev` targets `@opensource/core`.
 
 Run a command in one workspace:
 
 ```bash
 npm run build -w @opensource/timeline
-npm run test -w @opensource/video-canvas
+npm run test -w @opensource/video-preview
 ```
 
 Always install from the **assembly root**, not inside individual packages, unless you are working on a submodule standalone outside this monorepo.
 
 ## How packages connect
 
-`@opensource/core` is the integration layer. It imports `Timeline` and `CompositionCanvas`, binds playhead changes to canvas rendering, and re-exports both APIs.
+`@opensource/core` is the integration layer. It imports `Timeline` and `CompositionPreview`, binds playhead changes to canvas rendering, and re-exports both APIs.
 
 Dependency direction:
 
 ```
 @opensource/timeline  ──┐
                         ├──► @opensource/core
-@opensource/video-canvas ┘
+@opensource/video-preview ┘
 ```
 
-- **Timeline / video-canvas changes** → edit inside the submodule, commit and push in that repo, then pin the new commit in the assembly repo.
+- **Timeline / video-preview changes** → edit inside the submodule, commit and push in that repo, then pin the new commit in the assembly repo.
 - **Wiring, demo, or cross-package behavior** → edit `packages/core/`.
 
 ## Dev vs build resolution
 
-During **development**, Vite aliases in `packages/core/vite.config.ts` resolve submodule imports to **source files** (not `dist/`). Edits in `packages/timeline` or `packages/video-canvas` are picked up immediately when running `npm run dev`.
+During **development**, Vite aliases in `packages/core/vite.config.ts` resolve submodule imports to **source files** (not `dist/`). Edits in `packages/timeline` or `packages/video-preview` are picked up immediately when running `npm run dev`.
 
-During **library builds**, core externalizes `@opensource/timeline` and `@opensource/video-canvas` so consumers install them as peer-like dependencies. Submodule packages must be built (`npm run build -w @opensource/timeline`, etc.) before publishing or consuming their `dist/` output.
+During **library builds**, core externalizes `@opensource/timeline` and `@opensource/video-preview` so consumers install them as peer-like dependencies. Submodule packages must be built (`npm run build -w @opensource/timeline`, etc.) before publishing or consuming their `dist/` output.
 
-`@opensource/video-canvas` exposes TypeScript source in its `exports` field so workspaces can consume it without a pre-build step during dev.
+`@opensource/video-preview` exposes TypeScript source in its `exports` field so workspaces can consume it without a pre-build step during dev.
 
 ## Git submodules
 
@@ -96,7 +96,7 @@ npm install
 
 ### Change code in a submodule
 
-1. `cd packages/timeline` (or `packages/video-canvas`).
+1. `cd packages/timeline` (or `packages/video-preview`).
 2. Create a branch, make changes, commit, and push to the submodule's remote.
 3. Return to the assembly root and record the new submodule commit:
 
@@ -112,7 +112,7 @@ Never commit submodule changes only inside the assembly repo without pushing fro
 
 ```bash
 git submodule update --remote packages/timeline
-git submodule update --remote packages/video-canvas
+git submodule update --remote packages/video-preview
 ```
 
 Review and test before pinning updated submodule SHAs in the assembly repo.
@@ -134,7 +134,7 @@ git checkout -b my-feature
 | `npm run dev` | Core demo — timeline + canvas integrated preview (port 5551) |
 | `npm run dev:sidebar` | Sidebar package demo (port 5552) |
 | `npm run dev:timeline` | Timeline package demo (port 5553) |
-| `npm run dev:video-canvas` | Video canvas demo (port 5554) |
+| `npm run dev:video-preview` | Video preview demo (port 5554) |
 | `npm run dev:gpu-video-encode` | GPU video encode/export demo (port 5555) |
 | `npm run build` | Build all packages |
 | `npm run test` | Test all packages |
@@ -145,7 +145,7 @@ git checkout -b my-feature
 ### Always
 
 - Run `npm install` from the assembly root.
-- Put timeline-only logic in `packages/timeline`, canvas-only logic in `packages/video-canvas`, integration in `packages/core`.
+- Put timeline-only logic in `packages/timeline`, preview-only logic in `packages/video-preview`, integration in `packages/core`.
 - When touching a submodule, commit and push in the submodule repo, then pin the SHA in the assembly repo.
 - Build submodule packages before relying on their `dist/` artifacts.
 - Organize code by domain package, not by technical layer
@@ -169,12 +169,12 @@ git checkout -b my-feature
 - Edit `node_modules/` or committed `dist/` output by hand.
 - Commit secrets, API keys, or credentials.
 - Change assembly-repo files when the work belongs in a submodule (and vice versa).
-- Skip submodule init and assume `packages/timeline` or `packages/video-canvas` are ordinary directories.
+- Skip submodule init and assume `packages/timeline` or `packages/video-preview` are ordinary directories.
 
 ## Tech stack (shared)
 
 - TypeScript, Vite, Tailwind CSS v4
-- Vitest in timeline and video-canvas
+- Vitest in timeline and video-preview
 - Framework-agnostic packages (no React in the public APIs)
 
 

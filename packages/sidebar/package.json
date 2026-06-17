@@ -16,7 +16,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@opensource/video-canvas": "*"
+    "@opensource/video-preview": "*"
   },
   "devDependencies": {
     "@opensource/core": "*",

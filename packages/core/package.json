@@ -28,7 +28,7 @@
     "@opensource/gpu-video-encode": "*",
     "@opensource/sidebar": "*",
     "@opensource/timeline": "*",
-    "@opensource/video-canvas": "*",
+    "@opensource/video-preview": "*",
     "mediabunny": "^1.45.4"
   },
   "devDependencies": {

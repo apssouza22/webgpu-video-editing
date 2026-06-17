@@ -11,8 +11,8 @@ export default defineConfig(({ command }) => {
       resolve: {
         alias: {
           '@opensource/sidebar': resolve(__dirname, 'src/index.ts'),
-          '@opensource/video-canvas/style.css': resolve(__dirname, '../video-canvas/src/index.css'),
-          '@opensource/video-canvas': resolve(__dirname, '../video-canvas/src/index.ts'),
+          '@opensource/video-preview/style.css': resolve(__dirname, '../video-preview/src/index.css'),
+          '@opensource/video-preview': resolve(__dirname, '../video-preview/src/index.ts'),
         },
       },
       server: {
@@ -35,7 +35,7 @@ export default defineConfig(({ command }) => {
         fileName: 'sidebar',
       },
       rollupOptions: {
-        external: ['@opensource/video-canvas'],
+        external: ['@opensource/video-preview'],
         output: {
           assetFileNames: 'sidebar.[ext]',
         },

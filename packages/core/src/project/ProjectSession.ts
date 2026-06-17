@@ -1,8 +1,8 @@
 import type { Timeline } from '@opensource/timeline';
-import type { CompositionCanvas } from '@opensource/video-canvas';
+import type { CompositionPreview } from '@opensource/video-preview';
 import type { MediaLibraryItem, Sidebar } from '@opensource/sidebar';
 
-import type { TimelinePreviewSyncer } from '../clipCanvasSync';
+import type { TimelinePreviewSyncer } from '../clipPreviewSync';
 import type { MediaLibrary } from '../mediaLibrary';
 import { FileSystemProjectStore } from './FileSystemProjectStore';
 import { IndexedDbProjectIndex } from './IndexedDbProjectIndex';
@@ -46,7 +46,7 @@ export class ProjectSession {
   private readonly debounceMs: number;
   private saveContext: {
     timeline: Timeline;
-    canvas: CompositionCanvas;
+    preview: CompositionPreview;
     sidebar: Sidebar | null;
     mediaLibrary: MediaLibrary;
   } | null = null;
@@ -57,7 +57,7 @@ export class ProjectSession {
 
   setSaveContext(context: {
     timeline: Timeline;
-    canvas: CompositionCanvas;
+    preview: CompositionPreview;
     sidebar: Sidebar | null;
     mediaLibrary: MediaLibrary;
   }): void {
@@ -84,10 +84,10 @@ export class ProjectSession {
     name: string,
     directoryHandle: FileSystemDirectoryHandle,
     timeline: Timeline,
-    canvas: CompositionCanvas,
+    preview: CompositionPreview,
     mediaLibrary: MediaLibrary,
     sidebar: Sidebar | null,
-    clipCanvasSync?: TimelinePreviewSyncer,
+    clipPreviewSync?: TimelinePreviewSyncer,
   ): Promise<ProjectDocument> {
     this.emitStatus({ phase: 'loading', message: 'Creating project…' });
 
@@ -107,23 +107,23 @@ export class ProjectSession {
     this.mediaAssets = new MediaAssetService(store, this.index, meta.id);
 
     const urlMap = await this.importCurrentMediaLibrary(mediaLibrary, sidebar);
-    clipCanvasSync?.pause();
+    clipPreviewSync?.pause();
 
     try {
       const timelineState = remapTimelineStateUrls(timeline.getState(), urlMap);
-      const canvasState = remapCanvasStateUrls(canvas.getState(), urlMap);
+      const canvasState = remapCanvasStateUrls(preview.getState(), urlMap);
       timeline.loadState(timelineState);
-      canvas.loadState(canvasState);
-      clipCanvasSync?.rebuildMappings();
-      canvas.render(canvas.getCurrentTime(), { playing: false });
+      preview.loadState(canvasState);
+      clipPreviewSync?.rebuildMappings();
+      preview.render(preview.getCurrentTime(), { playing: false });
     } finally {
-      clipCanvasSync?.resume();
+      clipPreviewSync?.resume();
     }
 
     const document = captureProjectDocument({
       meta,
       timeline: timeline.getState(),
-      canvas: canvas.getState(),
+      canvas: preview.getState(),
       mediaLibrary: mediaLibrary.getPersistedItems(),
       mediaAssets: this.mediaAssets,
     });
@@ -169,10 +169,10 @@ export class ProjectSession {
 
   async restoreLastProject(
     timeline: Timeline,
-    canvas: CompositionCanvas,
+    preview: CompositionPreview,
     sidebar: Sidebar | null,
     mediaLibrary: MediaLibrary,
-    clipCanvasSync: TimelinePreviewSyncer,
+    clipPreviewSync: TimelinePreviewSyncer,
   ): Promise<ProjectDocument | null> {
     const record = await this.index.getLastOpenedProject();
     if (!record) {
@@ -202,7 +202,7 @@ export class ProjectSession {
       }
 
       await this.openWithDocument(store, document);
-      await this.hydrate(timeline, canvas, sidebar, mediaLibrary, clipCanvasSync);
+      await this.hydrate(timeline, preview, sidebar, mediaLibrary, clipPreviewSync);
       return document;
     } catch (error) {
       this.handleError(error);
@@ -278,17 +278,17 @@ export class ProjectSession {
 
   async hydrate(
     timeline: Timeline,
-    canvas: CompositionCanvas,
+    preview: CompositionPreview,
     sidebar: Sidebar | null,
     mediaLibrary: MediaLibrary,
-    clipCanvasSync: TimelinePreviewSyncer,
+    clipPreviewSync: TimelinePreviewSyncer,
   ): Promise<void> {
     if (!this.document || !this.mediaAssets) {
       return;
     }
 
     this.emitStatus({ phase: 'loading', message: 'Loading project state…' });
-    clipCanvasSync.pause();
+    clipPreviewSync.pause();
 
     try {
       const inFlightLibraryItems = mediaLibrary.getPersistedItems();
@@ -303,7 +303,7 @@ export class ProjectSession {
       ];
 
       timeline.loadState(resolved.timeline);
-      canvas.loadState(resolved.canvas);
+      preview.loadState(resolved.canvas);
 
       mediaLibrary.loadPersistedItems(mergedMediaLibrary);
 
@@ -313,10 +313,10 @@ export class ProjectSession {
         }
       }
 
-      clipCanvasSync.rebuildMappings();
-      canvas.render(canvas.getCurrentTime(), { playing: false });
+      clipPreviewSync.rebuildMappings();
+      preview.render(preview.getCurrentTime(), { playing: false });
     } finally {
-      clipCanvasSync.resume();
+      clipPreviewSync.resume();
       this.emitStatus({
         phase: 'ready',
         message: 'Project loaded.',
@@ -339,19 +339,19 @@ export class ProjectSession {
 
   async flushSave(
     timeline?: Timeline,
-    canvas?: CompositionCanvas,
+    preview?: CompositionPreview,
     _sidebar?: Sidebar | null,
     mediaLibrary?: MediaLibrary,
   ): Promise<void> {
     const resolvedTimeline = timeline ?? this.saveContext?.timeline;
-    const resolvedCanvas = canvas ?? this.saveContext?.canvas;
+    const resolvedPreview = preview ?? this.saveContext?.preview;
     const resolvedMediaLibrary = mediaLibrary ?? this.saveContext?.mediaLibrary;
 
     if (!this.pendingSave || !this.store || !this.mediaAssets || !this.document) {
       return;
     }
 
-    if (!resolvedTimeline || !resolvedCanvas || !resolvedMediaLibrary) {
+    if (!resolvedTimeline || !resolvedPreview || !resolvedMediaLibrary) {
       return;
     }
 
@@ -368,7 +368,7 @@ export class ProjectSession {
       this.document = captureProjectDocument({
         meta: this.document.meta,
         timeline: resolvedTimeline.getState(),
-        canvas: resolvedCanvas.getState(),
+        canvas: resolvedPreview.getState(),
         mediaLibrary: libraryItems,
         mediaAssets: this.mediaAssets,
         transcription: this.document.transcription,

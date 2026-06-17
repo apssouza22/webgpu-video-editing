@@ -1,11 +1,11 @@
 import type { Timeline } from '@opensource/timeline';
-import type { CompositionCanvas } from '@opensource/video-canvas';
+import type { CompositionPreview } from '@opensource/video-preview';
 
 import type { AnimationFrameLoop } from './AnimationFrameLoop';
 
 export interface EditorPlaybackOptions {
   timeline: Timeline;
-  canvas: CompositionCanvas;
+  preview: CompositionPreview;
   frameLoop: AnimationFrameLoop;
 }
 
@@ -14,14 +14,14 @@ export interface EditorPlaybackOptions {
  */
 export class EditorPlayback {
   private readonly timeline: Timeline;
-  private readonly canvas: CompositionCanvas;
+  private readonly preview: CompositionPreview;
   private readonly frameLoop: AnimationFrameLoop;
   private readonly disposables: Array<() => void> = [];
   private playbackStartedAt: number;
 
-  constructor({ timeline, canvas, frameLoop }: EditorPlaybackOptions) {
+  constructor({ timeline, preview, frameLoop }: EditorPlaybackOptions) {
     this.timeline = timeline;
-    this.canvas = canvas;
+    this.preview = preview;
     this.frameLoop = frameLoop;
     this.playbackStartedAt = timeline.getPlayhead();
   }
@@ -48,7 +48,7 @@ export class EditorPlayback {
   }
 
   private renderCanvas(time: number, playing: boolean): void {
-    this.canvas.render(time, {
+    this.preview.render(time, {
       playing,
       playbackRate: this.timeline.getPlaybackRate(),
       ...(playing ? { playbackStartedAt: this.playbackStartedAt } : {}),
@@ -64,7 +64,7 @@ export class EditorPlayback {
 
   private onPlay({ time }: { time: number }): void {
     this.playbackStartedAt = time;
-    this.canvas.selectElement(null);
+    this.preview.selectElement(null);
     this.renderCanvas(time, true);
     this.frameLoop.start();
   }

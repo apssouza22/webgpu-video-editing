@@ -4,7 +4,7 @@ import {
   ImageClip,
   VideoClip,
 } from '@opensource/gpu-video-encode';
-import type { CompositionCanvas, CanvasElement, CanvasSize } from '@opensource/video-canvas';
+import type { CompositionPreview, CanvasElement, CanvasSize } from '@opensource/video-preview';
 import { rasterizeTextElement } from './rasterizeTextElement';
 import {
   DEFAULT_EXPORT_FPS,
@@ -13,7 +13,7 @@ import {
   type ExportFormat,
 } from './exportOptions';
 
-export interface CanvasToCompositionOptions {
+export interface PreviewToCompositionOptions {
   fps?: number;
   width?: number;
   height?: number;
@@ -22,7 +22,7 @@ export interface CanvasToCompositionOptions {
   playbackRate?: number;
 }
 
-export interface CanvasToCompositionResult {
+export interface PreviewToCompositionResult {
   composition: Composition;
   /** Object URLs created during conversion (e.g. rasterized text). */
   revokeUrls: string[];
@@ -46,12 +46,12 @@ function sortVisualElements(elements: CanvasElement[]): CanvasElement[] {
     .sort((left, right) => left.zIndex - right.zIndex);
 }
 
-export async function canvasElementsToComposition(
-  canvas: CompositionCanvas,
-  options: CanvasToCompositionOptions = {},
-): Promise<CanvasToCompositionResult> {
-  const playerSize = canvas.getPlayerSize();
-  const elements = canvas.getElements();
+export async function previewElementsToComposition(
+  preview: CompositionPreview,
+  options: PreviewToCompositionOptions = {},
+): Promise<PreviewToCompositionResult> {
+  const playerSize = preview.getPlayerSize();
+  const elements = preview.getElements();
   const visualElements = sortVisualElements(elements);
   const audioElements = elements.filter((element) => element.type === 'audio');
   const videoElements = elements.filter((element) => element.type === 'video');
@@ -68,7 +68,7 @@ export async function canvasElementsToComposition(
   const format = options.format ?? DEFAULT_EXPORT_FORMAT;
 
   const composition = new Composition(fps, width, height, {
-    duration: canvas.getDuration(),
+    duration: preview.getDuration(),
     outputFilename: resolveOutputFilename(format, options.outputFilename),
     playbackRate: options.playbackRate ?? 1,
   });

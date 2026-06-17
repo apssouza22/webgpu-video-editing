@@ -1,4 +1,4 @@
-import type { TextCanvasElement } from '@opensource/video-canvas';
+import type { TextCanvasElement } from '@opensource/video-preview';
 
 /**
  * Renders a text canvas element to a PNG object URL for GPU image compositing.

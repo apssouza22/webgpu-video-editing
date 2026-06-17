@@ -10,7 +10,7 @@ function isBusyPhase(phase: ProjectPersistenceStatus['phase']): boolean {
 
 export function bindProjectPersistence({
   editor,
-  clipCanvasSync,
+  clipPreviewSync,
   autoSave = true,
   autoRestore = true,
   debounceMs = 1000,
@@ -32,7 +32,7 @@ export function bindProjectPersistence({
   });
   session.setSaveContext({
     timeline: editor.timeline,
-    canvas: editor.canvas,
+    preview: editor.preview,
     sidebar: editor.sidebar,
     mediaLibrary: editor.mediaLibrary,
   });
@@ -47,7 +47,7 @@ export function bindProjectPersistence({
 
   disposables.push(
     editor.timeline.on('state:change', scheduleSave),
-    editor.canvas.on('state:changed', scheduleSave),
+    editor.preview.on('state:changed', scheduleSave),
   );
 
   if (editor.sidebar) {
@@ -58,7 +58,7 @@ export function bindProjectPersistence({
   }
 
   const flush = (): void => {
-    void session.flushSave(editor.timeline, editor.canvas, editor.sidebar, editor.mediaLibrary);
+    void session.flushSave(editor.timeline, editor.preview, editor.sidebar, editor.mediaLibrary);
   };
 
   const beforeUnload = (): void => {
@@ -75,30 +75,30 @@ export function bindProjectPersistence({
         name,
         handle,
         editor.timeline,
-        editor.canvas,
+        editor.preview,
         editor.mediaLibrary,
         editor.sidebar,
-        clipCanvasSync,
+        clipPreviewSync,
       );
     },
     async openProject(directoryHandle?: FileSystemDirectoryHandle) {
       const document = await session.openProject(directoryHandle);
       await session.hydrate(
         editor.timeline,
-        editor.canvas,
+        editor.preview,
         editor.sidebar,
         editor.mediaLibrary,
-        clipCanvasSync,
+        clipPreviewSync,
       );
       return document;
     },
     async restoreLastProject() {
       return session.restoreLastProject(
         editor.timeline,
-        editor.canvas,
+        editor.preview,
         editor.sidebar,
         editor.mediaLibrary,
-        clipCanvasSync,
+        clipPreviewSync,
       );
     },
     importUploadedFile(file: File) {
@@ -110,7 +110,7 @@ export function bindProjectPersistence({
     save() {
       return session.flushSave(
         editor.timeline,
-        editor.canvas,
+        editor.preview,
         editor.sidebar,
         editor.mediaLibrary,
       );

@@ -3,7 +3,7 @@ import {
   createCanvasElement,
   type CanvasElement,
   type CanvasSize,
-} from '@opensource/video-canvas';
+} from '@opensource/video-preview';
 
 export interface TimelineClipToElementContext {
   zIndex: number;

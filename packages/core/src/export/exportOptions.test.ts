@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CompositionCanvas } from '@opensource/video-canvas';
+import type { CompositionPreview } from '@opensource/video-preview';
 
 import {
   resolveExportDimensions,
@@ -7,10 +7,10 @@ import {
   resolveOutputFilename,
 } from './exportOptions';
 
-function createCanvasStub(size: { width: number; height: number }): CompositionCanvas {
+function createCanvasStub(size: { width: number; height: number }): CompositionPreview {
   return {
     getPlayerSize: () => size,
-  } as CompositionCanvas;
+  } as CompositionPreview;
 }
 
 describe('resolveExportDimensions', () => {

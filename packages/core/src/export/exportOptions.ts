@@ -1,4 +1,4 @@
-import type { CompositionCanvas, CanvasSize } from '@opensource/video-canvas';
+import type { CompositionPreview, CanvasSize } from '@opensource/video-preview';
 import type { ExportProgress } from '@opensource/gpu-video-encode';
 
 /** Supported container formats (currently MP4/H.264 + AAC only). */
@@ -146,10 +146,10 @@ function normalizePlaybackRate(rate: number | undefined): number {
 }
 
 export function resolveExportSettings(
-  canvas: CompositionCanvas,
+  preview: CompositionPreview,
   options: ExportVideoOptions = {},
 ): ResolvedExportSettings {
-  const sourceSize = canvas.getPlayerSize();
+  const sourceSize = preview.getPlayerSize();
   const format = options.format ?? DEFAULT_EXPORT_FORMAT;
   const { width, height } = resolveExportDimensions(sourceSize, options.resolution);
   const fps = options.fps ?? DEFAULT_EXPORT_FPS;

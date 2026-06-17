@@ -1,13 +1,13 @@
 import type { AddClipInput, Timeline } from '@opensource/timeline';
 import type { MediaLibraryItem, Sidebar } from '@opensource/sidebar';
-import type { CompositionCanvasAPI } from '@opensource/video-canvas';
+import type { CompositionPreviewAPI } from '@opensource/video-preview';
 
 import type { MediaLibrary } from './MediaLibrary';
 
 export interface BindSidebarMediaLibraryOptions {
   sidebar: Sidebar;
   timeline: Timeline;
-  canvas: CompositionCanvasAPI;
+  preview: CompositionPreviewAPI;
   mediaLibrary: MediaLibrary;
   /** When set, uploads are routed through project persistence when a project is open. */
   importUploadedFile?: (file: File) => Promise<MediaLibraryItem | null>;
@@ -16,7 +16,7 @@ export interface BindSidebarMediaLibraryOptions {
 export function bindSidebarMediaLibrary({
   sidebar,
   timeline,
-  canvas,
+  preview,
   mediaLibrary,
   importUploadedFile,
 }: BindSidebarMediaLibraryOptions): () => void {
@@ -42,14 +42,14 @@ export function bindSidebarMediaLibrary({
       sidebar.notifyMediaAdded(item);
 
       if (addToCanvas === true) {
-        addMediaToTimeline(timeline, canvas, item, startTime);
+        addMediaToTimeline(timeline, preview, item, startTime);
       }
     }),
   );
 
   disposers.push(
     sidebar.on('media:selected', ({ item, startTime }) => {
-      addMediaToTimeline(timeline, canvas, item, startTime);
+      addMediaToTimeline(timeline, preview, item, startTime);
     }),
   );
 
@@ -106,10 +106,10 @@ export function mediaLibraryItemToAddClipInput(
 
 export function addMediaToTimeline(
   timeline: Timeline,
-  canvas: CompositionCanvasAPI,
+  preview: CompositionPreviewAPI,
   item: MediaLibraryItem,
   startTime?: number,
 ): void {
-  const at = startTime ?? canvas.getCurrentTime();
+  const at = startTime ?? preview.getCurrentTime();
   timeline.addClip(mediaLibraryItemToAddClipInput(item, at));
 }

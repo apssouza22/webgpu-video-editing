@@ -1,5 +1,5 @@
 import type { Clip, TimelineState } from '@opensource/timeline';
-import type { CanvasElement, CanvasState } from '@opensource/video-canvas';
+import type { CanvasElement, CanvasState } from '@opensource/video-preview';
 import type { MediaLibraryItem } from '@opensource/sidebar';
 
 import type { MediaAssetService } from './MediaAssetService';

@@ -1,5 +1,5 @@
 import type { TimelineState } from '@opensource/timeline';
-import type { CanvasState } from '@opensource/video-canvas';
+import type { CanvasState } from '@opensource/video-preview';
 import { describe, expect, it } from 'vitest';
 
 import { MediaAssetService } from './MediaAssetService';

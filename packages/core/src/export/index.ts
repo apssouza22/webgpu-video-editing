@@ -1,7 +1,7 @@
 export { bindSidebarExport, type BindSidebarExportOptions } from './bindSidebarExport';
-export { canvasElementsToComposition, type CanvasToCompositionOptions, type CanvasToCompositionResult } from './canvasToComposition';
+export { previewElementsToComposition, type PreviewToCompositionOptions, type PreviewToCompositionResult } from './previewToComposition';
 export { downloadBlob } from './downloadBlob';
-export { exportVideoFromCanvas, type ExportVideoResult } from './exportVideo';
+export { exportVideoFromPreview, type ExportVideoResult } from './exportVideo';
 export {
   DEFAULT_EXPORT_FORMAT,
   DEFAULT_EXPORT_FPS,
