@@ -10,7 +10,7 @@ import type { CompositionCanvas, CanvasElement } from '@opensource/video-canvas'
 
 import {
   getTimelineClipZIndex,
-  timelineClipToPreviewClip,
+  timelineClipToCanvasElement,
 } from './converters';
 
 type SyncSource = 'canvas' | 'timeline';
@@ -354,11 +354,13 @@ export class TimelinePreviewSyncer {
       return;
     }
 
-    this.canvas.addLayer(timelineClipToPreviewClip(clip));
-    const element = this.canvas.getElements().at(-1);
-    if (element) {
-      this.register(element.id, clip.id);
-    }
+    const { tracks } = this.timeline.getState();
+    const element = timelineClipToCanvasElement(clip, {
+      zIndex: getTimelineClipZIndex(clip, tracks),
+      playerSize: this.canvas.getPlayerSize(),
+    });
+    const elementId = this.canvas.addElement(element);
+    this.register(elementId, clip.id);
   }
 
   private applyClipTimingToCanvas(clip: Clip, elementId?: string): void {

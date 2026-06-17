@@ -28,7 +28,7 @@ function createSidebarStub(): Sidebar & {
 function createCanvasStub(): CompositionCanvasAPI {
   return {
     getCurrentTime: () => 2,
-    addLayer: vi.fn(),
+    addElement: vi.fn(),
   } as unknown as CompositionCanvasAPI;
 }
 
@@ -60,7 +60,7 @@ describe('bindSidebarMediaLibrary', () => {
     expect(mediaLibrary.list()).toHaveLength(1);
     expect(sidebar.notifyMediaAdded).toHaveBeenCalledTimes(1);
     expect(timeline.addClip).not.toHaveBeenCalled();
-    expect(canvas.addLayer).not.toHaveBeenCalled();
+    expect(canvas.addElement).not.toHaveBeenCalled();
 
     dispose();
     mediaLibrary.destroy();
@@ -96,7 +96,7 @@ describe('bindSidebarMediaLibrary', () => {
         hasAudio: true,
       }),
     );
-    expect(canvas.addLayer).not.toHaveBeenCalled();
+    expect(canvas.addElement).not.toHaveBeenCalled();
 
     dispose();
     mediaLibrary.destroy();
@@ -133,7 +133,7 @@ describe('bindSidebarMediaLibrary', () => {
     expect(mediaLibrary.list()).toHaveLength(0);
     expect(sidebar.notifyMediaAdded).toHaveBeenCalledWith(persistedItem);
     expect(timeline.addClip).not.toHaveBeenCalled();
-    expect(canvas.addLayer).not.toHaveBeenCalled();
+    expect(canvas.addElement).not.toHaveBeenCalled();
 
     dispose();
     mediaLibrary.destroy();
@@ -163,7 +163,7 @@ describe('bindSidebarMediaLibrary', () => {
     expect(mediaLibrary.list()).toHaveLength(0);
     expect(sidebar.notifyMediaAdded).not.toHaveBeenCalled();
     expect(timeline.addClip).not.toHaveBeenCalled();
-    expect(canvas.addLayer).not.toHaveBeenCalled();
+    expect(canvas.addElement).not.toHaveBeenCalled();
     expect(consoleError).toHaveBeenCalled();
 
     dispose();

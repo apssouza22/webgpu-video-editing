@@ -5,6 +5,7 @@ import {
   fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
   isLinkedAudioCompanion,
+  timelineClipToCanvasElement,
 } from './converters';
 
 describe('getTimelineClipZIndex', () => {
@@ -39,6 +40,64 @@ describe('isLinkedAudioCompanion', () => {
 
     expect(isLinkedAudioCompanion(audio, [video, audio])).toBe(true);
     expect(isLinkedAudioCompanion(video, [video, audio])).toBe(false);
+  });
+});
+
+describe('timelineClipToCanvasElement', () => {
+  it('maps timeline clip fields onto a canvas element', () => {
+    const element = timelineClipToCanvasElement(
+      {
+        id: 'clip-1',
+        type: 'video',
+        name: 'Scene',
+        url: 'clip.mp4',
+        startTime: 2,
+        duration: 8,
+        inPoint: 1.5,
+        outPoint: 9.5,
+        trackId: 'v1',
+      } as Clip,
+      {
+        zIndex: 3,
+        playerSize: { width: 1280, height: 720 },
+      },
+    );
+
+    expect(element).toMatchObject({
+      type: 'video',
+      name: 'Scene',
+      src: 'clip.mp4',
+      startTime: 2,
+      duration: 8,
+      sourceOffset: 1.5,
+      zIndex: 3,
+    });
+  });
+
+  it('mutes video when linked to a separate audio clip', () => {
+    const element = timelineClipToCanvasElement(
+      {
+        id: 'clip-1',
+        type: 'video',
+        name: 'Scene',
+        url: 'clip.mp4',
+        startTime: 0,
+        duration: 5,
+        inPoint: 0,
+        outPoint: 5,
+        trackId: 'v1',
+        linkedClipId: 'audio-1',
+      } as Clip,
+      {
+        zIndex: 0,
+        playerSize: { width: 1280, height: 720 },
+      },
+    );
+
+    expect(element.type).toBe('video');
+    if (element.type === 'video') {
+      expect(element.muted).toBe(true);
+    }
   });
 });
 

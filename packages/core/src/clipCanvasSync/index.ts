@@ -4,5 +4,5 @@ export {
   fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
   isLinkedAudioCompanion,
-  timelineClipToPreviewClip,
+  timelineClipToCanvasElement,
 } from './converters';

@@ -9,7 +9,7 @@ export {
   TimelinePreviewSyncer,
   fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
-  timelineClipToPreviewClip,
+  timelineClipToCanvasElement,
 } from './clipCanvasSync';
 export type { ClipCanvasSyncOptions } from './clipCanvasSync';
 export {

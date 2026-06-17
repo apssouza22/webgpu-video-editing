@@ -1,12 +1,14 @@
 import type { AddClipInput, Clip, Track } from '@opensource/timeline';
 import {
-  AudioClip,
-  ImageClip,
-  TextClip,
-  VideoClip,
+  createCanvasElement,
   type CanvasElement,
-  type CompositionClip,
+  type CanvasSize,
 } from '@opensource/video-canvas';
+
+export interface TimelineClipToElementContext {
+  zIndex: number;
+  playerSize: CanvasSize;
+}
 
 export function fromPreviewElementToTimelineClip(element: CanvasElement): AddClipInput {
   const base = {
@@ -46,25 +48,92 @@ export function fromPreviewElementToTimelineClip(element: CanvasElement): AddCli
   }
 }
 
-export function timelineClipToPreviewClip(clip: Clip): CompositionClip {
+export function timelineClipToCanvasElement(
+  clip: Clip,
+  context: TimelineClipToElementContext,
+): CanvasElement {
   const sourceOffset = clip.inPoint;
 
   switch (clip.type) {
-    case 'video':
-      return new VideoClip(clip.url ?? '', clip.startTime, clip.duration, undefined, undefined, undefined, undefined, {
+    case 'video': {
+      const defaults = createCanvasElement({
+        type: 'video',
+        src: clip.url ?? '',
+        zIndex: context.zIndex,
+        playerSize: context.playerSize,
+      });
+
+      if (defaults.type !== 'video') {
+        throw new Error('Expected video canvas element');
+      }
+
+      return {
+        ...defaults,
+        name: clip.name,
+        startTime: clip.startTime,
+        duration: clip.duration,
         sourceOffset,
         muted: Boolean(clip.linkedClipId),
+      };
+    }
+    case 'image': {
+      const defaults = createCanvasElement({
+        type: 'image',
+        src: clip.url ?? '',
+        zIndex: context.zIndex,
+        playerSize: context.playerSize,
       });
-    case 'image':
-      return new ImageClip(clip.url ?? '', clip.startTime, clip.duration);
-    case 'audio':
-      return new AudioClip(clip.url ?? '', clip.startTime, clip.duration, sourceOffset);
-    case 'text':
-      return new TextClip(
-        clip.textContent?.trim() || clip.name,
-        clip.startTime,
-        clip.duration,
-      );
+
+      if (defaults.type !== 'image') {
+        throw new Error('Expected image canvas element');
+      }
+
+      return {
+        ...defaults,
+        name: clip.name,
+        startTime: clip.startTime,
+        duration: clip.duration,
+      };
+    }
+    case 'audio': {
+      const defaults = createCanvasElement({
+        type: 'audio',
+        src: clip.url ?? '',
+        zIndex: context.zIndex,
+        playerSize: context.playerSize,
+      });
+
+      if (defaults.type !== 'audio') {
+        throw new Error('Expected audio canvas element');
+      }
+
+      return {
+        ...defaults,
+        name: clip.name,
+        startTime: clip.startTime,
+        duration: clip.duration,
+        sourceOffset,
+      };
+    }
+    case 'text': {
+      const defaults = createCanvasElement({
+        type: 'text',
+        zIndex: context.zIndex,
+        playerSize: context.playerSize,
+      });
+
+      if (defaults.type !== 'text') {
+        throw new Error('Expected text canvas element');
+      }
+
+      return {
+        ...defaults,
+        name: clip.name,
+        content: clip.textContent?.trim() || clip.name,
+        startTime: clip.startTime,
+        duration: clip.duration,
+      };
+    }
   }
 }
 
