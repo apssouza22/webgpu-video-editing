@@ -49,11 +49,12 @@ export function mediaLibraryItemToAddClipInput(
   item: MediaLibraryItem,
   startTime: number,
 ): AddClipInput {
+  const mediaDuration = item.duration ?? 5;
   const base = {
     name: item.name,
     startTime,
-    duration: 5,
-    sourceDuration: 5,
+    duration: mediaDuration,
+    sourceDuration: mediaDuration,
   };
 
   switch (item.type) {

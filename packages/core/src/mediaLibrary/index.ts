@@ -14,3 +14,4 @@ export type {
   MediaLibraryEventName,
   MediaLibraryHandlers,
 } from './types';
+export { formatMediaDuration, probeMediaDuration } from './duration';

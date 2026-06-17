@@ -40,6 +40,8 @@ export interface MediaLibraryItem {
   name: string;
   src: string;
   thumbnail?: string;
+  /** Duration in seconds for video and audio items. */
+  duration?: number;
   createdAt: number;
   source: MediaLibrarySource;
   /** Stable reference to a persisted project media asset. */
@@ -52,6 +54,7 @@ export interface ResolvedMediaInput {
   name: string;
   src: string;
   thumbnail?: string;
+  duration?: number;
   id?: string;
 }
 

@@ -1,5 +1,6 @@
 import type { MediaLibraryItem, ResolvedMediaInput } from '@opensource/sidebar';
 
+import { probeMediaDuration } from './duration';
 import { MediaLibraryEventEmitter } from './events';
 import type {
   AddMediaFromFileOptions,
@@ -71,6 +72,7 @@ export class MediaLibrary {
     };
     this.items.set(entry.id, entry);
     this.events.emit('added', { item: entry });
+    this.probeDuration(entry);
     return entry;
   }
 
@@ -92,6 +94,16 @@ export class MediaLibrary {
     });
   }
 
+  setDuration(id: string, duration: number): void {
+    const item = this.items.get(id);
+    if (!item || item.duration === duration) {
+      return;
+    }
+
+    this.items.set(id, { ...item, duration });
+    this.events.emit('changed', {});
+  }
+
   addFromResolvedMedia(input: ResolvedMediaInput): MediaLibraryItem {
     if (input.src.startsWith('blob:')) {
       this.objectUrls.add(input.src);
@@ -104,6 +116,7 @@ export class MediaLibrary {
       name: input.name,
       src: input.src,
       thumbnail: input.thumbnail,
+      duration: input.duration,
       source: 'library',
     });
   }
@@ -129,6 +142,7 @@ export class MediaLibrary {
         this.objectUrls.add(item.src);
       }
       this.items.set(item.id, item);
+      this.probeDuration(item);
     }
 
     this.events.emit('changed', {});
@@ -164,5 +178,29 @@ export class MediaLibrary {
     }
     this.objectUrls.clear();
     this.items.clear();
+  }
+
+  private probeDuration(item: MediaLibraryItem): void {
+    if (item.type !== 'video' && item.type !== 'audio') {
+      return;
+    }
+
+    if (item.duration !== undefined) {
+      return;
+    }
+
+    const kind = item.type === 'audio' ? 'audio' : 'video';
+    void probeMediaDuration(item.src, kind).then((duration) => {
+      if (duration === undefined) {
+        return;
+      }
+
+      const current = this.items.get(item.id);
+      if (!current || current.src !== item.src) {
+        return;
+      }
+
+      this.setDuration(item.id, duration);
+    });
   }
 }

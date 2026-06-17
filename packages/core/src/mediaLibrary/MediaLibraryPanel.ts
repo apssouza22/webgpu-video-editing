@@ -1,5 +1,6 @@
 import type { MediaLibraryItem } from '@opensource/sidebar';
 
+import { formatMediaDuration } from './duration';
 import type { MediaLibrary } from './MediaLibrary';
 
 const MEDIA_ACCEPT = 'video/*,image/*,audio/*';
@@ -99,15 +100,20 @@ export class MediaLibraryPanel {
     }
   }
 
-  private createCard(item: MediaLibraryItem): HTMLButtonElement {
-    const card = document.createElement('button');
-    card.type = 'button';
+  private createCard(item: MediaLibraryItem): HTMLElement {
+    const card = document.createElement('article');
     card.className =
-      'flex flex-col gap-2 p-2 border border-es-border rounded-xl bg-white/[0.02] text-left cursor-pointer hover:border-es-accent hover:bg-[#1a2233] overflow-hidden';
+      'relative flex flex-col gap-2 p-2 border border-es-border rounded-xl bg-white/[0.02] text-left overflow-hidden hover:border-es-accent hover:bg-[#1a2233]';
+
+    const selectButton = document.createElement('button');
+    selectButton.type = 'button';
+    selectButton.className =
+      'flex flex-col gap-2 w-full p-0 border-0 bg-transparent text-left cursor-pointer';
+    selectButton.addEventListener('click', () => this.mediaLibrary.selectItem(item));
 
     const thumb = document.createElement('div');
     thumb.className =
-      'aspect-video rounded-lg bg-[#11151d] border border-es-border overflow-hidden flex items-center justify-center';
+      'relative aspect-video rounded-lg bg-[#11151d] border border-es-border overflow-hidden flex items-center justify-center';
 
     if (item.type === 'audio') {
       thumb.innerHTML = `
@@ -127,6 +133,27 @@ export class MediaLibraryPanel {
       thumb.append(video);
     }
 
+    if (item.type === 'video') {
+      const durationBadge = document.createElement('span');
+      durationBadge.className =
+        'absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/70 text-[0.65rem] text-white tabular-nums pointer-events-none';
+      durationBadge.textContent = item.duration !== undefined
+        ? formatMediaDuration(item.duration)
+        : '…';
+      thumb.append(durationBadge);
+    }
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className =
+      'absolute top-3.5 right-3.5 z-10 w-6 h-6 rounded-md border border-es-border bg-[#11151d]/90 text-es-muted text-sm leading-none cursor-pointer hover:text-es-text hover:border-es-accent';
+    deleteButton.setAttribute('aria-label', `Delete ${item.name}`);
+    deleteButton.textContent = '×';
+    deleteButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      this.mediaLibrary.remove(item.id);
+    });
+
     const label = document.createElement('span');
     label.className = 'text-xs text-es-text truncate';
     label.textContent = item.name;
@@ -135,8 +162,8 @@ export class MediaLibraryPanel {
     meta.className = 'text-[0.65rem] uppercase tracking-wide text-es-muted';
     meta.textContent = item.type;
 
-    card.append(thumb, label, meta);
-    card.addEventListener('click', () => this.mediaLibrary.selectItem(item));
+    selectButton.append(thumb, label, meta);
+    card.append(selectButton, deleteButton);
     return card;
   }
 }

@@ -176,4 +176,34 @@ describe('bindMediaLibrary', () => {
     dispose();
     mediaLibrary.destroy();
   });
+
+  it('uses the media duration when adding video clips', () => {
+    const mediaLibrary = new MediaLibrary();
+    const canvas = createCanvasStub();
+    const timeline = createTimelineStub();
+    const dispose = bindMediaLibrary({ timeline, preview: canvas, mediaLibrary });
+
+    const item: MediaLibraryItem = {
+      id: 'lib-2',
+      type: 'video',
+      name: 'clip.mp4',
+      src: 'blob:clip',
+      duration: 12.5,
+      createdAt: 1,
+      source: 'upload',
+    };
+
+    mediaLibrary.selectItem(item);
+
+    expect(timeline.addClip).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'video',
+        duration: 12.5,
+        sourceDuration: 12.5,
+      }),
+    );
+
+    dispose();
+    mediaLibrary.destroy();
+  });
 });
