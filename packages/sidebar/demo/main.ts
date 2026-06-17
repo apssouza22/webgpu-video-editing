@@ -2,7 +2,8 @@ import '@opensource/sidebar/style.css';
 import '@opensource/video-preview/style.css';
 
 import { CompositionPreview } from '@opensource/video-preview';
-import { bindSidebarMediaLibrary, MediaLibrary } from '@opensource/core';
+import { Timeline } from '@opensource/timeline';
+import { bindMediaLibrary, MediaLibrary, MediaLibraryPanel } from '@opensource/core';
 import { Sidebar, mountSidebar } from '@opensource/sidebar';
 
 const app = document.getElementById('app');
@@ -11,7 +12,7 @@ if (!app) {
 }
 
 app.className =
-  'grid grid-cols-[320px_minmax(0,1fr)] h-screen overflow-hidden bg-es-bg text-es-text font-sans max-[960px]:grid-cols-1';
+  'grid grid-cols-[320px_minmax(0,1fr)_280px] h-screen overflow-hidden bg-es-bg text-es-text font-sans max-[960px]:grid-cols-1';
 
 const sidebarEl = document.createElement('aside');
 sidebarEl.className = 'min-h-0 border-r border-es-border overflow-hidden';
@@ -19,12 +20,20 @@ sidebarEl.className = 'min-h-0 border-r border-es-border overflow-hidden';
 const main = document.createElement('main');
 main.className = 'min-w-0 min-h-0';
 
-app.append(sidebarEl, main);
+const timelineEl = document.createElement('div');
+timelineEl.className = 'min-h-0 border-t border-es-border';
+
+app.append(sidebarEl, main, timelineEl);
 
 const preview = new CompositionPreview(main);
+const timeline = new Timeline(timelineEl);
 const mediaLibrary = new MediaLibrary();
-const sidebar = new Sidebar(preview, { mediaLibrary });
-const unmountMediaLibrary = bindSidebarMediaLibrary({ sidebar, preview, mediaLibrary });
+const sidebar = new Sidebar(preview, {
+  panelFactories: {
+    media: () => new MediaLibraryPanel(mediaLibrary).element,
+  },
+});
+const unmountMediaLibrary = bindMediaLibrary({ timeline, preview, mediaLibrary });
 const unmountSidebar = mountSidebar(sidebarEl, sidebar);
 
 window.addEventListener('beforeunload', () => {
@@ -32,5 +41,6 @@ window.addEventListener('beforeunload', () => {
   unmountMediaLibrary();
   sidebar.destroy();
   mediaLibrary.destroy();
+  timeline.destroy();
   preview.destroy();
 });

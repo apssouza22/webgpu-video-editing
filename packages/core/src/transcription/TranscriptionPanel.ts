@@ -1,5 +1,5 @@
-import type { Sidebar } from '../common/Sidebar';
-import type { TranscriptionChunk, TranscriptionResult } from '../common/types';
+import type { TranscriptionChunk, TranscriptionResult } from './types';
+import type { TranscriptionWorkspace } from './TranscriptionWorkspace';
 
 export class TranscriptionPanel {
   private readonly root: HTMLElement;
@@ -8,8 +8,9 @@ export class TranscriptionPanel {
   private readonly statusEl: HTMLParagraphElement;
   private readonly chunksContainer: HTMLDivElement;
   private transcribing = false;
+  private readonly disposers: Array<() => void> = [];
 
-  constructor(private readonly sidebar: Sidebar) {
+  constructor(private readonly workspace: TranscriptionWorkspace) {
     this.root = document.createElement('div');
     this.root.className = 'flex flex-col gap-4';
 
@@ -41,34 +42,42 @@ export class TranscriptionPanel {
     this.chunksContainer.className = 'sidebar-transcription-chunks';
 
     this.transcribeButton.addEventListener('click', () => {
-      this.sidebar.requestTranscription();
+      this.workspace.requestTranscription();
     });
 
     this.captionsButton.addEventListener('click', () => {
       const results = this.buildResultsFromDom();
       if (results.length > 0) {
-        this.sidebar.requestTranscriptionCaptions(results);
+        this.workspace.requestTranscriptionCaptions(results);
       }
     });
 
-    this.sidebar.on('transcription:status', ({ message, transcribing }) => {
-      this.transcribing = transcribing;
-      this.statusEl.textContent = message;
-      this.updateButtonState(this.sidebar.canTranscribe());
-    });
+    this.disposers.push(
+      this.workspace.on('transcription:status', ({ message, transcribing }) => {
+        this.transcribing = transcribing;
+        this.statusEl.textContent = message;
+        this.updateButtonState(this.workspace.getCanTranscribe());
+      }),
+    );
 
-    this.sidebar.on('transcription:result', ({ result }) => {
-      this.renderResult(result);
-      this.updateButtonState(this.sidebar.canTranscribe());
-    });
+    this.disposers.push(
+      this.workspace.on('transcription:result', ({ result }) => {
+        this.renderResult(result);
+        this.updateButtonState(this.workspace.getCanTranscribe());
+      }),
+    );
 
-    this.sidebar.on('transcription:highlight', ({ time }) => {
-      this.highlightChunksByTime(time);
-    });
+    this.disposers.push(
+      this.workspace.on('transcription:highlight', ({ time }) => {
+        this.highlightChunksByTime(time);
+      }),
+    );
 
-    this.sidebar.on('transcription:availability', ({ canTranscribe }) => {
-      this.updateButtonState(canTranscribe);
-    });
+    this.disposers.push(
+      this.workspace.on('transcription:availability', ({ canTranscribe }) => {
+        this.updateButtonState(canTranscribe);
+      }),
+    );
 
     this.root.append(
       title,
@@ -79,11 +88,17 @@ export class TranscriptionPanel {
       this.chunksContainer,
     );
 
-    this.updateButtonState(this.sidebar.canTranscribe());
+    this.updateButtonState(this.workspace.getCanTranscribe());
   }
 
   get element(): HTMLElement {
     return this.root;
+  }
+
+  destroy(): void {
+    while (this.disposers.length > 0) {
+      this.disposers.pop()?.();
+    }
   }
 
   private renderResult(result: TranscriptionResult | null): void {
@@ -127,12 +142,12 @@ export class TranscriptionPanel {
       event.stopPropagation();
       const startTime = Number(chunkEl.dataset.startTime ?? 0);
       const endTime = Number(chunkEl.dataset.endTime ?? 0);
-      this.sidebar.removeTranscriptionChunk(startTime, endTime, sourceId);
+      this.workspace.removeTranscriptionChunk(startTime, endTime, sourceId);
       this.removeChunkElement(chunkEl, startTime, endTime);
     });
 
     chunkEl.addEventListener('click', () => {
-      this.sidebar.seekTranscription(chunk.timestamp[0], sourceId);
+      this.workspace.seekTranscription(chunk.timestamp[0], sourceId);
     });
 
     chunkEl.append(text, remove);

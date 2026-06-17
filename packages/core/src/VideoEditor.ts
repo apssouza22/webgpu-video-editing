@@ -16,15 +16,17 @@ import {
   type ExportVideoOptions,
   type ExportVideoResult,
 } from './export';
-import { bindSidebarMediaLibrary, MediaLibrary } from './mediaLibrary';
+import { bindMediaLibrary, MediaLibrary, MediaLibraryPanel } from './mediaLibrary';
 import {
   bindProjectPersistence,
   type ProjectPersistenceApi,
   type ProjectPersistenceOptions,
 } from './project';
 import {
-  bindSidebarTranscription,
+  bindTranscription,
+  TranscriptionPanel,
   TranscriptionService,
+  TranscriptionWorkspace,
   type TranscriptionOptions,
 } from './transcription';
 
@@ -41,8 +43,8 @@ export interface VideoEditorOptions {
   /** When true (default), handles `export:requested` from the sidebar. */
   bindSidebarExport?: boolean;
   transcription?: TranscriptionOptions;
-  /** When true (default), handles sidebar transcription events. */
-  bindSidebarTranscription?: boolean;
+  /** When true (default), wires transcription panel and service. */
+  bindTranscription?: boolean;
   project?: ProjectPersistenceOptions;
 }
 
@@ -61,6 +63,7 @@ export class VideoEditor {
   readonly mediaLibrary: MediaLibrary;
   readonly sidebar: Sidebar | null;
   readonly transcription: TranscriptionService;
+  readonly transcriptionWorkspace: TranscriptionWorkspace;
   readonly frameLoop: AnimationFrameLoop;
   readonly clipPreviewSync: TimelinePreviewSyncer;
   projectPersistence?: ProjectPersistenceApi;
@@ -83,6 +86,7 @@ export class VideoEditor {
       mockTranscription: options.transcription?.mockTranscription ?? false,
       language: options.transcription?.language,
     });
+    this.transcriptionWorkspace = new TranscriptionWorkspace();
 
     if (sidebarContainer) {
       if (options.sidebarClassName) {
@@ -90,14 +94,29 @@ export class VideoEditor {
       }
       this.sidebar = new Sidebar(this.preview, {
         ...options.sidebar,
-        mediaLibrary: this.mediaLibrary,
+        panelFactories: {
+          ...options.sidebar?.panelFactories,
+          media: () => new MediaLibraryPanel(this.mediaLibrary).element,
+          transcription: () => new TranscriptionPanel(this.transcriptionWorkspace).element,
+        },
       });
       const unmountSidebar = mountSidebar(sidebarContainer, this.sidebar);
       this.disposables.push(unmountSidebar);
 
+      if (options.bindTranscription !== false) {
+        this.disposables.push(
+          bindTranscription({
+            workspace: this.transcriptionWorkspace,
+            timeline: this.timeline,
+            preview: this.preview,
+            transcription: this.transcription,
+            sidebar: this.sidebar,
+          }),
+        );
+      }
+
       this.disposables.push(
-        bindSidebarMediaLibrary({
-          sidebar: this.sidebar,
+        bindMediaLibrary({
           timeline: this.timeline,
           preview: this.preview,
           mediaLibrary: this.mediaLibrary,
@@ -120,16 +139,6 @@ export class VideoEditor {
         );
       }
 
-      if (options.bindSidebarTranscription !== false) {
-        this.disposables.push(
-          bindSidebarTranscription({
-            sidebar: this.sidebar,
-            timeline: this.timeline,
-            preview: this.preview,
-            transcription: this.transcription,
-          }),
-        );
-      }
     } else {
       this.sidebar = null;
     }

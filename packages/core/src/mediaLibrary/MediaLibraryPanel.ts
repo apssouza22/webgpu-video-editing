@@ -1,5 +1,6 @@
-import type { Sidebar } from '../common/Sidebar';
-import type { MediaLibraryItem } from '../common/types';
+import type { MediaLibraryItem } from '@opensource/sidebar';
+
+import type { MediaLibrary } from './MediaLibrary';
 
 const MEDIA_ACCEPT = 'video/*,image/*,audio/*';
 
@@ -9,9 +10,10 @@ export class MediaLibraryPanel {
   private readonly emptyState: HTMLElement;
   private readonly searchInput: HTMLInputElement;
   private readonly fileInput: HTMLInputElement;
+  private readonly disposers: Array<() => void> = [];
   private query = '';
 
-  constructor(private readonly sidebar: Sidebar) {
+  constructor(private readonly mediaLibrary: MediaLibrary) {
     this.root = document.createElement('div');
     this.root.className = 'flex flex-col gap-3 min-h-0';
 
@@ -45,7 +47,7 @@ export class MediaLibraryPanel {
       const files = this.fileInput.files;
       if (files) {
         for (const file of files) {
-          this.sidebar.requestMediaUpload(file);
+          this.mediaLibrary.requestUpload(file);
         }
       }
       this.fileInput.value = '';
@@ -64,9 +66,11 @@ export class MediaLibraryPanel {
       this.renderItems();
     });
 
-    this.sidebar.on('media:added', () => this.renderItems());
-    this.sidebar.on('media:removed', () => this.renderItems());
-    this.sidebar.on('media:library:changed', () => this.renderItems());
+    this.disposers.push(
+      this.mediaLibrary.on('added', () => this.renderItems()),
+      this.mediaLibrary.on('removed', () => this.renderItems()),
+      this.mediaLibrary.on('changed', () => this.renderItems()),
+    );
 
     this.root.append(header, this.searchInput, uploadButton, this.fileInput, this.grid, this.emptyState);
     this.renderItems();
@@ -76,9 +80,15 @@ export class MediaLibraryPanel {
     return this.root;
   }
 
+  destroy(): void {
+    while (this.disposers.length > 0) {
+      this.disposers.pop()?.();
+    }
+  }
+
   private renderItems(): void {
-    const items = this.sidebar
-      .getMediaLibrary()
+    const items = this.mediaLibrary
+      .list()
       .filter((item) => !this.query || item.name.toLowerCase().includes(this.query));
 
     this.grid.replaceChildren();
@@ -126,7 +136,12 @@ export class MediaLibraryPanel {
     meta.textContent = item.type;
 
     card.append(thumb, label, meta);
-    card.addEventListener('click', () => this.sidebar.selectMediaItem(item));
+    card.addEventListener('click', () => this.mediaLibrary.selectItem(item));
     return card;
   }
+}
+
+export function mountMediaLibraryPanel(mediaLibrary: MediaLibrary): () => void {
+  const panel = new MediaLibraryPanel(mediaLibrary);
+  return () => panel.destroy();
 }

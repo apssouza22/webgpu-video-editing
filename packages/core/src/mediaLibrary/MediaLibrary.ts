@@ -1,5 +1,12 @@
 import type { MediaLibraryItem, ResolvedMediaInput } from '@opensource/sidebar';
 
+import { MediaLibraryEventEmitter } from './events';
+import type {
+  AddMediaFromFileOptions,
+  MediaLibraryEventHandler,
+  MediaLibraryEventName,
+} from './types';
+
 let nextMediaId = 0;
 
 function createMediaId(): string {
@@ -8,6 +15,7 @@ function createMediaId(): string {
 }
 
 export class MediaLibrary {
+  readonly events = new MediaLibraryEventEmitter();
   private readonly items = new Map<string, MediaLibraryItem>();
   private readonly objectUrls = new Set<string>();
 
@@ -20,6 +28,35 @@ export class MediaLibrary {
     return this.items.get(id);
   }
 
+  requestUpload(
+    file: File,
+    options: AddMediaFromFileOptions = {},
+  ): void {
+    this.events.emit('upload:requested', { file, ...options });
+  }
+
+  requestRemove(id: string): void {
+    this.events.emit('remove:requested', { id });
+  }
+
+  selectItem(item: MediaLibraryItem, startTime?: number): void {
+    this.events.emit('selected', { item, startTime });
+  }
+
+  on<T extends MediaLibraryEventName>(
+    event: T,
+    handler: MediaLibraryEventHandler<T>,
+  ): () => void {
+    return this.events.on(event, handler);
+  }
+
+  off<T extends MediaLibraryEventName>(
+    event: T,
+    handler: MediaLibraryEventHandler<T>,
+  ): void {
+    this.events.off(event, handler);
+  }
+
   add(item: Omit<MediaLibraryItem, 'id' | 'createdAt'> & { id?: string }): MediaLibraryItem {
     const entry: MediaLibraryItem = {
       ...item,
@@ -27,6 +64,7 @@ export class MediaLibrary {
       createdAt: Date.now(),
     };
     this.items.set(entry.id, entry);
+    this.events.emit('added', { item: entry });
     return entry;
   }
 
@@ -86,6 +124,8 @@ export class MediaLibrary {
       }
       this.items.set(item.id, item);
     }
+
+    this.events.emit('changed', {});
   }
 
   getPersistedItems(): MediaLibraryItem[] {
@@ -108,6 +148,7 @@ export class MediaLibrary {
     }
 
     this.items.delete(id);
+    this.events.emit('removed', { id });
     return item;
   }
 

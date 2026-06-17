@@ -242,7 +242,7 @@ export class ProjectSession {
 
   async pickAndImportMedia(
     mediaLibrary: MediaLibrary,
-    sidebar: Sidebar | null,
+    _sidebar: Sidebar | null,
   ): Promise<void> {
     if (!this.store || !this.mediaAssets || !this.document) {
       throw new Error('Open a project before importing media.');
@@ -258,13 +258,12 @@ export class ProjectSession {
 
     for (const handle of handles) {
       const imported = await this.mediaAssets.importFromHandle(handle);
-      const item = mediaLibrary.addFromResolvedMedia({
+      mediaLibrary.addFromResolvedMedia({
         assetId: imported.asset.id,
         type: imported.type,
         name: imported.asset.name,
         src: imported.url,
       });
-      sidebar?.notifyMediaAdded(item);
     }
 
     this.scheduleSave();
@@ -279,7 +278,7 @@ export class ProjectSession {
   async hydrate(
     timeline: Timeline,
     preview: CompositionPreview,
-    sidebar: Sidebar | null,
+    _sidebar: Sidebar | null,
     mediaLibrary: MediaLibrary,
     clipPreviewSync: TimelinePreviewSyncer,
   ): Promise<void> {
@@ -306,12 +305,6 @@ export class ProjectSession {
       preview.loadState(resolved.canvas);
 
       mediaLibrary.loadPersistedItems(mergedMediaLibrary);
-
-      if (sidebar) {
-        for (const item of mergedMediaLibrary) {
-          sidebar.notifyMediaAdded(item);
-        }
-      }
 
       clipPreviewSync.rebuildMappings();
       preview.render(preview.getCurrentTime(), { playing: false });
@@ -409,7 +402,7 @@ export class ProjectSession {
 
   private async importCurrentMediaLibrary(
     mediaLibrary: MediaLibrary,
-    sidebar: Sidebar | null,
+    _sidebar: Sidebar | null,
   ): Promise<Map<string, string>> {
     if (!this.mediaAssets) {
       throw new Error('Media assets are not initialized.');
@@ -449,7 +442,6 @@ export class ProjectSession {
     }
 
     mediaLibrary.loadPersistedItems(updatedItems);
-    sidebar?.notifyMediaLibraryChanged();
 
     return urlMap;
   }

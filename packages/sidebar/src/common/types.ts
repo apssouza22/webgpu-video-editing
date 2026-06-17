@@ -1,19 +1,10 @@
 import type { CanvasElement } from '@opensource/video-preview';
 
+import type { Sidebar } from './Sidebar';
+
 export type MediaType = 'video' | 'image' | 'audio';
 
 export type SidebarPanelId = 'project' | 'media' | 'text' | 'properties' | 'export' | 'transcription';
-
-export interface TranscriptionChunk {
-  text: string;
-  timestamp: [number, number];
-}
-
-export interface TranscriptionResult {
-  text: string;
-  chunks: TranscriptionChunk[];
-  sourceId?: string;
-}
 
 export type ExportQuality = 'low' | 'medium' | 'high' | 'max';
 export type ExportFormat = 'mp4';
@@ -76,28 +67,10 @@ export interface SidebarEventMap {
     selectedElement: CanvasElement | null;
   };
   'panel:changed': { panel: SidebarPanelId };
-  'media:added': { item: MediaLibraryItem };
-  'media:removed': { id: string };
-  'media:library:changed': Record<string, never>;
-  'media:selected': { item: MediaLibraryItem; startTime?: number };
-  'media:upload:requested': { file: File } & AddMediaFromFileOptions;
-  'media:remove:requested': { id: string };
   'text:add:requested': { content: string; startTime: number };
   'export:requested': { settings: ExportSettings };
   'export:status': { message: string; exporting: boolean };
   'export:availability': { canExport: boolean };
-  'transcription:requested': { sourceId?: string };
-  'transcription:seek': { timestamp: number; sourceId: string };
-  'transcription:chunk:removed': {
-    startTime: number;
-    endTime: number;
-    sourceId: string;
-  };
-  'transcription:captions:requested': { results: TranscriptionResult[] };
-  'transcription:status': { message: string; transcribing: boolean };
-  'transcription:result': { result: TranscriptionResult | null };
-  'transcription:highlight': { time: number };
-  'transcription:availability': { canTranscribe: boolean };
   'project:create:requested': { name: string };
   'project:open:requested': Record<string, never>;
   'project:status': {
@@ -115,20 +88,11 @@ export type SidebarEventHandler<T extends SidebarEventName> = (
   payload: SidebarEventMap[T],
 ) => void;
 
+export type SidebarPanelFactory = (sidebar: Sidebar) => HTMLElement;
+
 export interface SidebarOptions {
   /** Initial sidebar panel. */
   initialPanel?: SidebarPanelId;
-  /** Media library data source for UI panels. */
-  mediaLibrary?: MediaLibraryHost;
-}
-
-export interface AddMediaFromFileOptions {
-  /** When true, also inserts the uploaded media on the timeline at the playhead. */
-  addToCanvas?: boolean;
-  startTime?: number;
-}
-
-/** Read-only media library access for sidebar UI panels. */
-export interface MediaLibraryHost {
-  list(type?: MediaType): MediaLibraryItem[];
+  /** Optional panel element factories supplied by the host application. */
+  panelFactories?: Partial<Record<SidebarPanelId, SidebarPanelFactory>>;
 }

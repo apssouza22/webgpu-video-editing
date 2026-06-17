@@ -1,39 +1,50 @@
-import type { CompositionPreview } from '@opensource/video-preview';
 import type { Sidebar } from '@opensource/sidebar';
+import type { CompositionPreview } from '@opensource/video-preview';
 import type { Timeline } from '@opensource/timeline';
 import type { CanvasElement } from '@opensource/video-preview';
 
 import type { TranscriptionService } from './TranscriptionService';
 import type { TranscriptionResult } from './types';
+import type { TranscriptionWorkspace } from './TranscriptionWorkspace';
 
-export interface BindSidebarTranscriptionOptions {
-  sidebar: Sidebar;
+export interface BindTranscriptionOptions {
+  workspace: TranscriptionWorkspace;
   timeline: Timeline;
   preview: CompositionPreview;
   transcription: TranscriptionService;
+  sidebar?: Sidebar | null;
 }
 
-export function bindSidebarTranscription({
-  sidebar,
+export function bindTranscription({
+  workspace,
   timeline,
   preview,
   transcription,
-}: BindSidebarTranscriptionOptions): () => void {
+  sidebar = null,
+}: BindTranscriptionOptions): () => void {
   const disposers: Array<() => void> = [];
 
+  const updateAvailability = (): void => {
+    workspace.setCanTranscribe(
+      preview
+        .getElements()
+        .some((element) => element.type === 'video' || element.type === 'audio'),
+    );
+  };
+
   disposers.push(
-    sidebar.on('transcription:requested', async ({ sourceId }) => {
+    workspace.on('transcription:requested', async ({ sourceId }) => {
       const source = findTranscriptionSource(preview, sourceId);
       if (!source) {
-        sidebar.setTranscriptionStatus(
+        workspace.setTranscriptionStatus(
           'Add a video or audio layer before transcribing.',
           false,
         );
         return;
       }
 
-      sidebar.setActivePanel('transcription');
-      sidebar.setTranscriptionStatus('Preparing audio for transcription…', true);
+      sidebar?.setActivePanel('transcription');
+      workspace.setTranscriptionStatus('Preparing audio for transcription…', true);
 
       try {
         transcription.loadModel();
@@ -45,12 +56,12 @@ export function bindSidebarTranscription({
         );
 
         if (result) {
-          sidebar.setTranscriptionResult(result);
-          sidebar.setTranscriptionStatus('Transcription complete.', false);
+          workspace.setTranscriptionResult(result);
+          workspace.setTranscriptionStatus('Transcription complete.', false);
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        sidebar.setTranscriptionStatus(`Transcription failed: ${message}`, false);
+        workspace.setTranscriptionStatus(`Transcription failed: ${message}`, false);
         console.error(error);
       }
     }),
@@ -59,7 +70,7 @@ export function bindSidebarTranscription({
   disposers.push(
     transcription.on('transcription:progress', (progress) => {
       if (progress.message || progress.status) {
-        sidebar.setTranscriptionStatus(
+        workspace.setTranscriptionStatus(
           progress.message ?? progress.status,
           true,
         );
@@ -68,24 +79,30 @@ export function bindSidebarTranscription({
   );
 
   disposers.push(
-    sidebar.on('transcription:seek', ({ timestamp }) => {
+    workspace.on('transcription:seek', ({ timestamp }) => {
       timeline.pause();
       timeline.setPlayhead(timestamp);
     }),
   );
 
   disposers.push(
-    sidebar.on('transcription:captions:requested', ({ results }) => {
+    workspace.on('transcription:captions:requested', ({ results }) => {
       addCaptionClips(timeline, results);
-      sidebar.setTranscriptionStatus('Caption layers added to the timeline.', false);
+      workspace.setTranscriptionStatus('Caption layers added to the timeline.', false);
     }),
   );
 
   disposers.push(
     timeline.on('playhead:change', ({ time }) => {
-      sidebar.highlightTranscriptionAt(time);
+      workspace.highlightTranscriptionAt(time);
     }),
   );
+
+  disposers.push(
+    preview.on('element:added', updateAvailability),
+    preview.on('element:removed', updateAvailability),
+  );
+  updateAvailability();
 
   return () => {
     while (disposers.length > 0) {

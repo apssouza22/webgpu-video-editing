@@ -1,10 +1,8 @@
 import type { Sidebar } from '../common/Sidebar';
 import type { SidebarPanelId } from '../common/types';
 import { ExportPanel } from './ExportPanel';
-import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { ProjectPanel } from './ProjectPanel';
 import { PropertiesPanel } from './PropertiesPanel';
-import { TranscriptionPanel } from './TranscriptionPanel';
 import { SIDEBAR_ICONS } from './sidebarIcons';
 import { UIComponent } from './UIComponent';
 
@@ -70,18 +68,21 @@ export class SidebarView extends UIComponent<Sidebar> {
     contentHost.className = 'sidebar-tab-content';
 
     const projectPanel = new ProjectPanel(this.sidebar);
-    const mediaPanel = new MediaLibraryPanel(this.sidebar);
+    const mediaPanel =
+      this.sidebar.createPanelElement('media') ?? this.createMissingPanel('Media');
     const textPanel = this.createTextPanel();
     const propertiesPanel = new PropertiesPanel(this.sidebar);
     const exportPanel = new ExportPanel(this.sidebar);
-    const transcriptionPanel = new TranscriptionPanel(this.sidebar);
+    const transcriptionPanel =
+      this.sidebar.createPanelElement('transcription') ??
+      this.createMissingPanel('Transcription');
 
     panels.set('project', projectPanel.element);
-    panels.set('media', mediaPanel.element);
+    panels.set('media', mediaPanel);
     panels.set('text', textPanel);
     panels.set('properties', propertiesPanel.element);
     panels.set('export', exportPanel.element);
-    panels.set('transcription', transcriptionPanel.element);
+    panels.set('transcription', transcriptionPanel);
 
     const refs: SidebarRefs = { panels, navButtons, contentHost };
     (shell as ShellElement)[SIDEBAR_REFS] = refs;
@@ -116,6 +117,13 @@ export class SidebarView extends UIComponent<Sidebar> {
       button.classList.toggle('is-active', id === panel);
       button.setAttribute('aria-current', id === panel ? 'page' : 'false');
     }
+  }
+
+  private createMissingPanel(label: string): HTMLElement {
+    const panel = document.createElement('div');
+    panel.className = 'flex flex-col gap-2 p-4 text-es-muted text-sm';
+    panel.textContent = `${label} panel is not mounted.`;
+    return panel;
   }
 
   private createTextPanel(): HTMLElement {

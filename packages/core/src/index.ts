@@ -71,14 +71,23 @@ export {
   type ProjectPersistenceStatus,
 } from './project';
 export {
-  bindSidebarMediaLibrary,
+  bindMediaLibrary,
   MediaLibrary,
+  MediaLibraryEventEmitter,
+  MediaLibraryPanel,
+  mountMediaLibraryPanel,
   addMediaToTimeline,
   mediaLibraryItemToAddClipInput,
-  type BindSidebarMediaLibraryOptions,
+  type AddMediaFromFileOptions,
+  type BindMediaLibraryOptions,
+  type MediaLibraryEventHandler,
+  type MediaLibraryEventMap,
+  type MediaLibraryEventName,
 } from './mediaLibrary';
 export {
-  bindSidebarTranscription,
+  bindTranscription,
+  TranscriptionPanel,
+  TranscriptionWorkspace,
   configureTranscriptionEnv,
   TranscriptionService,
   TranscriptionEventEmitter,
@@ -87,7 +96,7 @@ export {
   audioBufferToFloat32Array,
   extractAudioFromMediaUrl,
   createMockTranscriptionResult,
-  type BindSidebarTranscriptionOptions,
+  type BindTranscriptionOptions,
   type TranscriptionChunk,
   type TranscriptionEventHandler,
   type TranscriptionEventMap,
@@ -95,6 +104,9 @@ export {
   type TranscriptionOptions,
   type TranscriptionProgress,
   type TranscriptionResult,
+  type TranscriptionUIEventHandler,
+  type TranscriptionUIEventMap,
+  type TranscriptionUIEventName,
 } from './transcription';
 export {
   Sidebar,
@@ -108,7 +120,6 @@ export type {
   SidebarEventName,
   SidebarEventHandler,
   ExportSettings,
-  MediaLibraryHost,
   MediaLibraryItem,
   ResolvedMediaInput,
   SidebarPanelId,

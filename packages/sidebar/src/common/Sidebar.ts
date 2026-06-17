@@ -4,23 +4,21 @@ import { SidebarEventEmitter } from '../event/events';
 import type { SidebarEventHandler, SidebarEventName } from './types';
 import type {
   ExportSettings,
-  MediaLibraryHost,
-  MediaLibraryItem,
   SidebarOptions,
+  SidebarPanelFactory,
   SidebarPanelId,
-  TranscriptionResult,
 } from './types';
 
 export class Sidebar {
   readonly events = new SidebarEventEmitter();
   private readonly preview: CompositionPreviewAPI;
-  private readonly mediaLibrary: MediaLibraryHost | null;
+  private readonly panelFactories: Partial<Record<SidebarPanelId, SidebarPanelFactory>>;
   private readonly disposables: Array<() => void> = [];
   private activePanel: SidebarPanelId;
 
   constructor(preview: CompositionPreviewAPI, options: SidebarOptions = {}) {
     this.preview = preview;
-    this.mediaLibrary = options.mediaLibrary ?? null;
+    this.panelFactories = options.panelFactories ?? {};
     this.activePanel = options.initialPanel ?? 'media';
     this.bindCanvas();
   }
@@ -65,35 +63,8 @@ export class Sidebar {
     return this.preview.getElement(id);
   }
 
-  getMediaLibrary(type?: MediaLibraryItem['type']): MediaLibraryItem[] {
-    return this.mediaLibrary?.list(type) ?? [];
-  }
-
-  requestMediaUpload(
-    file: File,
-    options: { addToCanvas?: boolean; startTime?: number } = {},
-  ): void {
-    this.events.emit('media:upload:requested', { file, ...options });
-  }
-
-  requestMediaRemove(id: string): void {
-    this.events.emit('media:remove:requested', { id });
-  }
-
-  selectMediaItem(item: MediaLibraryItem, startTime?: number): void {
-    this.events.emit('media:selected', { item, startTime });
-  }
-
-  notifyMediaAdded(item: MediaLibraryItem): void {
-    this.events.emit('media:added', { item });
-  }
-
-  notifyMediaRemoved(id: string): void {
-    this.events.emit('media:removed', { id });
-  }
-
-  notifyMediaLibraryChanged(): void {
-    this.events.emit('media:library:changed', {});
+  createPanelElement(panel: SidebarPanelId): HTMLElement | undefined {
+    return this.panelFactories[panel]?.(this);
   }
 
   canManageProject(): boolean {
@@ -136,40 +107,6 @@ export class Sidebar {
 
   setExportStatus(message: string, exporting = false): void {
     this.events.emit('export:status', { message, exporting });
-  }
-
-  canTranscribe(): boolean {
-    return this.preview
-      .getElements()
-      .some((element) => element.type === 'video' || element.type === 'audio');
-  }
-
-  requestTranscription(sourceId?: string): void {
-    this.events.emit('transcription:requested', { sourceId });
-  }
-
-  seekTranscription(timestamp: number, sourceId: string): void {
-    this.events.emit('transcription:seek', { timestamp, sourceId });
-  }
-
-  removeTranscriptionChunk(startTime: number, endTime: number, sourceId: string): void {
-    this.events.emit('transcription:chunk:removed', { startTime, endTime, sourceId });
-  }
-
-  requestTranscriptionCaptions(results: TranscriptionResult[]): void {
-    this.events.emit('transcription:captions:requested', { results });
-  }
-
-  setTranscriptionStatus(message: string, transcribing = false): void {
-    this.events.emit('transcription:status', { message, transcribing });
-  }
-
-  setTranscriptionResult(result: TranscriptionResult | null): void {
-    this.events.emit('transcription:result', { result });
-  }
-
-  highlightTranscriptionAt(time: number): void {
-    this.events.emit('transcription:highlight', { time });
   }
 
   addTextToCanvas(content = 'New text', startTime?: number): void {
@@ -234,21 +171,10 @@ export class Sidebar {
       this.events.emit('export:availability', { canExport: this.canExport() });
     };
 
-    const notifyTranscriptionAvailability = (): void => {
-      this.events.emit('transcription:availability', { canTranscribe: this.canTranscribe() });
-    };
-
     this.disposables.push(
-      this.preview.on('element:added', () => {
-        notifyExportAvailability();
-        notifyTranscriptionAvailability();
-      }),
-      this.preview.on('element:removed', () => {
-        notifyExportAvailability();
-        notifyTranscriptionAvailability();
-      }),
+      this.preview.on('element:added', notifyExportAvailability),
+      this.preview.on('element:removed', notifyExportAvailability),
     );
     notifyExportAvailability();
-    notifyTranscriptionAvailability();
   }
 }

@@ -1,10 +1,11 @@
 import type { TimelineState } from '@opensource/timeline';
+import type { MediaLibraryItem } from '@opensource/sidebar';
 import type {
   AspectRatioId,
   CanvasElement,
   CanvasSize,
 } from '@opensource/video-preview';
-import type { MediaLibraryItem, TranscriptionResult } from '@opensource/sidebar';
+import type { TranscriptionResult } from '../transcription/types';
 
 export const PROJECT_DOCUMENT_VERSION = 1 as const;
 export const PROJECT_JSON_FILENAME = 'project.json';

@@ -1,11 +1,10 @@
 import type { AddClipInput, Timeline } from '@opensource/timeline';
-import type { MediaLibraryItem, Sidebar } from '@opensource/sidebar';
+import type { MediaLibraryItem } from '@opensource/sidebar';
 import type { CompositionPreviewAPI } from '@opensource/video-preview';
 
 import type { MediaLibrary } from './MediaLibrary';
 
-export interface BindSidebarMediaLibraryOptions {
-  sidebar: Sidebar;
+export interface BindMediaLibraryOptions {
   timeline: Timeline;
   preview: CompositionPreviewAPI;
   mediaLibrary: MediaLibrary;
@@ -13,17 +12,16 @@ export interface BindSidebarMediaLibraryOptions {
   importUploadedFile?: (file: File) => Promise<MediaLibraryItem | null>;
 }
 
-export function bindSidebarMediaLibrary({
-  sidebar,
+export function bindMediaLibrary({
   timeline,
   preview,
   mediaLibrary,
   importUploadedFile,
-}: BindSidebarMediaLibraryOptions): () => void {
+}: BindMediaLibraryOptions): () => void {
   const disposers: Array<() => void> = [];
 
   disposers.push(
-    sidebar.on('media:upload:requested', async ({ file, addToCanvas, startTime }) => {
+    mediaLibrary.on('upload:requested', async ({ file, addToCanvas, startTime }) => {
       let item: MediaLibraryItem | null = null;
 
       try {
@@ -39,8 +37,6 @@ export function bindSidebarMediaLibrary({
         return;
       }
 
-      sidebar.notifyMediaAdded(item);
-
       if (addToCanvas === true) {
         addMediaToTimeline(timeline, preview, item, startTime);
       }
@@ -48,17 +44,14 @@ export function bindSidebarMediaLibrary({
   );
 
   disposers.push(
-    sidebar.on('media:selected', ({ item, startTime }) => {
+    mediaLibrary.on('selected', ({ item, startTime }) => {
       addMediaToTimeline(timeline, preview, item, startTime);
     }),
   );
 
   disposers.push(
-    sidebar.on('media:remove:requested', ({ id }) => {
-      const item = mediaLibrary.remove(id);
-      if (item) {
-        sidebar.notifyMediaRemoved(id);
-      }
+    mediaLibrary.on('remove:requested', ({ id }) => {
+      mediaLibrary.remove(id);
     }),
   );
 

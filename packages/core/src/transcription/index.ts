@@ -1,5 +1,7 @@
 export { configureTranscriptionEnv } from './configureEnv';
-export { bindSidebarTranscription, type BindSidebarTranscriptionOptions } from './bindSidebarTranscription';
+export { bindTranscription, type BindTranscriptionOptions } from './bindTranscription';
+export { TranscriptionPanel } from './TranscriptionPanel';
+export { TranscriptionWorkspace } from './TranscriptionWorkspace';
 export { TranscriptionService } from './TranscriptionService';
 export { TranscriptionEventEmitter } from './TranscriptionEventEmitter';
 export { PipelineFactory, transcribe, onModelInferenceError } from './model';
@@ -10,6 +12,11 @@ export {
 } from './audioTransform';
 export { extractAudioFromMediaUrl, type ExtractAudioOptions } from './extractAudio';
 export { createMockTranscriptionResult } from './mockTranscription';
+export type {
+  TranscriptionUIEventHandler,
+  TranscriptionUIEventMap,
+  TranscriptionUIEventName,
+} from './uiTypes';
 export type {
   ModelParams,
   Pipeline,

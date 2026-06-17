@@ -134,7 +134,7 @@ describe('ProjectSession', () => {
 
     session.setSaveContext({
       timeline: timeline as never,
-      canvas: canvas as never,
+      preview: canvas as never,
       sidebar: null,
       mediaLibrary,
     });

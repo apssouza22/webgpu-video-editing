@@ -48,14 +48,10 @@ export function bindProjectPersistence({
   disposables.push(
     editor.timeline.on('state:change', scheduleSave),
     editor.preview.on('state:changed', scheduleSave),
+    editor.mediaLibrary.on('added', scheduleSave),
+    editor.mediaLibrary.on('removed', scheduleSave),
+    editor.mediaLibrary.on('changed', scheduleSave),
   );
-
-  if (editor.sidebar) {
-    disposables.push(
-      editor.sidebar.on('media:added', scheduleSave),
-      editor.sidebar.on('media:removed', scheduleSave),
-    );
-  }
 
   const flush = (): void => {
     void session.flushSave(editor.timeline, editor.preview, editor.sidebar, editor.mediaLibrary);

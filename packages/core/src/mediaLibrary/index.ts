@@ -1,7 +1,15 @@
 export { MediaLibrary } from './MediaLibrary';
+export { MediaLibraryPanel, mountMediaLibraryPanel } from './MediaLibraryPanel';
+export { MediaLibraryEventEmitter } from './events';
 export {
   addMediaToTimeline,
-  bindSidebarMediaLibrary,
+  bindMediaLibrary,
   mediaLibraryItemToAddClipInput,
-  type BindSidebarMediaLibraryOptions,
-} from './bindSidebarMediaLibrary';
+  type BindMediaLibraryOptions,
+} from './bindMediaLibrary';
+export type {
+  AddMediaFromFileOptions,
+  MediaLibraryEventHandler,
+  MediaLibraryEventMap,
+  MediaLibraryEventName,
+} from './types';
