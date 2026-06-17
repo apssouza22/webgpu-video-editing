@@ -1,14 +1,34 @@
 import type { TranscriptionResult } from './types';
-import { TranscriptionUIEventEmitter } from './uiEventEmitter';
-import type { TranscriptionUIEventHandler, TranscriptionUIEventName } from './uiTypes';
+import type {
+  TranscriptionWorkspaceHandlers,
+  TranscriptionWorkspaceView,
+} from './uiTypes';
 
-/** UI event surface for the transcription sidebar panel. */
+/** Integration surface for the transcription sidebar panel. */
 export class TranscriptionWorkspace {
-  readonly events = new TranscriptionUIEventEmitter();
+  private handlers: TranscriptionWorkspaceHandlers = {};
+  private view: TranscriptionWorkspaceView | null = null;
   private canTranscribe = false;
 
   getCanTranscribe(): boolean {
     return this.canTranscribe;
+  }
+
+  setHandlers(handlers: TranscriptionWorkspaceHandlers): () => void {
+    const previous = this.handlers;
+    this.handlers = { ...previous, ...handlers };
+    return () => {
+      this.handlers = previous;
+    };
+  }
+
+  setView(view: TranscriptionWorkspaceView): () => void {
+    this.view = view;
+    return () => {
+      if (this.view === view) {
+        this.view = null;
+      }
+    };
   }
 
   setCanTranscribe(value: boolean): void {
@@ -16,48 +36,30 @@ export class TranscriptionWorkspace {
       return;
     }
     this.canTranscribe = value;
-    this.events.emit('transcription:availability', { canTranscribe: value });
+    this.view?.setCanTranscribe(value);
   }
 
   requestTranscription(sourceId?: string): void {
-    this.events.emit('transcription:requested', { sourceId });
+    void this.handlers.onTranscriptionRequested?.(sourceId);
   }
 
   seekTranscription(timestamp: number, sourceId: string): void {
-    this.events.emit('transcription:seek', { timestamp, sourceId });
-  }
-
-  removeTranscriptionChunk(startTime: number, endTime: number, sourceId: string): void {
-    this.events.emit('transcription:chunk:removed', { startTime, endTime, sourceId });
+    this.handlers.onSeek?.(timestamp, sourceId);
   }
 
   requestTranscriptionCaptions(results: TranscriptionResult[]): void {
-    this.events.emit('transcription:captions:requested', { results });
+    this.handlers.onCaptionsRequested?.(results);
   }
 
   setTranscriptionStatus(message: string, transcribing = false): void {
-    this.events.emit('transcription:status', { message, transcribing });
+    this.view?.setStatus(message, transcribing);
   }
 
   setTranscriptionResult(result: TranscriptionResult | null): void {
-    this.events.emit('transcription:result', { result });
+    this.view?.setResult(result);
   }
 
   highlightTranscriptionAt(time: number): void {
-    this.events.emit('transcription:highlight', { time });
-  }
-
-  on<T extends TranscriptionUIEventName>(
-    event: T,
-    handler: TranscriptionUIEventHandler<T>,
-  ): () => void {
-    return this.events.on(event, handler);
-  }
-
-  off<T extends TranscriptionUIEventName>(
-    event: T,
-    handler: TranscriptionUIEventHandler<T>,
-  ): void {
-    this.events.off(event, handler);
+    this.view?.highlightAt(time);
   }
 }

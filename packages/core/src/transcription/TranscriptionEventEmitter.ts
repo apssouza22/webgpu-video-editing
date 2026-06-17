@@ -10,9 +10,6 @@ type ListenerMap = {
 
 export class TranscriptionEventEmitter {
   private readonly listeners: ListenerMap = {
-    'model:progress': new Set(),
-    'model:ready': new Set(),
-    'model:error': new Set(),
     'transcription:progress': new Set(),
     'transcription:complete': new Set(),
     'transcription:error': new Set(),

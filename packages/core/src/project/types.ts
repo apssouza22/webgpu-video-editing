@@ -130,5 +130,5 @@ export interface ProjectPersistenceOptions {
 
 export interface BindProjectPersistenceOptions extends ProjectPersistenceOptions {
   editor: import('../VideoEditor').VideoEditor;
-  clipPreviewSync: import('../clipPreviewSync').TimelinePreviewSyncer;
+  clipPreviewSync: import('../glueComponents').TimelinePreviewSyncer;
 }

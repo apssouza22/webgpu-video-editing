@@ -2,7 +2,7 @@ import type { Timeline } from '@opensource/timeline';
 import type { CompositionPreview } from '@opensource/video-preview';
 import type { MediaLibraryItem, Sidebar } from '@opensource/sidebar';
 
-import type { TimelinePreviewSyncer } from '../clipPreviewSync';
+import type { TimelinePreviewSyncer } from '../glueComponents';
 import type { MediaLibrary } from '../mediaLibrary';
 import { FileSystemProjectStore } from './FileSystemProjectStore';
 import { IndexedDbProjectIndex } from './IndexedDbProjectIndex';

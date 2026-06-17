@@ -1,22 +1,21 @@
-import type { TranscriptionResult } from './types';
+import type { TranscriptionProgress, TranscriptionResult } from './types';
 
-export interface TranscriptionUIEventMap {
-  'transcription:requested': { sourceId?: string };
-  'transcription:seek': { timestamp: number; sourceId: string };
-  'transcription:chunk:removed': {
-    startTime: number;
-    endTime: number;
-    sourceId: string;
-  };
-  'transcription:captions:requested': { results: TranscriptionResult[] };
-  'transcription:status': { message: string; transcribing: boolean };
-  'transcription:result': { result: TranscriptionResult | null };
-  'transcription:highlight': { time: number };
-  'transcription:availability': { canTranscribe: boolean };
+/** Wired by {@link bindTranscription}; not part of the public event surface. */
+export interface TranscriptionWorkspaceHandlers {
+  onTranscriptionRequested?: (sourceId?: string) => void | Promise<void>;
+  onSeek?: (timestamp: number, sourceId: string) => void;
+  onCaptionsRequested?: (results: TranscriptionResult[]) => void;
 }
 
-export type TranscriptionUIEventName = keyof TranscriptionUIEventMap;
+/** UI delegate registered by {@link TranscriptionPanel}. */
+export interface TranscriptionWorkspaceView {
+  setStatus(message: string, transcribing: boolean): void;
+  setResult(result: TranscriptionResult | null): void;
+  highlightAt(time: number): void;
+  setCanTranscribe(canTranscribe: boolean): void;
+}
 
-export type TranscriptionUIEventHandler<T extends TranscriptionUIEventName> = (
-  payload: TranscriptionUIEventMap[T],
-) => void;
+/** Wired by {@link bindTranscription}; not part of the public event surface. */
+export interface TranscriptionServiceHandlers {
+  onProgress?: (progress: TranscriptionProgress) => void;
+}

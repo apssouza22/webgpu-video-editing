@@ -6,13 +6,16 @@ export interface AddMediaFromFileOptions {
   startTime?: number;
 }
 
+/** Wired by {@link bindMediaLibrary}; not part of the public event surface. */
+export interface MediaLibraryHandlers {
+  onUpload?: (file: File, options: AddMediaFromFileOptions) => void | Promise<void>;
+  onSelect?: (item: MediaLibraryItem, startTime?: number) => void;
+}
+
 export interface MediaLibraryEventMap {
   'added': { item: MediaLibraryItem };
   'removed': { id: string };
   'changed': Record<string, never>;
-  'selected': { item: MediaLibraryItem; startTime?: number };
-  'upload:requested': { file: File } & AddMediaFromFileOptions;
-  'remove:requested': { id: string };
 }
 
 export type MediaLibraryEventName = keyof MediaLibraryEventMap;

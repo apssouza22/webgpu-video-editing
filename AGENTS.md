@@ -155,7 +155,9 @@ git checkout -b my-feature
 - Assume that webgpu is available
 - Highly decoupled components by using events and commands
 - Ensure strong boundaries between packages
-
+- The intersection between packages should be small and well defined
+- The crossing points between packages should be well defined and not leak implementation details
+- use the glueComponent to connect the packages
 
 
 ### Ask first

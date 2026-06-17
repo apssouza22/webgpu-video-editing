@@ -10,8 +10,8 @@ export {
   fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
   timelineClipToCanvasElement,
-} from './clipPreviewSync';
-export type { ClipPreviewSyncOptions } from './clipPreviewSync';
+} from './glueComponents';
+export type { ClipPreviewSyncOptions } from './glueComponents';
 export {
   AnimationFrameLoop,
   bindEditorPlayback,
@@ -83,6 +83,7 @@ export {
   type MediaLibraryEventHandler,
   type MediaLibraryEventMap,
   type MediaLibraryEventName,
+  type MediaLibraryHandlers,
 } from './mediaLibrary';
 export {
   bindTranscription,
@@ -104,9 +105,9 @@ export {
   type TranscriptionOptions,
   type TranscriptionProgress,
   type TranscriptionResult,
-  type TranscriptionUIEventHandler,
-  type TranscriptionUIEventMap,
-  type TranscriptionUIEventName,
+  type TranscriptionServiceHandlers,
+  type TranscriptionWorkspaceHandlers,
+  type TranscriptionWorkspaceView,
 } from './transcription';
 export {
   Sidebar,

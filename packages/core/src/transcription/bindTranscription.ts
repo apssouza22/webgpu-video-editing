@@ -33,62 +33,60 @@ export function bindTranscription({
   };
 
   disposers.push(
-    workspace.on('transcription:requested', async ({ sourceId }) => {
-      const source = findTranscriptionSource(preview, sourceId);
-      if (!source) {
-        workspace.setTranscriptionStatus(
-          'Add a video or audio layer before transcribing.',
-          false,
-        );
-        return;
-      }
-
-      sidebar?.setActivePanel('transcription');
-      workspace.setTranscriptionStatus('Preparing audio for transcription…', true);
-
-      try {
-        transcription.loadModel();
-        const result = await transcription.transcribeMedia(
-          getMediaSourceUrl(source),
-          source.type === 'audio' ? 'audio' : 'video',
-          source.id,
-          getTranscriptionClipOptions(source),
-        );
-
-        if (result) {
-          workspace.setTranscriptionResult(result);
-          workspace.setTranscriptionStatus('Transcription complete.', false);
+    workspace.setHandlers({
+      onTranscriptionRequested: async (sourceId) => {
+        const source = findTranscriptionSource(preview, sourceId);
+        if (!source) {
+          workspace.setTranscriptionStatus(
+            'Add a video or audio layer before transcribing.',
+            false,
+          );
+          return;
         }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        workspace.setTranscriptionStatus(`Transcription failed: ${message}`, false);
-        console.error(error);
-      }
+
+        sidebar?.setActivePanel('transcription');
+        workspace.setTranscriptionStatus('Preparing audio for transcription…', true);
+
+        try {
+          transcription.loadModel();
+          const result = await transcription.transcribeMedia(
+            getMediaSourceUrl(source),
+            source.type === 'audio' ? 'audio' : 'video',
+            source.id,
+            getTranscriptionClipOptions(source),
+          );
+
+          if (result) {
+            workspace.setTranscriptionResult(result);
+            workspace.setTranscriptionStatus('Transcription complete.', false);
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          workspace.setTranscriptionStatus(`Transcription failed: ${message}`, false);
+          console.error(error);
+        }
+      },
+      onSeek: (timestamp) => {
+        timeline.pause();
+        timeline.setPlayhead(timestamp);
+      },
+      onCaptionsRequested: (results) => {
+        addCaptionClips(timeline, results);
+        workspace.setTranscriptionStatus('Caption layers added to the timeline.', false);
+      },
     }),
   );
 
   disposers.push(
-    transcription.on('transcription:progress', (progress) => {
-      if (progress.message || progress.status) {
-        workspace.setTranscriptionStatus(
-          progress.message ?? progress.status,
-          true,
-        );
-      }
-    }),
-  );
-
-  disposers.push(
-    workspace.on('transcription:seek', ({ timestamp }) => {
-      timeline.pause();
-      timeline.setPlayhead(timestamp);
-    }),
-  );
-
-  disposers.push(
-    workspace.on('transcription:captions:requested', ({ results }) => {
-      addCaptionClips(timeline, results);
-      workspace.setTranscriptionStatus('Caption layers added to the timeline.', false);
+    transcription.setHandlers({
+      onProgress: (progress) => {
+        if (progress.message || progress.status) {
+          workspace.setTranscriptionStatus(
+            progress.message ?? progress.status,
+            true,
+          );
+        }
+      },
     }),
   );
 

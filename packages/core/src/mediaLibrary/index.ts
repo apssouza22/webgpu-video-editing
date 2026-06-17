@@ -12,4 +12,5 @@ export type {
   MediaLibraryEventHandler,
   MediaLibraryEventMap,
   MediaLibraryEventName,
+  MediaLibraryHandlers,
 } from './types';

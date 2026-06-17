@@ -13,9 +13,9 @@ export {
 export { extractAudioFromMediaUrl, type ExtractAudioOptions } from './extractAudio';
 export { createMockTranscriptionResult } from './mockTranscription';
 export type {
-  TranscriptionUIEventHandler,
-  TranscriptionUIEventMap,
-  TranscriptionUIEventName,
+  TranscriptionServiceHandlers,
+  TranscriptionWorkspaceHandlers,
+  TranscriptionWorkspaceView,
 } from './uiTypes';
 export type {
   ModelParams,

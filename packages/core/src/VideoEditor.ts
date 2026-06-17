@@ -8,7 +8,7 @@ import {
 } from '@opensource/sidebar';
 
 import { AnimationFrameLoop, bindEditorPlayback } from './loop';
-import { bindClipPreviewSync, TimelinePreviewSyncer } from './clipPreviewSync';
+import { bindClipPreviewSync, TimelinePreviewSyncer } from './glueComponents';
 import {
   bindSidebarExport,
   downloadBlob,

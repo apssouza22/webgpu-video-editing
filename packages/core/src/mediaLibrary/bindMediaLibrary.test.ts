@@ -6,23 +6,6 @@ import type { Timeline } from '@opensource/timeline';
 import { bindMediaLibrary } from './bindMediaLibrary';
 import { MediaLibrary } from './MediaLibrary';
 
-function createMediaLibraryStub(): MediaLibrary & {
-  handlers: Map<string, Set<(payload: unknown) => void>>;
-} {
-  const handlers = new Map<string, Set<(payload: unknown) => void>>();
-  const library = new MediaLibrary();
-
-  const originalOn = library.on.bind(library);
-  library.on = ((event: string, handler: (payload: unknown) => void) => {
-    const listeners = handlers.get(event) ?? new Set();
-    listeners.add(handler);
-    handlers.set(event, listeners);
-    return originalOn(event as never, handler as never);
-  }) as typeof library.on;
-
-  return Object.assign(library, { handlers });
-}
-
 function createCanvasStub(): CompositionPreviewAPI {
   return {
     getCurrentTime: () => 2,
@@ -43,7 +26,7 @@ describe('bindMediaLibrary', () => {
       revokeObjectURL: vi.fn(),
     });
 
-    const mediaLibrary = createMediaLibraryStub();
+    const mediaLibrary = new MediaLibrary();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
     const dispose = bindMediaLibrary({ timeline, preview: canvas, mediaLibrary });
@@ -51,10 +34,8 @@ describe('bindMediaLibrary', () => {
     const added = vi.fn();
     mediaLibrary.on('added', added);
 
-    const uploadHandler = [...(mediaLibrary.handlers.get('upload:requested') ?? [])][0];
     const file = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
-
-    uploadHandler({ file });
+    mediaLibrary.requestUpload(file);
     await Promise.resolve();
 
     expect(mediaLibrary.list()).toHaveLength(1);
@@ -73,15 +54,13 @@ describe('bindMediaLibrary', () => {
       revokeObjectURL: vi.fn(),
     });
 
-    const mediaLibrary = createMediaLibraryStub();
+    const mediaLibrary = new MediaLibrary();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
     const dispose = bindMediaLibrary({ timeline, preview: canvas, mediaLibrary });
 
-    const uploadHandler = [...(mediaLibrary.handlers.get('upload:requested') ?? [])][0];
     const file = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
-
-    uploadHandler({ file, addToCanvas: true });
+    mediaLibrary.requestUpload(file, { addToCanvas: true });
     await Promise.resolve();
 
     expect(mediaLibrary.list()).toHaveLength(1);
@@ -102,7 +81,7 @@ describe('bindMediaLibrary', () => {
   });
 
   it('does not add persisted uploads to the timeline by default', async () => {
-    const mediaLibrary = createMediaLibraryStub();
+    const mediaLibrary = new MediaLibrary();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
     const persistedItem: MediaLibraryItem = {
@@ -125,8 +104,7 @@ describe('bindMediaLibrary', () => {
       importUploadedFile: async () => persistedItem,
     });
 
-    const uploadHandler = [...(mediaLibrary.handlers.get('upload:requested') ?? [])][0];
-    uploadHandler({ file: new File(['video'], 'clip.mp4', { type: 'video/mp4' }) });
+    mediaLibrary.requestUpload(new File(['video'], 'clip.mp4', { type: 'video/mp4' }));
     await Promise.resolve();
 
     expect(mediaLibrary.list()).toHaveLength(0);
@@ -139,7 +117,7 @@ describe('bindMediaLibrary', () => {
   });
 
   it('does not add to the timeline when persisted import throws', async () => {
-    const mediaLibrary = createMediaLibraryStub();
+    const mediaLibrary = new MediaLibrary();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -156,8 +134,7 @@ describe('bindMediaLibrary', () => {
       },
     });
 
-    const uploadHandler = [...(mediaLibrary.handlers.get('upload:requested') ?? [])][0];
-    uploadHandler({ file: new File(['video'], 'clip.mp4', { type: 'video/mp4' }) });
+    mediaLibrary.requestUpload(new File(['video'], 'clip.mp4', { type: 'video/mp4' }));
     await Promise.resolve();
 
     expect(mediaLibrary.list()).toHaveLength(0);
@@ -169,5 +146,34 @@ describe('bindMediaLibrary', () => {
     dispose();
     mediaLibrary.destroy();
     consoleError.mockRestore();
+  });
+
+  it('adds selected items to the timeline', () => {
+    const mediaLibrary = new MediaLibrary();
+    const canvas = createCanvasStub();
+    const timeline = createTimelineStub();
+    const dispose = bindMediaLibrary({ timeline, preview: canvas, mediaLibrary });
+
+    const item: MediaLibraryItem = {
+      id: 'lib-1',
+      type: 'image',
+      name: 'photo.png',
+      src: 'blob:photo',
+      createdAt: 1,
+      source: 'upload',
+    };
+
+    mediaLibrary.selectItem(item, 3);
+
+    expect(timeline.addClip).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'image',
+        url: 'blob:photo',
+        startTime: 3,
+      }),
+    );
+
+    dispose();
+    mediaLibrary.destroy();
   });
 });

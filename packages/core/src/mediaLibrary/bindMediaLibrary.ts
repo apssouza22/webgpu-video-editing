@@ -18,10 +18,8 @@ export function bindMediaLibrary({
   mediaLibrary,
   importUploadedFile,
 }: BindMediaLibraryOptions): () => void {
-  const disposers: Array<() => void> = [];
-
-  disposers.push(
-    mediaLibrary.on('upload:requested', async ({ file, addToCanvas, startTime }) => {
+  return mediaLibrary.setHandlers({
+    onUpload: async (file, { addToCanvas, startTime } = {}) => {
       let item: MediaLibraryItem | null = null;
 
       try {
@@ -40,26 +38,11 @@ export function bindMediaLibrary({
       if (addToCanvas === true) {
         addMediaToTimeline(timeline, preview, item, startTime);
       }
-    }),
-  );
-
-  disposers.push(
-    mediaLibrary.on('selected', ({ item, startTime }) => {
+    },
+    onSelect: (item, startTime) => {
       addMediaToTimeline(timeline, preview, item, startTime);
-    }),
-  );
-
-  disposers.push(
-    mediaLibrary.on('remove:requested', ({ id }) => {
-      mediaLibrary.remove(id);
-    }),
-  );
-
-  return () => {
-    while (disposers.length > 0) {
-      disposers.pop()?.();
-    }
-  };
+    },
+  });
 }
 
 export function mediaLibraryItemToAddClipInput(

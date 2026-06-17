@@ -3,6 +3,7 @@ import type { ExtractAudioOptions } from './extractAudio';
 import { createMockTranscriptionResult } from './mockTranscription';
 import { extractAudioFromMediaUrl } from './extractAudio';
 import { TranscriptionEventEmitter } from './TranscriptionEventEmitter';
+import type { TranscriptionServiceHandlers } from './uiTypes';
 import type {
   TranscriptionEventHandler,
   TranscriptionEventName,
@@ -12,11 +13,19 @@ import type {
   WorkerResponseMessage,
 } from './types';
 
+interface PendingAudioTranscription {
+  sourceId: string;
+  resolve: (result: TranscriptionResult) => void;
+  reject: (error: Error) => void;
+}
+
 export class TranscriptionService {
   readonly events = new TranscriptionEventEmitter();
   private readonly options: TranscriptionOptions;
+  private handlers: TranscriptionServiceHandlers = {};
   private worker: Worker | null = null;
   private transcribing = false;
+  private pendingAudioTranscription: PendingAudioTranscription | null = null;
 
   constructor(options: TranscriptionOptions = {}) {
     this.options = options;
@@ -24,6 +33,14 @@ export class TranscriptionService {
 
   get isTranscribing(): boolean {
     return this.transcribing;
+  }
+
+  setHandlers(handlers: TranscriptionServiceHandlers): () => void {
+    const previous = this.handlers;
+    this.handlers = { ...previous, ...handlers };
+    return () => {
+      this.handlers = previous;
+    };
   }
 
   loadModel(): void {
@@ -76,19 +93,7 @@ export class TranscriptionService {
     const audio = await prepareAudioForWhisper(audioBuffer);
 
     return new Promise((resolve, reject) => {
-      const unsubscribe = this.events.on('transcription:complete', ({ result }) => {
-        if (result.sourceId === sourceId) {
-          unsubscribe();
-          resolve(result);
-        }
-      });
-
-      const unsubscribeError = this.events.on('transcription:error', ({ error }) => {
-        unsubscribe();
-        unsubscribeError();
-        reject(error);
-      });
-
+      this.pendingAudioTranscription = { sourceId, resolve, reject };
       this.worker?.postMessage({ audio, sourceId });
     });
   }
@@ -111,6 +116,7 @@ export class TranscriptionService {
     this.worker?.terminate();
     this.worker = null;
     this.transcribing = false;
+    this.pendingAudioTranscription = null;
   }
 
   private ensureWorker(): void {
@@ -133,24 +139,33 @@ export class TranscriptionService {
       case 'initiate':
       case 'done':
         if (isProgressPayload(message.data)) {
-          this.events.emit('model:progress', message.data);
+          this.handlers.onProgress?.(message.data);
           this.events.emit('transcription:progress', message.data);
         }
         break;
 
       case 'ready':
-        this.events.emit('model:ready', {});
         break;
 
       case 'complete':
         if (message.data && isTranscriptionResult(message.data)) {
-          this.events.emit('transcription:complete', { result: message.data });
+          const result = message.data;
+          const pending = this.pendingAudioTranscription;
+          if (pending && pending.sourceId === result.sourceId) {
+            this.pendingAudioTranscription = null;
+            pending.resolve(result);
+          }
+          this.events.emit('transcription:complete', { result });
         }
         break;
 
       case 'error': {
         const error = normalizeWorkerError(message.data);
-        this.events.emit('model:error', { error });
+        const pending = this.pendingAudioTranscription;
+        if (pending) {
+          this.pendingAudioTranscription = null;
+          pending.reject(error);
+        }
         this.events.emit('transcription:error', { error });
         break;
       }

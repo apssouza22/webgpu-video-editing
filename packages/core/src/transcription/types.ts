@@ -64,9 +64,6 @@ export interface TranscriptionError extends Error {
 }
 
 export interface TranscriptionEventMap {
-  'model:progress': TranscriptionProgress;
-  'model:ready': Record<string, never>;
-  'model:error': { error: Error };
   'transcription:progress': TranscriptionProgress;
   'transcription:complete': { result: TranscriptionResult };
   'transcription:error': { error: Error };

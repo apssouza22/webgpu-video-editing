@@ -1,7 +1,8 @@
 import type { TranscriptionChunk, TranscriptionResult } from './types';
+import type { TranscriptionWorkspaceView } from './uiTypes';
 import type { TranscriptionWorkspace } from './TranscriptionWorkspace';
 
-export class TranscriptionPanel {
+export class TranscriptionPanel implements TranscriptionWorkspaceView {
   private readonly root: HTMLElement;
   private readonly transcribeButton: HTMLButtonElement;
   private readonly captionsButton: HTMLButtonElement;
@@ -52,32 +53,7 @@ export class TranscriptionPanel {
       }
     });
 
-    this.disposers.push(
-      this.workspace.on('transcription:status', ({ message, transcribing }) => {
-        this.transcribing = transcribing;
-        this.statusEl.textContent = message;
-        this.updateButtonState(this.workspace.getCanTranscribe());
-      }),
-    );
-
-    this.disposers.push(
-      this.workspace.on('transcription:result', ({ result }) => {
-        this.renderResult(result);
-        this.updateButtonState(this.workspace.getCanTranscribe());
-      }),
-    );
-
-    this.disposers.push(
-      this.workspace.on('transcription:highlight', ({ time }) => {
-        this.highlightChunksByTime(time);
-      }),
-    );
-
-    this.disposers.push(
-      this.workspace.on('transcription:availability', ({ canTranscribe }) => {
-        this.updateButtonState(canTranscribe);
-      }),
-    );
+    this.disposers.push(this.workspace.setView(this));
 
     this.root.append(
       title,
@@ -93,6 +69,25 @@ export class TranscriptionPanel {
 
   get element(): HTMLElement {
     return this.root;
+  }
+
+  setStatus(message: string, transcribing: boolean): void {
+    this.transcribing = transcribing;
+    this.statusEl.textContent = message;
+    this.updateButtonState(this.workspace.getCanTranscribe());
+  }
+
+  setResult(result: TranscriptionResult | null): void {
+    this.renderResult(result);
+    this.updateButtonState(this.workspace.getCanTranscribe());
+  }
+
+  highlightAt(time: number): void {
+    this.highlightChunksByTime(time);
+  }
+
+  setCanTranscribe(canTranscribe: boolean): void {
+    this.updateButtonState(canTranscribe);
   }
 
   destroy(): void {
@@ -142,7 +137,6 @@ export class TranscriptionPanel {
       event.stopPropagation();
       const startTime = Number(chunkEl.dataset.startTime ?? 0);
       const endTime = Number(chunkEl.dataset.endTime ?? 0);
-      this.workspace.removeTranscriptionChunk(startTime, endTime, sourceId);
       this.removeChunkElement(chunkEl, startTime, endTime);
     });
 

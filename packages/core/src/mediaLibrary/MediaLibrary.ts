@@ -5,6 +5,7 @@ import type {
   AddMediaFromFileOptions,
   MediaLibraryEventHandler,
   MediaLibraryEventName,
+  MediaLibraryHandlers,
 } from './types';
 
 let nextMediaId = 0;
@@ -18,6 +19,7 @@ export class MediaLibrary {
   readonly events = new MediaLibraryEventEmitter();
   private readonly items = new Map<string, MediaLibraryItem>();
   private readonly objectUrls = new Set<string>();
+  private handlers: MediaLibraryHandlers = {};
 
   list(type?: MediaLibraryItem['type']): MediaLibraryItem[] {
     const all = [...this.items.values()].sort((a, b) => b.createdAt - a.createdAt);
@@ -28,19 +30,23 @@ export class MediaLibrary {
     return this.items.get(id);
   }
 
+  setHandlers(handlers: MediaLibraryHandlers): () => void {
+    const previous = this.handlers;
+    this.handlers = { ...previous, ...handlers };
+    return () => {
+      this.handlers = previous;
+    };
+  }
+
   requestUpload(
     file: File,
     options: AddMediaFromFileOptions = {},
   ): void {
-    this.events.emit('upload:requested', { file, ...options });
-  }
-
-  requestRemove(id: string): void {
-    this.events.emit('remove:requested', { id });
+    void this.handlers.onUpload?.(file, options);
   }
 
   selectItem(item: MediaLibraryItem, startTime?: number): void {
-    this.events.emit('selected', { item, startTime });
+    this.handlers.onSelect?.(item, startTime);
   }
 
   on<T extends MediaLibraryEventName>(
