@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { MediaLibrary } from './MediaLibrary';
+import { MediaLibraryService } from './MediaLibraryService';
 
-describe('MediaLibrary', () => {
+describe('MediaLibraryService', () => {
   it('starts empty', () => {
-    const library = new MediaLibrary();
+    const library = new MediaLibraryService();
     expect(library.list()).toHaveLength(0);
   });
 
@@ -15,7 +15,7 @@ describe('MediaLibrary', () => {
       revokeObjectURL,
     });
 
-    const library = new MediaLibrary();
+    const library = new MediaLibraryService();
     const file = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
     const item = library.addFromFile(file);
 
@@ -31,7 +31,7 @@ describe('MediaLibrary', () => {
   });
 
   it('returns only persisted library items', () => {
-    const library = new MediaLibrary();
+    const library = new MediaLibraryService();
 
     library.addFromResolvedMedia({
       assetId: 'asset-1',
@@ -52,7 +52,7 @@ describe('MediaLibrary', () => {
   });
 
   it('replaces persisted items when loading a project', () => {
-    const library = new MediaLibrary();
+    const library = new MediaLibraryService();
     library.addFromFile(new File(['x'], 'old.png', { type: 'image/png' }));
 
     library.loadPersistedItems([

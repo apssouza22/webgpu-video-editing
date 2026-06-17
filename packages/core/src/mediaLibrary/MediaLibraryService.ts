@@ -1,12 +1,11 @@
-import type { MediaLibraryItem, ResolvedMediaInput } from '@opensource/sidebar';
-
 import { probeMediaDuration } from './duration';
 import { MediaLibraryEventEmitter } from './events';
 import type {
   AddMediaFromFileOptions,
   MediaLibraryEventHandler,
   MediaLibraryEventName,
-  MediaLibraryHandlers,
+  MediaLibraryItem,
+  ResolvedMediaInput,
 } from './types';
 
 let nextMediaId = 0;
@@ -16,11 +15,10 @@ function createMediaId(): string {
   return `media-${nextMediaId}`;
 }
 
-export class MediaLibrary {
+export class MediaLibraryService {
   readonly events = new MediaLibraryEventEmitter();
   private readonly items = new Map<string, MediaLibraryItem>();
   private readonly objectUrls = new Set<string>();
-  private handlers: MediaLibraryHandlers = {};
 
   list(type?: MediaLibraryItem['type']): MediaLibraryItem[] {
     const all = [...this.items.values()].sort((a, b) => b.createdAt - a.createdAt);
@@ -31,23 +29,15 @@ export class MediaLibrary {
     return this.items.get(id);
   }
 
-  setHandlers(handlers: MediaLibraryHandlers): () => void {
-    const previous = this.handlers;
-    this.handlers = { ...previous, ...handlers };
-    return () => {
-      this.handlers = previous;
-    };
-  }
-
   requestUpload(
     file: File,
     options: AddMediaFromFileOptions = {},
   ): void {
-    void this.handlers.onUpload?.(file, options);
+    this.events.emit('upload:requested', { file, ...options });
   }
 
   selectItem(item: MediaLibraryItem, startTime?: number): void {
-    this.handlers.onSelect?.(item, startTime);
+    this.events.emit('selected', { item, startTime });
   }
 
   on<T extends MediaLibraryEventName>(

@@ -1,4 +1,30 @@
-import type { MediaLibraryItem } from '@opensource/sidebar';
+export type MediaType = 'video' | 'image' | 'audio';
+
+export type MediaLibrarySource = 'upload' | 'library';
+
+export interface MediaLibraryItem {
+  id: string;
+  type: MediaType;
+  name: string;
+  src: string;
+  thumbnail?: string;
+  /** Duration in seconds for video and audio items. */
+  duration?: number;
+  createdAt: number;
+  source: MediaLibrarySource;
+  /** Stable reference to a persisted project media asset. */
+  assetId?: string;
+}
+
+export interface ResolvedMediaInput {
+  assetId: string;
+  type: MediaType;
+  name: string;
+  src: string;
+  thumbnail?: string;
+  duration?: number;
+  id?: string;
+}
 
 export interface AddMediaFromFileOptions {
   /** When true, also inserts the uploaded media on the timeline at the playhead. */
@@ -6,16 +32,12 @@ export interface AddMediaFromFileOptions {
   startTime?: number;
 }
 
-/** Wired by {@link bindMediaLibrary}; not part of the public event surface. */
-export interface MediaLibraryHandlers {
-  onUpload?: (file: File, options: AddMediaFromFileOptions) => void | Promise<void>;
-  onSelect?: (item: MediaLibraryItem, startTime?: number) => void;
-}
-
 export interface MediaLibraryEventMap {
   'added': { item: MediaLibraryItem };
   'removed': { id: string };
   'changed': Record<string, never>;
+  'upload:requested': { file: File } & AddMediaFromFileOptions;
+  'selected': { item: MediaLibraryItem; startTime?: number };
 }
 
 export type MediaLibraryEventName = keyof MediaLibraryEventMap;

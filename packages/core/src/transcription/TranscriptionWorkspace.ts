@@ -1,12 +1,14 @@
 import type { TranscriptionResult, TranscriptionWordRemovedPayload } from './types';
+import { TranscriptionWorkspaceEventEmitter } from './TranscriptionWorkspaceEventEmitter';
 import type {
-  TranscriptionWorkspaceHandlers,
+  TranscriptionWorkspaceEventHandler,
+  TranscriptionWorkspaceEventName,
   TranscriptionWorkspaceView,
 } from './uiTypes';
 
 /** Integration surface for the transcription sidebar panel. */
 export class TranscriptionWorkspace {
-  private handlers: TranscriptionWorkspaceHandlers = {};
+  readonly events = new TranscriptionWorkspaceEventEmitter();
   private view: TranscriptionWorkspaceView | null = null;
   private canTranscribe = false;
 
@@ -14,12 +16,18 @@ export class TranscriptionWorkspace {
     return this.canTranscribe;
   }
 
-  setHandlers(handlers: TranscriptionWorkspaceHandlers): () => void {
-    const previous = this.handlers;
-    this.handlers = { ...previous, ...handlers };
-    return () => {
-      this.handlers = previous;
-    };
+  on<T extends TranscriptionWorkspaceEventName>(
+    event: T,
+    handler: TranscriptionWorkspaceEventHandler<T>,
+  ): () => void {
+    return this.events.on(event, handler);
+  }
+
+  off<T extends TranscriptionWorkspaceEventName>(
+    event: T,
+    handler: TranscriptionWorkspaceEventHandler<T>,
+  ): void {
+    this.events.off(event, handler);
   }
 
   setView(view: TranscriptionWorkspaceView): () => void {
@@ -40,19 +48,19 @@ export class TranscriptionWorkspace {
   }
 
   requestTranscription(sourceId?: string): void {
-    void this.handlers.onTranscriptionRequested?.(sourceId);
+    this.events.emit('transcription:requested', { sourceId });
   }
 
   seekTranscription(timestamp: number, sourceId: string): void {
-    this.handlers.onSeek?.(timestamp, sourceId);
+    this.events.emit('transcription:seek', { timestamp, sourceId });
   }
 
   requestTranscriptionCaptions(results: TranscriptionResult[]): void {
-    this.handlers.onCaptionsRequested?.(results);
+    this.events.emit('transcription:captions:requested', { results });
   }
 
   removeTranscriptionWord(payload: TranscriptionWordRemovedPayload): void {
-    this.handlers.onWordRemoved?.(payload);
+    this.events.emit('transcription:word:removed', payload);
   }
 
   setTranscriptionStatus(message: string, transcribing = false): void {

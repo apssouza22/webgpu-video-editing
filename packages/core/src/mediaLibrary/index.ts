@@ -1,17 +1,12 @@
-export { MediaLibrary } from './MediaLibrary';
+export { MediaLibraryService } from './MediaLibraryService';
 export { MediaLibraryPanel, mountMediaLibraryPanel } from './MediaLibraryPanel';
-export { MediaLibraryEventEmitter } from './events';
-export {
-  addMediaToTimeline,
-  bindMediaLibrary,
-  mediaLibraryItemToAddClipInput,
-  type BindMediaLibraryOptions,
-} from './bindMediaLibrary';
 export type {
   AddMediaFromFileOptions,
   MediaLibraryEventHandler,
   MediaLibraryEventMap,
   MediaLibraryEventName,
-  MediaLibraryHandlers,
+  MediaLibraryItem,
+  MediaLibrarySource,
+  MediaType,
+  ResolvedMediaInput,
 } from './types';
-export { formatMediaDuration, probeMediaDuration } from './duration';

@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CompositionPreviewAPI } from '@opensource/video-preview';
-import type { MediaLibraryItem } from '@opensource/sidebar';
 import type { Timeline } from '@opensource/timeline';
 
-import { bindMediaLibrary } from './bindMediaLibrary';
-import { MediaLibrary } from './MediaLibrary';
+import { MediaLibraryService } from '../mediaLibrary/MediaLibraryService';
+import type { MediaLibraryItem } from '../mediaLibrary/types';
+import { bindMediaLibraryTimeline } from './MediaLibraryTimelineSubscriber';
 
 function createCanvasStub(): CompositionPreviewAPI {
   return {
@@ -19,17 +19,17 @@ function createTimelineStub(): Timeline {
   } as unknown as Timeline;
 }
 
-describe('bindMediaLibrary', () => {
+describe('MediaLibraryTimelineSubscriber', () => {
   it('adds uploaded files to the library without adding to the timeline by default', async () => {
     vi.stubGlobal('URL', {
       createObjectURL: () => 'blob:upload-1',
       revokeObjectURL: vi.fn(),
     });
 
-    const mediaLibrary = new MediaLibrary();
+    const mediaLibrary = new MediaLibraryService();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
-    const dispose = bindMediaLibrary({ timeline, preview: canvas, mediaLibrary });
+    const { dispose } = bindMediaLibraryTimeline({ timeline, preview: canvas, mediaLibrary });
 
     const added = vi.fn();
     mediaLibrary.on('added', added);
@@ -54,10 +54,10 @@ describe('bindMediaLibrary', () => {
       revokeObjectURL: vi.fn(),
     });
 
-    const mediaLibrary = new MediaLibrary();
+    const mediaLibrary = new MediaLibraryService();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
-    const dispose = bindMediaLibrary({ timeline, preview: canvas, mediaLibrary });
+    const { dispose } = bindMediaLibraryTimeline({ timeline, preview: canvas, mediaLibrary });
 
     const file = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
     mediaLibrary.requestUpload(file, { addToCanvas: true });
@@ -81,7 +81,7 @@ describe('bindMediaLibrary', () => {
   });
 
   it('does not add persisted uploads to the timeline by default', async () => {
-    const mediaLibrary = new MediaLibrary();
+    const mediaLibrary = new MediaLibraryService();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
     const persistedItem: MediaLibraryItem = {
@@ -97,7 +97,7 @@ describe('bindMediaLibrary', () => {
     const added = vi.fn();
     mediaLibrary.on('added', added);
 
-    const dispose = bindMediaLibrary({
+    const { dispose } = bindMediaLibraryTimeline({
       timeline,
       preview: canvas,
       mediaLibrary,
@@ -117,7 +117,7 @@ describe('bindMediaLibrary', () => {
   });
 
   it('does not add to the timeline when persisted import throws', async () => {
-    const mediaLibrary = new MediaLibrary();
+    const mediaLibrary = new MediaLibraryService();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -125,7 +125,7 @@ describe('bindMediaLibrary', () => {
     const added = vi.fn();
     mediaLibrary.on('added', added);
 
-    const dispose = bindMediaLibrary({
+    const { dispose } = bindMediaLibraryTimeline({
       timeline,
       preview: canvas,
       mediaLibrary,
@@ -149,10 +149,10 @@ describe('bindMediaLibrary', () => {
   });
 
   it('adds selected items to the timeline', () => {
-    const mediaLibrary = new MediaLibrary();
+    const mediaLibrary = new MediaLibraryService();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
-    const dispose = bindMediaLibrary({ timeline, preview: canvas, mediaLibrary });
+    const { dispose } = bindMediaLibraryTimeline({ timeline, preview: canvas, mediaLibrary });
 
     const item: MediaLibraryItem = {
       id: 'lib-1',
@@ -178,10 +178,10 @@ describe('bindMediaLibrary', () => {
   });
 
   it('uses the media duration when adding video clips', () => {
-    const mediaLibrary = new MediaLibrary();
+    const mediaLibrary = new MediaLibraryService();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
-    const dispose = bindMediaLibrary({ timeline, preview: canvas, mediaLibrary });
+    const { dispose } = bindMediaLibraryTimeline({ timeline, preview: canvas, mediaLibrary });
 
     const item: MediaLibraryItem = {
       id: 'lib-2',

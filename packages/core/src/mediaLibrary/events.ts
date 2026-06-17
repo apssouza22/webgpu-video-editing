@@ -13,6 +13,8 @@ export class MediaLibraryEventEmitter {
     'added': new Set(),
     'removed': new Set(),
     'changed': new Set(),
+    'upload:requested': new Set(),
+    'selected': new Set(),
   };
 
   on<T extends MediaLibraryEventName>(

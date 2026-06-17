@@ -3,7 +3,7 @@ import type { CompositionPreview } from '@opensource/video-preview';
 import type { Timeline } from '@opensource/timeline';
 import type { CanvasElement } from '@opensource/video-preview';
 
-import type { TimelinePreviewSyncer } from '../glueComponents';
+import type { ClipPreviewSyncService } from '../subscribers';
 import type { TranscriptionService } from './TranscriptionService';
 import type { TranscriptionResult } from './types';
 import type { TranscriptionWorkspace } from './TranscriptionWorkspace';
@@ -13,7 +13,7 @@ export interface BindTranscriptionOptions {
   timeline: Timeline;
   preview: CompositionPreview;
   transcription: TranscriptionService;
-  clipPreviewSync: TimelinePreviewSyncer;
+  clipPreviewSync: ClipPreviewSyncService;
   sidebar?: Sidebar | null;
 }
 
@@ -36,67 +36,63 @@ export function bindTranscription({
   };
 
   disposers.push(
-    workspace.setHandlers({
-      onTranscriptionRequested: async (sourceId) => {
-        const source = findTranscriptionSource(preview, sourceId);
-        if (!source) {
-          workspace.setTranscriptionStatus(
-            'Add a video or audio layer before transcribing.',
-            false,
-          );
-          return;
+    workspace.on('transcription:requested', async ({ sourceId }) => {
+      const source = findTranscriptionSource(preview, sourceId);
+      if (!source) {
+        workspace.setTranscriptionStatus(
+          'Add a video or audio layer before transcribing.',
+          false,
+        );
+        return;
+      }
+
+      sidebar?.setActivePanel('transcription');
+      workspace.setTranscriptionStatus('Preparing audio for transcription…', true);
+
+      try {
+        transcription.loadModel();
+        const result = await transcription.transcribeMedia(
+          getMediaSourceUrl(source),
+          source.type === 'audio' ? 'audio' : 'video',
+          source.id,
+          getTranscriptionClipOptions(source),
+        );
+
+        if (result) {
+          const clipId = clipPreviewSync.getClipIdForElement(source.id);
+          workspace.setTranscriptionResult({
+            ...result,
+            clipId,
+          });
+          workspace.setTranscriptionStatus('Transcription complete.', false);
         }
-
-        sidebar?.setActivePanel('transcription');
-        workspace.setTranscriptionStatus('Preparing audio for transcription…', true);
-
-        try {
-          transcription.loadModel();
-          const result = await transcription.transcribeMedia(
-            getMediaSourceUrl(source),
-            source.type === 'audio' ? 'audio' : 'video',
-            source.id,
-            getTranscriptionClipOptions(source),
-          );
-
-          if (result) {
-            const clipId = clipPreviewSync.getClipIdForElement(source.id);
-            workspace.setTranscriptionResult({
-              ...result,
-              clipId,
-            });
-            workspace.setTranscriptionStatus('Transcription complete.', false);
-          }
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          workspace.setTranscriptionStatus(`Transcription failed: ${message}`, false);
-          console.error(error);
-        }
-      },
-      onSeek: (timestamp) => {
-        timeline.pause();
-        timeline.setPlayhead(timestamp);
-      },
-      onCaptionsRequested: (results) => {
-        addCaptionClips(timeline, results);
-        workspace.setTranscriptionStatus('Caption layers added to the timeline.', false);
-      },
-      onWordRemoved: (payload) => {
-        transcription.notifyWordRemoved(payload);
-      },
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        workspace.setTranscriptionStatus(`Transcription failed: ${message}`, false);
+        console.error(error);
+      }
+    }),
+    workspace.on('transcription:seek', ({ timestamp }) => {
+      timeline.pause();
+      timeline.setPlayhead(timestamp);
+    }),
+    workspace.on('transcription:captions:requested', ({ results }) => {
+      addCaptionClips(timeline, results);
+      workspace.setTranscriptionStatus('Caption layers added to the timeline.', false);
+    }),
+    workspace.on('transcription:word:removed', (payload) => {
+      transcription.notifyWordRemoved(payload);
     }),
   );
 
   disposers.push(
-    transcription.setHandlers({
-      onProgress: (progress) => {
-        if (progress.message || progress.status) {
-          workspace.setTranscriptionStatus(
-            progress.message ?? progress.status,
-            true,
-          );
-        }
-      },
+    transcription.on('transcription:progress', (progress) => {
+      if (progress.message || progress.status) {
+        workspace.setTranscriptionStatus(
+          progress.message ?? progress.status,
+          true,
+        );
+      }
     }),
   );
 

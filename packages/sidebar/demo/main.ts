@@ -3,7 +3,7 @@ import '@opensource/video-preview/style.css';
 
 import { CompositionPreview } from '@opensource/video-preview';
 import { Timeline } from '@opensource/timeline';
-import { bindMediaLibrary, MediaLibrary, MediaLibraryPanel } from '@opensource/core';
+import { bindMediaLibraryTimeline, MediaLibraryPanel, MediaLibraryService } from '@opensource/core';
 import { Sidebar, mountSidebar } from '@opensource/sidebar';
 
 const app = document.getElementById('app');
@@ -27,13 +27,13 @@ app.append(sidebarEl, main, timelineEl);
 
 const preview = new CompositionPreview(main);
 const timeline = new Timeline(timelineEl);
-const mediaLibrary = new MediaLibrary();
+const mediaLibrary = new MediaLibraryService();
 const sidebar = new Sidebar(preview, {
   panelFactories: {
     media: () => new MediaLibraryPanel(mediaLibrary).element,
   },
 });
-const unmountMediaLibrary = bindMediaLibrary({ timeline, preview, mediaLibrary });
+const { dispose: unmountMediaLibrary } = bindMediaLibraryTimeline({ timeline, preview, mediaLibrary });
 const unmountSidebar = mountSidebar(sidebarEl, sidebar);
 
 window.addEventListener('beforeunload', () => {

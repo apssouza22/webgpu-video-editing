@@ -1,13 +1,4 @@
-import type { TranscriptionProgress, TranscriptionResult } from './types';
-import type { TranscriptionWordRemovedPayload } from './types';
-
-/** Wired by {@link bindTranscription}; not part of the public event surface. */
-export interface TranscriptionWorkspaceHandlers {
-  onTranscriptionRequested?: (sourceId?: string) => void | Promise<void>;
-  onSeek?: (timestamp: number, sourceId: string) => void;
-  onCaptionsRequested?: (results: TranscriptionResult[]) => void;
-  onWordRemoved?: (payload: TranscriptionWordRemovedPayload) => void;
-}
+import type { TranscriptionResult, TranscriptionWordRemovedPayload } from './types';
 
 /** UI delegate registered by {@link TranscriptionPanel}. */
 export interface TranscriptionWorkspaceView {
@@ -17,7 +8,15 @@ export interface TranscriptionWorkspaceView {
   setCanTranscribe(canTranscribe: boolean): void;
 }
 
-/** Wired by {@link bindTranscription}; not part of the public event surface. */
-export interface TranscriptionServiceHandlers {
-  onProgress?: (progress: TranscriptionProgress) => void;
+export interface TranscriptionWorkspaceEventMap {
+  'transcription:requested': { sourceId?: string };
+  'transcription:seek': { timestamp: number; sourceId: string };
+  'transcription:captions:requested': { results: TranscriptionResult[] };
+  'transcription:word:removed': TranscriptionWordRemovedPayload;
 }
+
+export type TranscriptionWorkspaceEventName = keyof TranscriptionWorkspaceEventMap;
+
+export type TranscriptionWorkspaceEventHandler<T extends TranscriptionWorkspaceEventName> = (
+  payload: TranscriptionWorkspaceEventMap[T],
+) => void;

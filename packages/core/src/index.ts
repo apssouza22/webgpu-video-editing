@@ -6,16 +6,23 @@ export { CompositionPreview } from '@opensource/video-preview';
 export type { CompositionPreviewOptions } from '@opensource/video-preview';
 export {
   bindClipPreviewSync,
+  bindMediaLibraryTimeline,
   bindTranscriptionTimelineCut,
-  TimelinePreviewSyncer,
+  ClipPreviewSyncService,
+  CompositionPreviewSubscriber,
+  TimelineSubscriber,
+  MediaLibraryTimelineSubscriber,
   fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
   timelineClipToCanvasElement,
-} from './glueComponents';
+} from './subscribers';
 export type {
   BindTranscriptionTimelineCutOptions,
   ClipPreviewSyncOptions,
-} from './glueComponents';
+  CompositionPreviewSubscriberOptions,
+  MediaLibraryTimelineSubscriberOptions,
+  TimelineSubscriberOptions,
+} from './subscribers';
 export {
   AnimationFrameLoop,
   bindEditorPlayback,
@@ -75,19 +82,17 @@ export {
   type ProjectPersistenceStatus,
 } from './project';
 export {
-  bindMediaLibrary,
-  MediaLibrary,
-  MediaLibraryEventEmitter,
+  MediaLibraryService,
   MediaLibraryPanel,
   mountMediaLibraryPanel,
-  addMediaToTimeline,
-  mediaLibraryItemToAddClipInput,
   type AddMediaFromFileOptions,
-  type BindMediaLibraryOptions,
   type MediaLibraryEventHandler,
   type MediaLibraryEventMap,
   type MediaLibraryEventName,
-  type MediaLibraryHandlers,
+  type MediaLibraryItem,
+  type MediaLibrarySource,
+  type MediaType,
+  type ResolvedMediaInput,
 } from './mediaLibrary';
 export {
   bindTranscription,
@@ -110,8 +115,9 @@ export {
   type TranscriptionProgress,
   type TranscriptionResult,
   type TranscriptionWordRemovedPayload,
-  type TranscriptionServiceHandlers,
-  type TranscriptionWorkspaceHandlers,
+  type TranscriptionWorkspaceEventHandler,
+  type TranscriptionWorkspaceEventMap,
+  type TranscriptionWorkspaceEventName,
   type TranscriptionWorkspaceView,
 } from './transcription';
 export {
@@ -126,7 +132,5 @@ export type {
   SidebarEventName,
   SidebarEventHandler,
   ExportSettings,
-  MediaLibraryItem,
-  ResolvedMediaInput,
   SidebarPanelId,
 } from '@opensource/sidebar';

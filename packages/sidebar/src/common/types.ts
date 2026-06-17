@@ -2,8 +2,6 @@ import type { CanvasElement } from '@opensource/video-preview';
 
 import type { Sidebar } from './Sidebar';
 
-export type MediaType = 'video' | 'image' | 'audio';
-
 export type SidebarPanelId = 'project' | 'media' | 'text' | 'properties' | 'export' | 'transcription';
 
 export type ExportQuality = 'low' | 'medium' | 'high' | 'max';
@@ -30,32 +28,6 @@ export interface ExportSettings {
   format?: ExportFormat;
   resolution?: ExportResolution;
   outputFilename?: string;
-}
-
-export type MediaLibrarySource = 'upload' | 'library';
-
-export interface MediaLibraryItem {
-  id: string;
-  type: MediaType;
-  name: string;
-  src: string;
-  thumbnail?: string;
-  /** Duration in seconds for video and audio items. */
-  duration?: number;
-  createdAt: number;
-  source: MediaLibrarySource;
-  /** Stable reference to a persisted project media asset. */
-  assetId?: string;
-}
-
-export interface ResolvedMediaInput {
-  assetId: string;
-  type: MediaType;
-  name: string;
-  src: string;
-  thumbnail?: string;
-  duration?: number;
-  id?: string;
 }
 
 export interface SidebarEventMap {

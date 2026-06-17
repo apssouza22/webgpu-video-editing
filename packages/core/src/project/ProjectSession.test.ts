@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { MediaLibrary } from '../mediaLibrary';
+import { MediaLibraryService } from '../mediaLibrary';
 import { ProjectSession } from './ProjectSession';
 import { FileSystemProjectStore } from './FileSystemProjectStore';
 
@@ -98,7 +98,7 @@ describe('ProjectSession', () => {
   it('persists uploaded media into the open project', async () => {
     const { store, directoryHandle } = createMockStore();
     const session = new ProjectSession();
-    const mediaLibrary = new MediaLibrary();
+    const mediaLibrary = new MediaLibraryService();
 
     const timeline = {
       getState: () => ({

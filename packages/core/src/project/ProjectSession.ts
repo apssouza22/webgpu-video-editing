@@ -1,9 +1,10 @@
 import type { Timeline } from '@opensource/timeline';
 import type { CompositionPreview } from '@opensource/video-preview';
-import type { MediaLibraryItem, Sidebar } from '@opensource/sidebar';
+import type { MediaLibraryItem } from '../mediaLibrary/types';
+import type { Sidebar } from '@opensource/sidebar';
 
-import type { TimelinePreviewSyncer } from '../glueComponents';
-import type { MediaLibrary } from '../mediaLibrary';
+import type { ClipPreviewSyncService } from '../subscribers';
+import type { MediaLibraryService } from '../mediaLibrary/MediaLibraryService';
 import { FileSystemProjectStore } from './FileSystemProjectStore';
 import { IndexedDbProjectIndex } from './IndexedDbProjectIndex';
 import { MediaAssetService } from './MediaAssetService';
@@ -48,7 +49,7 @@ export class ProjectSession {
     timeline: Timeline;
     preview: CompositionPreview;
     sidebar: Sidebar | null;
-    mediaLibrary: MediaLibrary;
+    mediaLibrary: MediaLibraryService;
   } | null = null;
 
   constructor(private readonly options: ProjectSessionOptions = {}) {
@@ -59,7 +60,7 @@ export class ProjectSession {
     timeline: Timeline;
     preview: CompositionPreview;
     sidebar: Sidebar | null;
-    mediaLibrary: MediaLibrary;
+    mediaLibrary: MediaLibraryService;
   }): void {
     this.saveContext = context;
   }
@@ -85,9 +86,9 @@ export class ProjectSession {
     directoryHandle: FileSystemDirectoryHandle,
     timeline: Timeline,
     preview: CompositionPreview,
-    mediaLibrary: MediaLibrary,
+    mediaLibrary: MediaLibraryService,
     sidebar: Sidebar | null,
-    clipPreviewSync?: TimelinePreviewSyncer,
+    clipPreviewSync?: ClipPreviewSyncService,
   ): Promise<ProjectDocument> {
     this.emitStatus({ phase: 'loading', message: 'Creating project…' });
 
@@ -171,8 +172,8 @@ export class ProjectSession {
     timeline: Timeline,
     preview: CompositionPreview,
     sidebar: Sidebar | null,
-    mediaLibrary: MediaLibrary,
-    clipPreviewSync: TimelinePreviewSyncer,
+    mediaLibrary: MediaLibraryService,
+    clipPreviewSync: ClipPreviewSyncService,
   ): Promise<ProjectDocument | null> {
     const record = await this.index.getLastOpenedProject();
     if (!record) {
@@ -212,7 +213,7 @@ export class ProjectSession {
 
   async importUploadedFile(
     file: File,
-    mediaLibrary: MediaLibrary,
+    mediaLibrary: MediaLibraryService,
     _sidebar: Sidebar | null,
   ): Promise<MediaLibraryItem> {
     if (!this.store || !this.mediaAssets || !this.document) {
@@ -241,7 +242,7 @@ export class ProjectSession {
   }
 
   async pickAndImportMedia(
-    mediaLibrary: MediaLibrary,
+    mediaLibrary: MediaLibraryService,
     _sidebar: Sidebar | null,
   ): Promise<void> {
     if (!this.store || !this.mediaAssets || !this.document) {
@@ -279,8 +280,8 @@ export class ProjectSession {
     timeline: Timeline,
     preview: CompositionPreview,
     _sidebar: Sidebar | null,
-    mediaLibrary: MediaLibrary,
-    clipPreviewSync: TimelinePreviewSyncer,
+    mediaLibrary: MediaLibraryService,
+    clipPreviewSync: ClipPreviewSyncService,
   ): Promise<void> {
     if (!this.document || !this.mediaAssets) {
       return;
@@ -334,7 +335,7 @@ export class ProjectSession {
     timeline?: Timeline,
     preview?: CompositionPreview,
     _sidebar?: Sidebar | null,
-    mediaLibrary?: MediaLibrary,
+    mediaLibrary?: MediaLibraryService,
   ): Promise<void> {
     const resolvedTimeline = timeline ?? this.saveContext?.timeline;
     const resolvedPreview = preview ?? this.saveContext?.preview;
@@ -401,7 +402,7 @@ export class ProjectSession {
   }
 
   private async importCurrentMediaLibrary(
-    mediaLibrary: MediaLibrary,
+    mediaLibrary: MediaLibraryService,
     _sidebar: Sidebar | null,
   ): Promise<Map<string, string>> {
     if (!this.mediaAssets) {

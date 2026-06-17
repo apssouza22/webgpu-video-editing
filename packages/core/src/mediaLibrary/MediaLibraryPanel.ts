@@ -1,7 +1,6 @@
-import type { MediaLibraryItem } from '@opensource/sidebar';
-
 import { formatMediaDuration } from './duration';
-import type { MediaLibrary } from './MediaLibrary';
+import type { MediaLibraryService } from './MediaLibraryService';
+import type { MediaLibraryItem } from './types';
 
 const MEDIA_ACCEPT = 'video/*,image/*,audio/*';
 
@@ -14,7 +13,7 @@ export class MediaLibraryPanel {
   private readonly disposers: Array<() => void> = [];
   private query = '';
 
-  constructor(private readonly mediaLibrary: MediaLibrary) {
+  constructor(private readonly mediaLibrary: MediaLibraryService) {
     this.root = document.createElement('div');
     this.root.className = 'flex flex-col gap-3 min-h-0';
 
@@ -168,7 +167,7 @@ export class MediaLibraryPanel {
   }
 }
 
-export function mountMediaLibraryPanel(mediaLibrary: MediaLibrary): () => void {
+export function mountMediaLibraryPanel(mediaLibrary: MediaLibraryService): () => void {
   const panel = new MediaLibraryPanel(mediaLibrary);
   return () => panel.destroy();
 }

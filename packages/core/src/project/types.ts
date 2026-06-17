@@ -1,5 +1,5 @@
 import type { TimelineState } from '@opensource/timeline';
-import type { MediaLibraryItem } from '@opensource/sidebar';
+import type { MediaLibraryItem } from '../mediaLibrary/types';
 import type {
   AspectRatioId,
   CanvasElement,
@@ -130,5 +130,5 @@ export interface ProjectPersistenceOptions {
 
 export interface BindProjectPersistenceOptions extends ProjectPersistenceOptions {
   editor: import('../VideoEditor').VideoEditor;
-  clipPreviewSync: import('../glueComponents').TimelinePreviewSyncer;
+  clipPreviewSync: import('../subscribers').ClipPreviewSyncService;
 }

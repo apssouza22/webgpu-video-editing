@@ -157,7 +157,16 @@ git checkout -b my-feature
 - Ensure strong boundaries between packages
 - The intersection between packages should be small and well defined
 - The crossing points between packages should be well defined and not leak implementation details
-- use the glueComponent to connect the packages
+- Create a component subscriber class for each component in the core subscribers package. Ex TimelineSubscriber
+- Create a service class for each component to facilitate communication between the component and the outside world
+- Only services and data objects should be available outside of the packages
+
+
+## Component subscribers
+The component subscribers are responsible for subscribing to other components events and react accordingly. 
+Example: The timeline subscriber is responsible for subscribing to the timeline events and react accordingly. 
+It can react by calling a service, emitting an event or updating the component state.
+
 
 
 ### Ask first

@@ -12,9 +12,11 @@ export {
 } from './audioTransform';
 export { extractAudioFromMediaUrl, type ExtractAudioOptions } from './extractAudio';
 export { createMockTranscriptionResult } from './mockTranscription';
+export { TranscriptionWorkspaceEventEmitter } from './TranscriptionWorkspaceEventEmitter';
 export type {
-  TranscriptionServiceHandlers,
-  TranscriptionWorkspaceHandlers,
+  TranscriptionWorkspaceEventHandler,
+  TranscriptionWorkspaceEventMap,
+  TranscriptionWorkspaceEventName,
   TranscriptionWorkspaceView,
 } from './uiTypes';
 export type {

@@ -8,7 +8,12 @@ import {
 } from '@opensource/sidebar';
 
 import { AnimationFrameLoop, bindEditorPlayback } from './loop';
-import { bindClipPreviewSync, bindTranscriptionTimelineCut, TimelinePreviewSyncer } from './glueComponents';
+import {
+  bindClipPreviewSync,
+  bindMediaLibraryTimeline,
+  bindTranscriptionTimelineCut,
+  ClipPreviewSyncService,
+} from './subscribers';
 import {
   bindSidebarExport,
   downloadBlob,
@@ -16,7 +21,7 @@ import {
   type ExportVideoOptions,
   type ExportVideoResult,
 } from './export';
-import { bindMediaLibrary, MediaLibrary, MediaLibraryPanel } from './mediaLibrary';
+import { MediaLibraryPanel, MediaLibraryService } from './mediaLibrary';
 import {
   bindProjectPersistence,
   type ProjectPersistenceApi,
@@ -60,12 +65,12 @@ export interface VideoEditorMount {
 export class VideoEditor {
   readonly timeline: Timeline;
   readonly preview: CompositionPreview;
-  readonly mediaLibrary: MediaLibrary;
+  readonly mediaLibrary: MediaLibraryService;
   readonly sidebar: Sidebar | null;
   readonly transcription: TranscriptionService;
   readonly transcriptionWorkspace: TranscriptionWorkspace;
   readonly frameLoop: AnimationFrameLoop;
-  readonly clipPreviewSync: TimelinePreviewSyncer;
+  readonly clipPreviewSync: ClipPreviewSyncService;
   projectPersistence?: ProjectPersistenceApi;
   private readonly disposables: Array<() => void> = [];
 
@@ -81,7 +86,7 @@ export class VideoEditor {
     this.preview = new CompositionPreview(previewContainer, {
       className: options.previewClassName,
     });
-    this.mediaLibrary = new MediaLibrary();
+    this.mediaLibrary = new MediaLibraryService();
     this.transcription = new TranscriptionService({
       mockTranscription: options.transcription?.mockTranscription ?? false,
       language: options.transcription?.language,
@@ -121,7 +126,7 @@ export class VideoEditor {
       }
 
       this.disposables.push(
-        bindMediaLibrary({
+        bindMediaLibraryTimeline({
           timeline: this.timeline,
           preview: this.preview,
           mediaLibrary: this.mediaLibrary,
@@ -132,7 +137,7 @@ export class VideoEditor {
             }
             return persistence.importUploadedFile(file);
           },
-        }),
+        }).dispose,
       );
 
       if (options.bindSidebarExport !== false) {

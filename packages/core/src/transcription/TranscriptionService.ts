@@ -3,7 +3,6 @@ import type { ExtractAudioOptions } from './extractAudio';
 import { createMockTranscriptionResult } from './mockTranscription';
 import { extractAudioFromMediaUrl } from './extractAudio';
 import { TranscriptionEventEmitter } from './TranscriptionEventEmitter';
-import type { TranscriptionServiceHandlers } from './uiTypes';
 import type {
   TranscriptionEventHandler,
   TranscriptionEventName,
@@ -23,7 +22,6 @@ interface PendingAudioTranscription {
 export class TranscriptionService {
   readonly events = new TranscriptionEventEmitter();
   private readonly options: TranscriptionOptions;
-  private handlers: TranscriptionServiceHandlers = {};
   private worker: Worker | null = null;
   private transcribing = false;
   private pendingAudioTranscription: PendingAudioTranscription | null = null;
@@ -34,14 +32,6 @@ export class TranscriptionService {
 
   get isTranscribing(): boolean {
     return this.transcribing;
-  }
-
-  setHandlers(handlers: TranscriptionServiceHandlers): () => void {
-    const previous = this.handlers;
-    this.handlers = { ...previous, ...handlers };
-    return () => {
-      this.handlers = previous;
-    };
   }
 
   loadModel(): void {
@@ -144,7 +134,6 @@ export class TranscriptionService {
       case 'initiate':
       case 'done':
         if (isProgressPayload(message.data)) {
-          this.handlers.onProgress?.(message.data);
           this.events.emit('transcription:progress', message.data);
         }
         break;

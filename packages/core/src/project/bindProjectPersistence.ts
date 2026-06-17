@@ -153,7 +153,7 @@ export type ProjectPersistenceApi = {
   createProject: (name: string, directoryHandle?: FileSystemDirectoryHandle) => Promise<unknown>;
   openProject: (directoryHandle?: FileSystemDirectoryHandle) => Promise<unknown>;
   restoreLastProject: () => Promise<unknown>;
-  importUploadedFile: (file: File) => Promise<import('@opensource/sidebar').MediaLibraryItem>;
+  importUploadedFile: (file: File) => Promise<import('../mediaLibrary/types').MediaLibraryItem>;
   importMedia: () => Promise<void>;
   save: () => Promise<void>;
 };

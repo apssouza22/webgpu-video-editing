@@ -1,4 +1,4 @@
-import type { MediaLibraryItem } from '@opensource/sidebar';
+import type { MediaLibraryItem } from '../mediaLibrary/types';
 
 import { FileSystemProjectStore } from './FileSystemProjectStore';
 import { IndexedDbProjectIndex } from './IndexedDbProjectIndex';
