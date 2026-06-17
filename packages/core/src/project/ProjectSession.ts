@@ -2,7 +2,7 @@ import type { Timeline } from '@opensource/timeline';
 import type { CompositionCanvas } from '@opensource/video-canvas';
 import type { MediaLibraryItem, Sidebar } from '@opensource/sidebar';
 
-import type { ClipCanvasSync } from '../clipCanvasSync';
+import type { TimelinePreviewSyncer } from '../clipCanvasSync';
 import type { MediaLibrary } from '../mediaLibrary';
 import { FileSystemProjectStore } from './FileSystemProjectStore';
 import { IndexedDbProjectIndex } from './IndexedDbProjectIndex';
@@ -87,7 +87,7 @@ export class ProjectSession {
     canvas: CompositionCanvas,
     mediaLibrary: MediaLibrary,
     sidebar: Sidebar | null,
-    clipCanvasSync?: ClipCanvasSync,
+    clipCanvasSync?: TimelinePreviewSyncer,
   ): Promise<ProjectDocument> {
     this.emitStatus({ phase: 'loading', message: 'Creating project…' });
 
@@ -172,7 +172,7 @@ export class ProjectSession {
     canvas: CompositionCanvas,
     sidebar: Sidebar | null,
     mediaLibrary: MediaLibrary,
-    clipCanvasSync: ClipCanvasSync,
+    clipCanvasSync: TimelinePreviewSyncer,
   ): Promise<ProjectDocument | null> {
     const record = await this.index.getLastOpenedProject();
     if (!record) {
@@ -281,7 +281,7 @@ export class ProjectSession {
     canvas: CompositionCanvas,
     sidebar: Sidebar | null,
     mediaLibrary: MediaLibrary,
-    clipCanvasSync: ClipCanvasSync,
+    clipCanvasSync: TimelinePreviewSyncer,
   ): Promise<void> {
     if (!this.document || !this.mediaAssets) {
       return;

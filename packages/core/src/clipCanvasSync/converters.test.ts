@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Clip } from '@opensource/timeline';
 
 import {
-  canvasElementToAddClipInput,
+  fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
   isLinkedAudioCompanion,
 } from './converters';
@@ -44,7 +44,7 @@ describe('isLinkedAudioCompanion', () => {
 
 describe('canvasElementToAddClipInput', () => {
   it('maps canvas timing fields onto timeline clip input', () => {
-    const input = canvasElementToAddClipInput({
+    const input = fromPreviewElementToTimelineClip({
       id: 'el-1',
       type: 'video',
       name: 'Scene',

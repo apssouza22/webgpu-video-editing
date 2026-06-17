@@ -8,7 +8,7 @@ import {
   type CompositionClip,
 } from '@opensource/video-canvas';
 
-export function canvasElementToAddClipInput(element: CanvasElement): AddClipInput {
+export function fromPreviewElementToTimelineClip(element: CanvasElement): AddClipInput {
   const base = {
     name: element.name,
     duration: element.duration,
@@ -46,7 +46,7 @@ export function canvasElementToAddClipInput(element: CanvasElement): AddClipInpu
   }
 }
 
-export function timelineClipToCompositionClip(clip: Clip): CompositionClip {
+export function timelineClipToPreviewClip(clip: Clip): CompositionClip {
   const sourceOffset = clip.inPoint;
 
   switch (clip.type) {

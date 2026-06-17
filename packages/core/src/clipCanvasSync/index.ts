@@ -1,8 +1,8 @@
-export { bindClipCanvasSync, ClipCanvasSync } from './ClipCanvasSync';
-export type { ClipCanvasSyncOptions } from './ClipCanvasSync';
+export { bindClipCanvasSync, TimelinePreviewSyncer } from './TimelinePreviewSyncer';
+export type { ClipCanvasSyncOptions } from './TimelinePreviewSyncer';
 export {
-  canvasElementToAddClipInput,
+  fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
   isLinkedAudioCompanion,
-  timelineClipToCompositionClip,
+  timelineClipToPreviewClip,
 } from './converters';

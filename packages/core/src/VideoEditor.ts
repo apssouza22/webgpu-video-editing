@@ -7,9 +7,8 @@ import {
   type SidebarOptions,
 } from '@opensource/sidebar';
 
-import { AnimationFrameLoop } from './animationFrameLoop';
-import { bindClipCanvasSync, ClipCanvasSync } from './clipCanvasSync';
-import { bindEditorPlayback } from './editorPlayback';
+import { AnimationFrameLoop, bindEditorPlayback } from './loop';
+import { bindClipCanvasSync, TimelinePreviewSyncer } from './clipCanvasSync';
 import {
   bindSidebarExport,
   downloadBlob,
@@ -63,7 +62,7 @@ export class VideoEditor {
   readonly sidebar: Sidebar | null;
   readonly transcription: TranscriptionService;
   readonly frameLoop: AnimationFrameLoop;
-  readonly clipCanvasSync: ClipCanvasSync;
+  readonly clipCanvasSync: TimelinePreviewSyncer;
   projectPersistence?: ProjectPersistenceApi;
   private readonly disposables: Array<() => void> = [];
 
@@ -99,6 +98,7 @@ export class VideoEditor {
       this.disposables.push(
         bindSidebarMediaLibrary({
           sidebar: this.sidebar,
+          timeline: this.timeline,
           canvas: this.canvas,
           mediaLibrary: this.mediaLibrary,
           importUploadedFile: async (file) => {
@@ -145,6 +145,20 @@ export class VideoEditor {
       }),
     );
     this.disposables.push(() => clipCanvasBinding.dispose());
+
+    if (this.sidebar) {
+      this.disposables.push(
+        this.sidebar.on('text:add:requested', ({ content, startTime }) => {
+          this.timeline.addClip({
+            type: 'text',
+            name: content.slice(0, 32) || 'Text',
+            startTime,
+            duration: 5,
+            textContent: content,
+          });
+        }),
+      );
+    }
 
     if (options.project) {
       this.disposables.push(

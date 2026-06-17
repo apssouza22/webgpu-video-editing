@@ -1,7 +1,7 @@
 import type { Timeline } from '@opensource/timeline';
 import type { CompositionCanvas } from '@opensource/video-canvas';
 
-import type { AnimationFrameLoop } from '../animationFrameLoop';
+import type { AnimationFrameLoop } from './AnimationFrameLoop';
 
 export interface EditorPlaybackOptions {
   timeline: Timeline;

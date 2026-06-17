@@ -9,10 +9,8 @@ import type { Clip } from '@opensource/timeline';
 import type { CompositionCanvas, CanvasElement } from '@opensource/video-canvas';
 
 import {
-  canvasElementToAddClipInput,
   getTimelineClipZIndex,
-  isLinkedAudioCompanion,
-  timelineClipToCompositionClip,
+  timelineClipToPreviewClip,
 } from './converters';
 
 type SyncSource = 'canvas' | 'timeline';
@@ -22,13 +20,12 @@ export interface ClipCanvasSyncOptions {
   canvas: CompositionCanvas;
 }
 
-export class ClipCanvasSync {
+export class TimelinePreviewSyncer {
   private readonly timeline: Timeline;
   private readonly canvas: CompositionCanvas;
   private readonly disposables: Array<() => void> = [];
   private source: SyncSource | null = null;
   private paused = false;
-  private pendingElementId: string | null = null;
   private readonly elementToClip = new Map<string, string>();
   private readonly clipToElement = new Map<string, string>();
 
@@ -39,7 +36,6 @@ export class ClipCanvasSync {
 
   bind(): () => void {
     this.disposables.push(
-      this.canvas.on('element:added', (payload) => this.onCanvasElementAdded(payload.element)),
       this.canvas.on('element:removed', (payload) => this.onCanvasElementRemoved(payload.id)),
       this.canvas.on('element:updated', (payload) => this.onCanvasElementUpdated(payload)),
       this.canvas.on('selection:changed', (payload) => this.onCanvasSelectionChanged(payload.selectedId)),
@@ -64,7 +60,6 @@ export class ClipCanvasSync {
     }
     this.elementToClip.clear();
     this.clipToElement.clear();
-    this.pendingElementId = null;
     this.source = null;
     this.paused = false;
   }
@@ -121,22 +116,6 @@ export class ClipCanvasSync {
 
     const clipUrl = clip.url ?? '';
     return element.src === clipUrl;
-  }
-
-  private onCanvasElementAdded(element: CanvasElement): void {
-    if (this.paused || this.source === 'timeline') {
-      return;
-    }
-
-    this.pendingElementId = element.id;
-    this.source = 'canvas';
-
-    try {
-      this.timeline.addClip(canvasElementToAddClipInput(element));
-    } finally {
-      this.pendingElementId = null;
-      this.source = null;
-    }
   }
 
   private onCanvasElementRemoved(elementId: string): void {
@@ -203,53 +182,10 @@ export class ClipCanvasSync {
       return;
     }
 
-    if (this.source === 'canvas') {
-      if (this.pendingElementId && clips.length > 0) {
-        const primary = clips.find((clip) => !isLinkedAudioCompanion(clip, clips)) ?? clips[0];
-        const linkedAudio = clips.find(
-          (clip) => clip.type === 'audio' && clip.linkedClipId === primary.id,
-        );
-        this.applyClipTimingToCanvas(primary, this.pendingElementId);
-        this.register(this.pendingElementId, primary.id);
-
-        if (linkedAudio) {
-          this.canvas.updateElement(this.pendingElementId, { muted: true });
-          this.source = 'timeline';
-          this.canvas.addLayer(timelineClipToCompositionClip(linkedAudio));
-          const audioElement = this.canvas.getElements().at(-1);
-          if (audioElement) {
-            this.register(audioElement.id, linkedAudio.id);
-          }
-        }
-      }
-      return;
-    }
-
     this.source = 'timeline';
     try {
       for (const clip of clips) {
-        if (isLinkedAudioCompanion(clip, clips)) {
-          if (this.clipToElement.has(clip.id)) {
-            continue;
-          }
-
-          this.canvas.addLayer(timelineClipToCompositionClip(clip));
-          const element = this.canvas.getElements().at(-1);
-          if (element) {
-            this.register(element.id, clip.id);
-          }
-          continue;
-        }
-
-        if (this.clipToElement.has(clip.id)) {
-          continue;
-        }
-
-        this.canvas.addLayer(timelineClipToCompositionClip(clip));
-        const element = this.canvas.getElements().at(-1);
-        if (element) {
-          this.register(element.id, clip.id);
-        }
+        this.addCanvasLayerForClip(clip);
       }
     } finally {
       this.source = null;
@@ -418,7 +354,7 @@ export class ClipCanvasSync {
       return;
     }
 
-    this.canvas.addLayer(timelineClipToCompositionClip(clip));
+    this.canvas.addLayer(timelineClipToPreviewClip(clip));
     const element = this.canvas.getElements().at(-1);
     if (element) {
       this.register(element.id, clip.id);
@@ -580,9 +516,9 @@ export class ClipCanvasSync {
 
 export function bindClipCanvasSync(options: ClipCanvasSyncOptions): {
   dispose: () => void;
-  sync: ClipCanvasSync;
+  sync: TimelinePreviewSyncer;
 } {
-  const sync = new ClipCanvasSync(options);
+  const sync = new TimelinePreviewSyncer(options);
   const unbind = sync.bind();
   return {
     sync,

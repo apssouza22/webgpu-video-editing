@@ -19,6 +19,7 @@ export class SidebarEventEmitter {
     'media:selected': new Set(),
     'media:upload:requested': new Set(),
     'media:remove:requested': new Set(),
+    'text:add:requested': new Set(),
     'export:requested': new Set(),
     'export:status': new Set(),
     'export:availability': new Set(),

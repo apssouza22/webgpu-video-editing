@@ -1,8 +1,4 @@
-import {
-  TextClip,
-  type CompositionCanvasAPI,
-  type CanvasElement,
-} from '@opensource/video-canvas';
+import type { CompositionCanvasAPI, CanvasElement } from '@opensource/video-canvas';
 
 import { SidebarEventEmitter } from '../event/events';
 import type { SidebarEventHandler, SidebarEventName } from './types';
@@ -177,8 +173,10 @@ export class Sidebar {
   }
 
   addTextToCanvas(content = 'New text', startTime?: number): void {
-    const clip = new TextClip(content, startTime ?? this.canvas.getCurrentTime());
-    this.canvas.addLayer(clip);
+    this.events.emit('text:add:requested', {
+      content,
+      startTime: startTime ?? this.canvas.getCurrentTime(),
+    });
   }
 
   on<T extends SidebarEventName>(event: T, handler: SidebarEventHandler<T>): () => void {

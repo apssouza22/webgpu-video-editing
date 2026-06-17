@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CompositionCanvasAPI } from '@opensource/video-canvas';
 import type { MediaLibraryItem, Sidebar } from '@opensource/sidebar';
+import type { Timeline } from '@opensource/timeline';
 
 import { bindSidebarMediaLibrary } from './bindSidebarMediaLibrary';
 import { MediaLibrary } from './MediaLibrary';
@@ -26,13 +27,19 @@ function createSidebarStub(): Sidebar & {
 
 function createCanvasStub(): CompositionCanvasAPI {
   return {
-    getCurrentTime: () => 0,
+    getCurrentTime: () => 2,
     addLayer: vi.fn(),
   } as unknown as CompositionCanvasAPI;
 }
 
+function createTimelineStub(): Timeline {
+  return {
+    addClip: vi.fn(),
+  } as unknown as Timeline;
+}
+
 describe('bindSidebarMediaLibrary', () => {
-  it('adds uploaded files to the library without adding to the canvas by default', async () => {
+  it('adds uploaded files to the library without adding to the timeline by default', async () => {
     vi.stubGlobal('URL', {
       createObjectURL: () => 'blob:upload-1',
       revokeObjectURL: vi.fn(),
@@ -40,8 +47,9 @@ describe('bindSidebarMediaLibrary', () => {
 
     const sidebar = createSidebarStub();
     const canvas = createCanvasStub();
+    const timeline = createTimelineStub();
     const mediaLibrary = new MediaLibrary();
-    const dispose = bindSidebarMediaLibrary({ sidebar, canvas, mediaLibrary });
+    const dispose = bindSidebarMediaLibrary({ sidebar, timeline, canvas, mediaLibrary });
 
     const uploadHandler = [...(sidebar.handlers.get('media:upload:requested') ?? [])][0];
     const file = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
@@ -51,6 +59,7 @@ describe('bindSidebarMediaLibrary', () => {
 
     expect(mediaLibrary.list()).toHaveLength(1);
     expect(sidebar.notifyMediaAdded).toHaveBeenCalledTimes(1);
+    expect(timeline.addClip).not.toHaveBeenCalled();
     expect(canvas.addLayer).not.toHaveBeenCalled();
 
     dispose();
@@ -58,7 +67,7 @@ describe('bindSidebarMediaLibrary', () => {
     vi.unstubAllGlobals();
   });
 
-  it('adds uploaded files to the canvas when addToCanvas is true', async () => {
+  it('adds uploaded files to the timeline when addToCanvas is true', async () => {
     vi.stubGlobal('URL', {
       createObjectURL: () => 'blob:upload-2',
       revokeObjectURL: vi.fn(),
@@ -66,8 +75,9 @@ describe('bindSidebarMediaLibrary', () => {
 
     const sidebar = createSidebarStub();
     const canvas = createCanvasStub();
+    const timeline = createTimelineStub();
     const mediaLibrary = new MediaLibrary();
-    const dispose = bindSidebarMediaLibrary({ sidebar, canvas, mediaLibrary });
+    const dispose = bindSidebarMediaLibrary({ sidebar, timeline, canvas, mediaLibrary });
 
     const uploadHandler = [...(sidebar.handlers.get('media:upload:requested') ?? [])][0];
     const file = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
@@ -77,16 +87,26 @@ describe('bindSidebarMediaLibrary', () => {
 
     expect(mediaLibrary.list()).toHaveLength(1);
     expect(sidebar.notifyMediaAdded).toHaveBeenCalledTimes(1);
-    expect(canvas.addLayer).toHaveBeenCalledTimes(1);
+    expect(timeline.addClip).toHaveBeenCalledTimes(1);
+    expect(timeline.addClip).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'video',
+        url: 'blob:upload-2',
+        startTime: 2,
+        hasAudio: true,
+      }),
+    );
+    expect(canvas.addLayer).not.toHaveBeenCalled();
 
     dispose();
     mediaLibrary.destroy();
     vi.unstubAllGlobals();
   });
 
-  it('does not add persisted uploads to the canvas by default', async () => {
+  it('does not add persisted uploads to the timeline by default', async () => {
     const sidebar = createSidebarStub();
     const canvas = createCanvasStub();
+    const timeline = createTimelineStub();
     const mediaLibrary = new MediaLibrary();
     const persistedItem: MediaLibraryItem = {
       id: 'lib-1',
@@ -100,6 +120,7 @@ describe('bindSidebarMediaLibrary', () => {
 
     const dispose = bindSidebarMediaLibrary({
       sidebar,
+      timeline,
       canvas,
       mediaLibrary,
       importUploadedFile: async () => persistedItem,
@@ -111,20 +132,23 @@ describe('bindSidebarMediaLibrary', () => {
 
     expect(mediaLibrary.list()).toHaveLength(0);
     expect(sidebar.notifyMediaAdded).toHaveBeenCalledWith(persistedItem);
+    expect(timeline.addClip).not.toHaveBeenCalled();
     expect(canvas.addLayer).not.toHaveBeenCalled();
 
     dispose();
     mediaLibrary.destroy();
   });
 
-  it('does not add to the canvas when persisted import throws', async () => {
+  it('does not add to the timeline when persisted import throws', async () => {
     const sidebar = createSidebarStub();
     const canvas = createCanvasStub();
+    const timeline = createTimelineStub();
     const mediaLibrary = new MediaLibrary();
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     const dispose = bindSidebarMediaLibrary({
       sidebar,
+      timeline,
       canvas,
       mediaLibrary,
       importUploadedFile: async () => {
@@ -138,6 +162,7 @@ describe('bindSidebarMediaLibrary', () => {
 
     expect(mediaLibrary.list()).toHaveLength(0);
     expect(sidebar.notifyMediaAdded).not.toHaveBeenCalled();
+    expect(timeline.addClip).not.toHaveBeenCalled();
     expect(canvas.addLayer).not.toHaveBeenCalled();
     expect(consoleError).toHaveBeenCalled();
 

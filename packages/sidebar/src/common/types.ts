@@ -82,6 +82,7 @@ export interface SidebarEventMap {
   'media:selected': { item: MediaLibraryItem; startTime?: number };
   'media:upload:requested': { file: File } & AddMediaFromFileOptions;
   'media:remove:requested': { id: string };
+  'text:add:requested': { content: string; startTime: number };
   'export:requested': { settings: ExportSettings };
   'export:status': { message: string; exporting: boolean };
   'export:availability': { canExport: boolean };
@@ -122,7 +123,7 @@ export interface SidebarOptions {
 }
 
 export interface AddMediaFromFileOptions {
-  /** When true, also inserts the uploaded media on the canvas at the playhead. */
+  /** When true, also inserts the uploaded media on the timeline at the playhead. */
   addToCanvas?: boolean;
   startTime?: number;
 }

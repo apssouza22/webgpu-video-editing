@@ -6,23 +6,21 @@ export { CompositionCanvas } from '@opensource/video-canvas';
 export type { CompositionCanvasOptions } from '@opensource/video-canvas';
 export {
   bindClipCanvasSync,
-  ClipCanvasSync,
-  canvasElementToAddClipInput,
+  TimelinePreviewSyncer,
+  fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
-  timelineClipToCompositionClip,
+  timelineClipToPreviewClip,
 } from './clipCanvasSync';
 export type { ClipCanvasSyncOptions } from './clipCanvasSync';
 export {
   AnimationFrameLoop,
-  type AnimationFrameLoopOptions,
-  type FrameCallback,
-  type FrameContext,
-} from './animationFrameLoop';
-export {
   bindEditorPlayback,
   EditorPlayback,
+  type AnimationFrameLoopOptions,
   type EditorPlaybackOptions,
-} from './editorPlayback';
+  type FrameCallback,
+  type FrameContext,
+} from './loop';
 export {
   bindSidebarExport,
   canvasElementsToComposition,
@@ -75,7 +73,8 @@ export {
 export {
   bindSidebarMediaLibrary,
   MediaLibrary,
-  addMediaToCanvas,
+  addMediaToTimeline,
+  mediaLibraryItemToAddClipInput,
   type BindSidebarMediaLibraryOptions,
 } from './mediaLibrary';
 export {

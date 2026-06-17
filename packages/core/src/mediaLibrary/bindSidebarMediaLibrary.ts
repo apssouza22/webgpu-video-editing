@@ -1,15 +1,12 @@
-import {
-  AudioClip,
-  ImageClip,
-  VideoClip,
-  type CompositionCanvasAPI,
-} from '@opensource/video-canvas';
+import type { AddClipInput, Timeline } from '@opensource/timeline';
 import type { MediaLibraryItem, Sidebar } from '@opensource/sidebar';
+import type { CompositionCanvasAPI } from '@opensource/video-canvas';
 
 import type { MediaLibrary } from './MediaLibrary';
 
 export interface BindSidebarMediaLibraryOptions {
   sidebar: Sidebar;
+  timeline: Timeline;
   canvas: CompositionCanvasAPI;
   mediaLibrary: MediaLibrary;
   /** When set, uploads are routed through project persistence when a project is open. */
@@ -18,6 +15,7 @@ export interface BindSidebarMediaLibraryOptions {
 
 export function bindSidebarMediaLibrary({
   sidebar,
+  timeline,
   canvas,
   mediaLibrary,
   importUploadedFile,
@@ -44,14 +42,14 @@ export function bindSidebarMediaLibrary({
       sidebar.notifyMediaAdded(item);
 
       if (addToCanvas === true) {
-        addMediaToCanvas(canvas, item, startTime);
+        addMediaToTimeline(timeline, canvas, item, startTime);
       }
     }),
   );
 
   disposers.push(
     sidebar.on('media:selected', ({ item, startTime }) => {
-      addMediaToCanvas(canvas, item, startTime);
+      addMediaToTimeline(timeline, canvas, item, startTime);
     }),
   );
 
@@ -71,22 +69,47 @@ export function bindSidebarMediaLibrary({
   };
 }
 
-export function addMediaToCanvas(
+export function mediaLibraryItemToAddClipInput(
+  item: MediaLibraryItem,
+  startTime: number,
+): AddClipInput {
+  const base = {
+    name: item.name,
+    startTime,
+    duration: 5,
+    sourceDuration: 5,
+  };
+
+  switch (item.type) {
+    case 'video':
+      return {
+        ...base,
+        type: 'video',
+        url: item.src,
+        hasAudio: true,
+      };
+    case 'image':
+      return {
+        ...base,
+        type: 'image',
+        url: item.src,
+      };
+    case 'audio':
+      return {
+        ...base,
+        type: 'audio',
+        url: item.src,
+        hasAudio: false,
+      };
+  }
+}
+
+export function addMediaToTimeline(
+  timeline: Timeline,
   canvas: CompositionCanvasAPI,
   item: MediaLibraryItem,
   startTime?: number,
 ): void {
   const at = startTime ?? canvas.getCurrentTime();
-
-  if (item.type === 'video') {
-    canvas.addLayer(new VideoClip(item.src, at));
-    return;
-  }
-
-  if (item.type === 'image') {
-    canvas.addLayer(new ImageClip(item.src, at));
-    return;
-  }
-
-  canvas.addLayer(new AudioClip(item.src, at));
+  timeline.addClip(mediaLibraryItemToAddClipInput(item, at));
 }

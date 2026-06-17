@@ -1,6 +1,7 @@
 export { MediaLibrary } from './MediaLibrary';
 export {
-  addMediaToCanvas,
+  addMediaToTimeline,
   bindSidebarMediaLibrary,
+  mediaLibraryItemToAddClipInput,
   type BindSidebarMediaLibraryOptions,
 } from './bindSidebarMediaLibrary';
