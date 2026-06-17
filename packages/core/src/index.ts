@@ -11,7 +11,8 @@ export {
   ClipPreviewSyncService,
   CompositionPreviewSubscriber,
   TimelineSubscriber,
-  MediaLibraryTimelineSubscriber,
+  MediaLibrarySubscriber,
+  MediaLibrarySubscriber as MediaLibraryTimelineSubscriber,
   fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
   timelineClipToCanvasElement,
@@ -96,8 +97,8 @@ export {
 } from './mediaLibrary';
 export {
   bindTranscription,
-  TranscriptionPanel,
-  TranscriptionWorkspace,
+  createTranscriptionService,
+  TranscriptionView,
   configureTranscriptionEnv,
   TranscriptionService,
   TranscriptionEventEmitter,
@@ -115,10 +116,6 @@ export {
   type TranscriptionProgress,
   type TranscriptionResult,
   type TranscriptionWordRemovedPayload,
-  type TranscriptionWorkspaceEventHandler,
-  type TranscriptionWorkspaceEventMap,
-  type TranscriptionWorkspaceEventName,
-  type TranscriptionWorkspaceView,
 } from './transcription';
 export {
   Sidebar,

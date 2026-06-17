@@ -4,7 +4,7 @@ import type { Timeline } from '@opensource/timeline';
 
 import { MediaLibraryService } from '../mediaLibrary/MediaLibraryService';
 import type { MediaLibraryItem } from '../mediaLibrary/types';
-import { bindMediaLibraryTimeline } from './MediaLibraryTimelineSubscriber';
+import { bindMediaLibraryTimeline } from './MediaLibrarySubscriber';
 
 function createCanvasStub(): CompositionPreviewAPI {
   return {

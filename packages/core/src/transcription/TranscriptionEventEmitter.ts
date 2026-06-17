@@ -14,6 +14,9 @@ export class TranscriptionEventEmitter {
     'transcription:complete': new Set(),
     'transcription:error': new Set(),
     'transcription:word:removed': new Set(),
+    'transcription:requested': new Set(),
+    'transcription:seek': new Set(),
+    'transcription:captions:requested': new Set(),
   };
 
   on<T extends TranscriptionEventName>(

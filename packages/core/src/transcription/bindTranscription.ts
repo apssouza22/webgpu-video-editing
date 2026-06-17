@@ -4,31 +4,28 @@ import type { Timeline } from '@opensource/timeline';
 import type { CanvasElement } from '@opensource/video-preview';
 
 import type { ClipPreviewSyncService } from '../subscribers';
-import type { TranscriptionService } from './TranscriptionService';
+import type { TranscriptionService } from './transcription';
 import type { TranscriptionResult } from './types';
-import type { TranscriptionWorkspace } from './TranscriptionWorkspace';
 
 export interface BindTranscriptionOptions {
-  workspace: TranscriptionWorkspace;
+  transcription: TranscriptionService;
   timeline: Timeline;
   preview: CompositionPreview;
-  transcription: TranscriptionService;
   clipPreviewSync: ClipPreviewSyncService;
   sidebar?: Sidebar | null;
 }
 
 export function bindTranscription({
-  workspace,
+  transcription,
   timeline,
   preview,
-  transcription,
   clipPreviewSync,
   sidebar = null,
 }: BindTranscriptionOptions): () => void {
   const disposers: Array<() => void> = [];
 
   const updateAvailability = (): void => {
-    workspace.setCanTranscribe(
+    transcription.setCanTranscribe(
       preview
         .getElements()
         .some((element) => element.type === 'video' || element.type === 'audio'),
@@ -36,10 +33,10 @@ export function bindTranscription({
   };
 
   disposers.push(
-    workspace.on('transcription:requested', async ({ sourceId }) => {
+    transcription.on('transcription:requested', async ({ sourceId }) => {
       const source = findTranscriptionSource(preview, sourceId);
       if (!source) {
-        workspace.setTranscriptionStatus(
+        transcription.setTranscriptionStatus(
           'Add a video or audio layer before transcribing.',
           false,
         );
@@ -47,7 +44,7 @@ export function bindTranscription({
       }
 
       sidebar?.setActivePanel('transcription');
-      workspace.setTranscriptionStatus('Preparing audio for transcription…', true);
+      transcription.setTranscriptionStatus('Preparing audio for transcription…', true);
 
       try {
         transcription.loadModel();
@@ -60,45 +57,39 @@ export function bindTranscription({
 
         if (result) {
           const clipId = clipPreviewSync.getClipIdForElement(source.id);
-          workspace.setTranscriptionResult({
+          transcription.setTranscriptionResult({
             ...result,
             clipId,
           });
-          workspace.setTranscriptionStatus('Transcription complete.', false);
+          transcription.setTranscriptionStatus('Transcription complete.', false);
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        workspace.setTranscriptionStatus(`Transcription failed: ${message}`, false);
+        transcription.setTranscriptionStatus(`Transcription failed: ${message}`, false);
         console.error(error);
       }
     }),
-    workspace.on('transcription:seek', ({ timestamp }) => {
+    transcription.on('transcription:seek', ({ timestamp }) => {
       timeline.pause();
       timeline.setPlayhead(timestamp);
     }),
-    workspace.on('transcription:captions:requested', ({ results }) => {
+    transcription.on('transcription:captions:requested', ({ results }) => {
       addCaptionClips(timeline, results);
-      workspace.setTranscriptionStatus('Caption layers added to the timeline.', false);
-    }),
-    workspace.on('transcription:word:removed', (payload) => {
-      transcription.notifyWordRemoved(payload);
+      transcription.setTranscriptionStatus('Caption layers added to the timeline.', false);
     }),
   );
 
   disposers.push(
     transcription.on('transcription:progress', (progress) => {
       if (progress.message || progress.status) {
-        workspace.setTranscriptionStatus(
-          progress.message ?? progress.status,
-          true,
-        );
+        transcription.setTranscriptionStatus(progress.message ?? progress.status, true);
       }
     }),
   );
 
   disposers.push(
     timeline.on('playhead:change', ({ time }) => {
-      workspace.highlightTranscriptionAt(time);
+      transcription.highlightTranscriptionAt(time);
     }),
   );
 

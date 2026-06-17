@@ -69,6 +69,9 @@ export interface TranscriptionEventMap {
   'transcription:complete': { result: TranscriptionResult };
   'transcription:error': { error: Error };
   'transcription:word:removed': TranscriptionWordRemovedPayload;
+  'transcription:requested': { sourceId?: string };
+  'transcription:seek': { timestamp: number; sourceId: string };
+  'transcription:captions:requested': { results: TranscriptionResult[] };
 }
 
 export interface TranscriptionWordRemovedPayload {

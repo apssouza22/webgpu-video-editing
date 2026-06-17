@@ -12,7 +12,7 @@ export interface MediaLibraryTimelineSubscriberOptions {
   importUploadedFile?: (file: File) => Promise<MediaLibraryItem | null>;
 }
 
-export class MediaLibraryTimelineSubscriber {
+export class MediaLibrarySubscriber {
   private readonly timeline: Timeline;
   private readonly preview: CompositionPreviewAPI;
   private readonly mediaLibrary: MediaLibraryService;
@@ -113,9 +113,9 @@ export function bindMediaLibraryTimeline(
   options: MediaLibraryTimelineSubscriberOptions,
 ): {
   dispose: () => void;
-  subscriber: MediaLibraryTimelineSubscriber;
+  subscriber: MediaLibrarySubscriber;
 } {
-  const subscriber = new MediaLibraryTimelineSubscriber(options);
+  const subscriber = new MediaLibrarySubscriber(options);
   const unbind = subscriber.bind();
   return {
     subscriber,

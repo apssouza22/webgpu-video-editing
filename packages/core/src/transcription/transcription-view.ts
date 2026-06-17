@@ -1,17 +1,16 @@
 import type { TranscriptionChunk, TranscriptionResult } from './types';
-import type { TranscriptionWorkspaceView } from './uiTypes';
-import type { TranscriptionWorkspace } from './TranscriptionWorkspace';
+import type { TranscriptionService } from './transcription';
 
-export class TranscriptionPanel implements TranscriptionWorkspaceView {
+export class TranscriptionView {
   private readonly root: HTMLElement;
   private readonly transcribeButton: HTMLButtonElement;
   private readonly captionsButton: HTMLButtonElement;
   private readonly statusEl: HTMLParagraphElement;
   private readonly chunksContainer: HTMLDivElement;
   private transcribing = false;
-  private readonly disposers: Array<() => void> = [];
+  private canTranscribe = false;
 
-  constructor(private readonly workspace: TranscriptionWorkspace) {
+  constructor(private readonly transcriptionManager: TranscriptionService) {
     this.root = document.createElement('div');
     this.root.className = 'flex flex-col gap-4';
 
@@ -43,17 +42,15 @@ export class TranscriptionPanel implements TranscriptionWorkspaceView {
     this.chunksContainer.className = 'sidebar-transcription-chunks';
 
     this.transcribeButton.addEventListener('click', () => {
-      this.workspace.requestTranscription();
+      this.transcriptionManager.requestTranscription();
     });
 
     this.captionsButton.addEventListener('click', () => {
-      const results = this.buildResultsFromDom();
+      const results = this.#buildCurrentTranscription();
       if (results.length > 0) {
-        this.workspace.requestTranscriptionCaptions(results);
+        this.transcriptionManager.requestTranscriptionCaptions(results);
       }
     });
-
-    this.disposers.push(this.workspace.setView(this));
 
     this.root.append(
       title,
@@ -63,8 +60,6 @@ export class TranscriptionPanel implements TranscriptionWorkspaceView {
       this.statusEl,
       this.chunksContainer,
     );
-
-    this.updateButtonState(this.workspace.getCanTranscribe());
   }
 
   get element(): HTMLElement {
@@ -74,25 +69,39 @@ export class TranscriptionPanel implements TranscriptionWorkspaceView {
   setStatus(message: string, transcribing: boolean): void {
     this.transcribing = transcribing;
     this.statusEl.textContent = message;
-    this.updateButtonState(this.workspace.getCanTranscribe());
-  }
-
-  setResult(result: TranscriptionResult | null): void {
-    this.renderResult(result);
-    this.updateButtonState(this.workspace.getCanTranscribe());
-  }
-
-  highlightAt(time: number): void {
-    this.highlightChunksByTime(time);
+    this.#updateButtonState();
   }
 
   setCanTranscribe(canTranscribe: boolean): void {
-    this.updateButtonState(canTranscribe);
+    this.canTranscribe = canTranscribe;
+    this.#updateButtonState();
   }
 
-  destroy(): void {
-    while (this.disposers.length > 0) {
-      this.disposers.pop()?.();
+  updateTranscription(result: TranscriptionResult): void {
+    this.showLoading(false);
+    this.renderResult(result);
+    this.#updateButtonState();
+  }
+
+  showLoading(loading = true): void {
+    if (loading) {
+      this.setStatus('Transcribing… Please wait.', true);
+      this.captionsButton.hidden = true;
+    }
+  }
+
+  highlightChunksByTime(currentTime: number): void {
+    const chunks = this.chunksContainer.querySelectorAll<HTMLElement>(
+      '.sidebar-transcription-chunk',
+    );
+
+    for (const chunk of chunks) {
+      const startTime = Number(chunk.dataset.startTime ?? 0);
+      const endTime = Number(chunk.dataset.endTime ?? 0);
+      chunk.classList.toggle(
+        'is-active',
+        currentTime >= startTime && currentTime <= endTime,
+      );
     }
   }
 
@@ -106,14 +115,14 @@ export class TranscriptionPanel implements TranscriptionWorkspaceView {
 
     for (const [index, chunk] of result.chunks.entries()) {
       this.chunksContainer.append(
-        this.createChunkElement(chunk, index, result.sourceId ?? '', result.clipId ?? ''),
+        this.#createChunkElement(chunk, index, result.sourceId ?? '', result.clipId ?? ''),
       );
     }
 
     this.captionsButton.hidden = result.chunks.length === 0;
   }
 
-  private createChunkElement(
+  #createChunkElement(
     chunk: TranscriptionChunk,
     index: number,
     sourceId: string,
@@ -141,54 +150,60 @@ export class TranscriptionPanel implements TranscriptionWorkspaceView {
       event.stopPropagation();
       const startTime = Number(chunkEl.dataset.startTime ?? 0);
       const endTime = Number(chunkEl.dataset.endTime ?? 0);
-      this.removeChunkElement(chunkEl, startTime, endTime);
+      this.#removeChunk(chunkEl, startTime, endTime);
     });
 
     chunkEl.addEventListener('click', () => {
-      this.workspace.seekTranscription(chunk.timestamp[0], sourceId);
+      this.transcriptionManager.seekToTimestamp(chunk.timestamp[0], sourceId);
     });
 
     chunkEl.append(text, remove);
     return chunkEl;
   }
 
-  private removeChunkElement(
-    chunkElement: HTMLElement,
-    startTime: number,
-    endTime: number,
-  ): void {
+  #removeChunk(chunkElement: HTMLElement, startTime: number, endTime: number): void {
+    if (!chunkElement.parentNode) {
+      return;
+    }
+
     const removedDuration = endTime - startTime;
+    const sourceId = chunkElement.dataset.sourceId ?? '';
     const clipId = chunkElement.dataset.clipId ?? '';
     const text =
       chunkElement.querySelector('.sidebar-transcription-chunk-text')?.textContent?.trim() ?? '';
-    const chunks = Array.from(
-      this.chunksContainer.querySelectorAll<HTMLElement>('.sidebar-transcription-chunk'),
-    );
 
-    for (const chunk of chunks) {
-      const chunkStart = Number(chunk.dataset.startTime ?? 0);
-      const chunkEnd = Number(chunk.dataset.endTime ?? 0);
-
-      if (chunkStart > startTime) {
-        chunk.dataset.startTime = String(chunkStart - removedDuration);
-        chunk.dataset.endTime = String(chunkEnd - removedDuration);
-      }
-    }
+    this.transcriptionManager.removeInterval(startTime, endTime, sourceId, {
+      clipId,
+      text,
+      duration: removedDuration,
+    });
+    this.#updateSubsequentTimestamps(startTime, removedDuration);
 
     chunkElement.remove();
     this.captionsButton.hidden = this.chunksContainer.childElementCount === 0;
+  }
 
-    if (clipId && removedDuration > 0) {
-      this.workspace.removeTranscriptionWord({
-        clipId,
-        startTime,
-        duration: removedDuration,
-        text,
-      });
+  #updateSubsequentTimestamps(removedStartTime: number, removedDuration: number): void {
+    const chunks = this.#getCurrentChunks();
+
+    for (const chunk of chunks) {
+      const chunkStartTime = Number(chunk.dataset.startTime ?? 0);
+      const chunkEndTime = Number(chunk.dataset.endTime ?? 0);
+
+      if (chunkStartTime > removedStartTime) {
+        chunk.dataset.startTime = String(chunkStartTime - removedDuration);
+        chunk.dataset.endTime = String(chunkEndTime - removedDuration);
+      }
     }
   }
 
-  private buildResultsFromDom(): TranscriptionResult[] {
+  #getCurrentChunks(): HTMLElement[] {
+    return Array.from(
+      this.chunksContainer.querySelectorAll<HTMLElement>('.sidebar-transcription-chunk'),
+    );
+  }
+
+  #buildCurrentTranscription(): TranscriptionResult[] {
     const grouped = new Map<string, TranscriptionResult>();
     const chunks = this.chunksContainer.querySelectorAll<HTMLElement>(
       '.sidebar-transcription-chunk',
@@ -213,25 +228,10 @@ export class TranscriptionPanel implements TranscriptionWorkspaceView {
     return [...grouped.values()];
   }
 
-  private highlightChunksByTime(currentTime: number): void {
-    const chunks = this.chunksContainer.querySelectorAll<HTMLElement>(
-      '.sidebar-transcription-chunk',
-    );
-
-    for (const chunk of chunks) {
-      const startTime = Number(chunk.dataset.startTime ?? 0);
-      const endTime = Number(chunk.dataset.endTime ?? 0);
-      chunk.classList.toggle(
-        'is-active',
-        currentTime >= startTime && currentTime <= endTime,
-      );
-    }
-  }
-
-  private updateButtonState(canTranscribe: boolean): void {
-    const enabled = canTranscribe && !this.transcribing;
+  #updateButtonState(): void {
+    const enabled = this.canTranscribe && !this.transcribing;
     this.transcribeButton.disabled = !enabled;
-    this.transcribeButton.title = canTranscribe
+    this.transcribeButton.title = this.canTranscribe
       ? 'Transcribe the first video or audio layer'
       : 'Add a video or audio layer before transcribing';
   }

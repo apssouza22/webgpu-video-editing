@@ -3,6 +3,7 @@ import type { ExtractAudioOptions } from './extractAudio';
 import { createMockTranscriptionResult } from './mockTranscription';
 import { extractAudioFromMediaUrl } from './extractAudio';
 import { TranscriptionEventEmitter } from './TranscriptionEventEmitter';
+import { TranscriptionView } from './transcription-view';
 import type {
   TranscriptionEventHandler,
   TranscriptionEventName,
@@ -22,12 +23,22 @@ interface PendingAudioTranscription {
 export class TranscriptionService {
   readonly events = new TranscriptionEventEmitter();
   private readonly options: TranscriptionOptions;
-  private worker: Worker | null = null;
+  private readonly worker: Worker;
+  private readonly transcriptionView: TranscriptionView;
   private transcribing = false;
   private pendingAudioTranscription: PendingAudioTranscription | null = null;
 
   constructor(options: TranscriptionOptions = {}) {
     this.options = options;
+    this.worker = new Worker(new URL('./worker.ts', import.meta.url), {
+      type: 'module',
+    });
+    this.transcriptionView = new TranscriptionView(this);
+    this.#addEventListener();
+  }
+
+  get view(): TranscriptionView {
+    return this.transcriptionView;
   }
 
   get isTranscribing(): boolean {
@@ -35,8 +46,57 @@ export class TranscriptionService {
   }
 
   loadModel(): void {
-    this.ensureWorker();
-    this.worker?.postMessage({ task: 'load-model' });
+    this.worker.postMessage({ task: 'load-model' });
+  }
+
+  requestTranscription(sourceId?: string): void {
+    this.events.emit('transcription:requested', { sourceId });
+  }
+
+  requestTranscriptionCaptions(results: TranscriptionResult[]): void {
+    this.events.emit('transcription:captions:requested', { results });
+  }
+
+  removeInterval(
+    startTime: number,
+    endTime: number,
+    _sourceId: string,
+    payload?: Pick<TranscriptionWordRemovedPayload, 'clipId' | 'text' | 'duration'>,
+  ): void {
+    const duration = payload?.duration ?? endTime - startTime;
+    if (payload?.clipId && duration > 0) {
+      this.events.emit('transcription:word:removed', {
+        clipId: payload.clipId,
+        startTime,
+        duration,
+        text: payload.text ?? '',
+      });
+    }
+  }
+
+  seekToTimestamp(timestamp: number, sourceId: string): void {
+    this.events.emit('transcription:seek', { timestamp, sourceId });
+  }
+
+  setCanTranscribe(value: boolean): void {
+    this.transcriptionView.setCanTranscribe(value);
+  }
+
+  setTranscriptionStatus(message: string, transcribing = false): void {
+    this.transcriptionView.setStatus(message, transcribing);
+  }
+
+  setTranscriptionResult(result: TranscriptionResult | null): void {
+    if (result) {
+      this.transcriptionView.updateTranscription(result);
+      return;
+    }
+
+    this.transcriptionView.setStatus('', false);
+  }
+
+  highlightTranscriptionAt(time: number): void {
+    this.transcriptionView.highlightChunksByTime(time);
   }
 
   async transcribeMedia(
@@ -55,12 +115,12 @@ export class TranscriptionService {
       if (this.options.mockTranscription) {
         await delay(600);
         const result = createMockTranscriptionResult(sourceId);
-        this.events.emit('transcription:complete', { result });
+        this.#onTranscriptionComplete(result);
         return result;
       }
 
       const audioBuffer = await extractAudioFromMediaUrl(url, mediaType, extractOptions);
-      return await this.transcribeAudioBuffer(audioBuffer, sourceId);
+      return await this.startTranscription(audioBuffer, sourceId);
     } catch (error) {
       const normalized = normalizeError(error);
       this.events.emit('transcription:error', { error: normalized });
@@ -70,22 +130,22 @@ export class TranscriptionService {
     }
   }
 
-  async transcribeAudioBuffer(
+  async startTranscription(
     audioBuffer: AudioBuffer,
     sourceId: string,
   ): Promise<TranscriptionResult | null> {
     if (this.options.mockTranscription) {
       const result = createMockTranscriptionResult(sourceId);
-      this.events.emit('transcription:complete', { result });
+      this.#onTranscriptionComplete(result);
       return result;
     }
 
-    this.ensureWorker();
+    this.transcriptionView.showLoading();
     const audio = await prepareAudioForWhisper(audioBuffer);
 
     return new Promise((resolve, reject) => {
       this.pendingAudioTranscription = { sourceId, resolve, reject };
-      this.worker?.postMessage({ audio, sourceId });
+      this.worker.postMessage({ audio, sourceId });
     });
   }
 
@@ -103,70 +163,71 @@ export class TranscriptionService {
     this.events.off(event, handler);
   }
 
-  notifyWordRemoved(payload: TranscriptionWordRemovedPayload): void {
-    this.events.emit('transcription:word:removed', payload);
-  }
-
   destroy(): void {
-    this.worker?.terminate();
-    this.worker = null;
+    this.worker.terminate();
     this.transcribing = false;
     this.pendingAudioTranscription = null;
   }
 
-  private ensureWorker(): void {
-    if (this.worker) {
-      return;
-    }
-
-    this.worker = new Worker(new URL('./worker.ts', import.meta.url), {
-      type: 'module',
-    });
-
+  #addEventListener(): void {
     this.worker.addEventListener('message', (event: MessageEvent<WorkerResponseMessage>) => {
-      this.handleWorkerMessage(event.data);
+      const message = event.data;
+
+      switch (message.status) {
+        case 'progress':
+          break;
+
+        case 'complete':
+          if (message.data && isTranscriptionResult(message.data)) {
+            this.#onTranscriptionComplete(message.data);
+          }
+          break;
+
+        case 'initiate':
+          break;
+
+        case 'ready':
+          console.log('Transcription model ready');
+          break;
+
+        case 'error': {
+          const error = normalizeWorkerError(message.data);
+          const pending = this.pendingAudioTranscription;
+          if (pending) {
+            this.pendingAudioTranscription = null;
+            pending.reject(error);
+          }
+          this.events.emit('transcription:error', { error });
+          break;
+        }
+
+        case 'done':
+          if (message.file) {
+            console.log('Model file done loaded:', message.file);
+          }
+          if (isProgressPayload(message.data)) {
+            this.events.emit('transcription:progress', message.data);
+          }
+          break;
+
+        default:
+          if (isProgressPayload(message.data)) {
+            this.events.emit('transcription:progress', message.data);
+          }
+          break;
+      }
     });
   }
 
-  private handleWorkerMessage(message: WorkerResponseMessage): void {
-    switch (message.status) {
-      case 'progress':
-      case 'initiate':
-      case 'done':
-        if (isProgressPayload(message.data)) {
-          this.events.emit('transcription:progress', message.data);
-        }
-        break;
-
-      case 'ready':
-        break;
-
-      case 'complete':
-        if (message.data && isTranscriptionResult(message.data)) {
-          const result = message.data;
-          const pending = this.pendingAudioTranscription;
-          if (pending && pending.sourceId === result.sourceId) {
-            this.pendingAudioTranscription = null;
-            pending.resolve(result);
-          }
-          this.events.emit('transcription:complete', { result });
-        }
-        break;
-
-      case 'error': {
-        const error = normalizeWorkerError(message.data);
-        const pending = this.pendingAudioTranscription;
-        if (pending) {
-          this.pendingAudioTranscription = null;
-          pending.reject(error);
-        }
-        this.events.emit('transcription:error', { error });
-        break;
-      }
-
-      default:
-        break;
+  #onTranscriptionComplete(data: TranscriptionResult): void {
+    const pending = this.pendingAudioTranscription;
+    if (pending && pending.sourceId === data.sourceId) {
+      this.pendingAudioTranscription = null;
+      pending.resolve(data);
     }
+
+    this.transcriptionView.updateTranscription(data);
+    this.events.emit('transcription:complete', { result: data });
   }
 }
 

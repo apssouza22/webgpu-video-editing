@@ -23,6 +23,7 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
   }
 
   if (isLoadModelMessage(message)) {
+    console.log('Loading transcription model...');
     try {
       await PipelineFactory.getInstance((data) => {
         self.postMessage(data);
@@ -46,5 +47,8 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
     };
 
     self.postMessage(responseMessage);
+    return;
   }
+
+  console.warn('Unknown message received in worker:', message);
 });

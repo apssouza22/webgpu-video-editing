@@ -1,8 +1,9 @@
+import { TranscriptionService } from './transcription';
+
 export { configureTranscriptionEnv } from './configureEnv';
 export { bindTranscription, type BindTranscriptionOptions } from './bindTranscription';
-export { TranscriptionPanel } from './TranscriptionPanel';
-export { TranscriptionWorkspace } from './TranscriptionWorkspace';
-export { TranscriptionService } from './TranscriptionService';
+export { TranscriptionView } from './transcription-view';
+export { TranscriptionService } from './transcription';
 export { TranscriptionEventEmitter } from './TranscriptionEventEmitter';
 export { PipelineFactory, transcribe, onModelInferenceError } from './model';
 export {
@@ -12,13 +13,6 @@ export {
 } from './audioTransform';
 export { extractAudioFromMediaUrl, type ExtractAudioOptions } from './extractAudio';
 export { createMockTranscriptionResult } from './mockTranscription';
-export { TranscriptionWorkspaceEventEmitter } from './TranscriptionWorkspaceEventEmitter';
-export type {
-  TranscriptionWorkspaceEventHandler,
-  TranscriptionWorkspaceEventMap,
-  TranscriptionWorkspaceEventName,
-  TranscriptionWorkspaceView,
-} from './uiTypes';
 export type {
   ModelParams,
   Pipeline,
@@ -35,3 +29,9 @@ export type {
   WorkerMessage,
   WorkerResponseMessage,
 } from './types';
+
+export function createTranscriptionService(
+  options?: import('./types').TranscriptionOptions,
+): TranscriptionService {
+  return new TranscriptionService(options);
+}

@@ -29,9 +29,8 @@ import {
 } from './project';
 import {
   bindTranscription,
-  TranscriptionPanel,
+  createTranscriptionService,
   TranscriptionService,
-  TranscriptionWorkspace,
   type TranscriptionOptions,
 } from './transcription';
 
@@ -68,7 +67,6 @@ export class VideoEditor {
   readonly mediaLibrary: MediaLibraryService;
   readonly sidebar: Sidebar | null;
   readonly transcription: TranscriptionService;
-  readonly transcriptionWorkspace: TranscriptionWorkspace;
   readonly frameLoop: AnimationFrameLoop;
   readonly clipPreviewSync: ClipPreviewSyncService;
   projectPersistence?: ProjectPersistenceApi;
@@ -87,11 +85,10 @@ export class VideoEditor {
       className: options.previewClassName,
     });
     this.mediaLibrary = new MediaLibraryService();
-    this.transcription = new TranscriptionService({
+    this.transcription = createTranscriptionService({
       mockTranscription: options.transcription?.mockTranscription ?? false,
       language: options.transcription?.language,
     });
-    this.transcriptionWorkspace = new TranscriptionWorkspace();
 
     const clipPreviewBinding = bindClipPreviewSync({ timeline: this.timeline, preview: this.preview });
     this.clipPreviewSync = clipPreviewBinding.sync;
@@ -106,7 +103,7 @@ export class VideoEditor {
         panelFactories: {
           ...options.sidebar?.panelFactories,
           media: () => new MediaLibraryPanel(this.mediaLibrary).element,
-          transcription: () => new TranscriptionPanel(this.transcriptionWorkspace).element,
+          transcription: () => this.transcription.view.element,
         },
       });
       const unmountSidebar = mountSidebar(sidebarContainer, this.sidebar);
@@ -115,10 +112,9 @@ export class VideoEditor {
       if (options.bindTranscription !== false) {
         this.disposables.push(
           bindTranscription({
-            workspace: this.transcriptionWorkspace,
+            transcription: this.transcription,
             timeline: this.timeline,
             preview: this.preview,
-            transcription: this.transcription,
             clipPreviewSync: this.clipPreviewSync,
             sidebar: this.sidebar,
           }),

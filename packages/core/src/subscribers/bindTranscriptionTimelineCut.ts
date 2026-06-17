@@ -1,6 +1,6 @@
 import type { Timeline } from '@opensource/timeline';
 
-import type { TranscriptionService } from '../transcription';
+import type { TranscriptionService } from '../transcription/transcription';
 
 export interface BindTranscriptionTimelineCutOptions {
   timeline: Timeline;

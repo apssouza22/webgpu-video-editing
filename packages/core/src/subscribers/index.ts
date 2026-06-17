@@ -7,9 +7,10 @@ export { TimelineSubscriber } from './TimelineSubscriber';
 export type { TimelineSubscriberOptions } from './TimelineSubscriber';
 export {
   bindMediaLibraryTimeline,
-  MediaLibraryTimelineSubscriber,
-} from './MediaLibraryTimelineSubscriber';
-export type { MediaLibraryTimelineSubscriberOptions } from './MediaLibraryTimelineSubscriber';
+  MediaLibrarySubscriber,
+  MediaLibrarySubscriber as MediaLibraryTimelineSubscriber,
+} from './MediaLibrarySubscriber';
+export type { MediaLibraryTimelineSubscriberOptions } from './MediaLibrarySubscriber';
 export {
   bindTranscriptionTimelineCut,
   type BindTranscriptionTimelineCutOptions,
