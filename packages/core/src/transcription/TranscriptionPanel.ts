@@ -105,7 +105,9 @@ export class TranscriptionPanel implements TranscriptionWorkspaceView {
     }
 
     for (const [index, chunk] of result.chunks.entries()) {
-      this.chunksContainer.append(this.createChunkElement(chunk, index, result.sourceId ?? ''));
+      this.chunksContainer.append(
+        this.createChunkElement(chunk, index, result.sourceId ?? '', result.clipId ?? ''),
+      );
     }
 
     this.captionsButton.hidden = result.chunks.length === 0;
@@ -115,6 +117,7 @@ export class TranscriptionPanel implements TranscriptionWorkspaceView {
     chunk: TranscriptionChunk,
     index: number,
     sourceId: string,
+    clipId: string,
   ): HTMLElement {
     const chunkEl = document.createElement('button');
     chunkEl.type = 'button';
@@ -123,6 +126,7 @@ export class TranscriptionPanel implements TranscriptionWorkspaceView {
     chunkEl.dataset.startTime = String(chunk.timestamp[0]);
     chunkEl.dataset.endTime = String(chunk.timestamp[1]);
     chunkEl.dataset.sourceId = sourceId;
+    chunkEl.dataset.clipId = clipId;
 
     const text = document.createElement('span');
     text.className = 'sidebar-transcription-chunk-text';
@@ -154,6 +158,9 @@ export class TranscriptionPanel implements TranscriptionWorkspaceView {
     endTime: number,
   ): void {
     const removedDuration = endTime - startTime;
+    const clipId = chunkElement.dataset.clipId ?? '';
+    const text =
+      chunkElement.querySelector('.sidebar-transcription-chunk-text')?.textContent?.trim() ?? '';
     const chunks = Array.from(
       this.chunksContainer.querySelectorAll<HTMLElement>('.sidebar-transcription-chunk'),
     );
@@ -170,6 +177,15 @@ export class TranscriptionPanel implements TranscriptionWorkspaceView {
 
     chunkElement.remove();
     this.captionsButton.hidden = this.chunksContainer.childElementCount === 0;
+
+    if (clipId && removedDuration > 0) {
+      this.workspace.removeTranscriptionWord({
+        clipId,
+        startTime,
+        duration: removedDuration,
+        text,
+      });
+    }
   }
 
   private buildResultsFromDom(): TranscriptionResult[] {
@@ -180,10 +196,11 @@ export class TranscriptionPanel implements TranscriptionWorkspaceView {
 
     for (const chunkEl of chunks) {
       const sourceId = chunkEl.dataset.sourceId ?? '';
+      const clipId = chunkEl.dataset.clipId ?? '';
       const text = chunkEl.querySelector('.sidebar-transcription-chunk-text')?.textContent ?? '';
       const startTime = Number(chunkEl.dataset.startTime ?? 0);
       const endTime = Number(chunkEl.dataset.endTime ?? 0);
-      const entry = grouped.get(sourceId) ?? { sourceId, text: '', chunks: [] };
+      const entry = grouped.get(sourceId) ?? { sourceId, clipId, text: '', chunks: [] };
 
       entry.chunks.push({
         text,

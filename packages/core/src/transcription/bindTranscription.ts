@@ -3,6 +3,7 @@ import type { CompositionPreview } from '@opensource/video-preview';
 import type { Timeline } from '@opensource/timeline';
 import type { CanvasElement } from '@opensource/video-preview';
 
+import type { TimelinePreviewSyncer } from '../glueComponents';
 import type { TranscriptionService } from './TranscriptionService';
 import type { TranscriptionResult } from './types';
 import type { TranscriptionWorkspace } from './TranscriptionWorkspace';
@@ -12,6 +13,7 @@ export interface BindTranscriptionOptions {
   timeline: Timeline;
   preview: CompositionPreview;
   transcription: TranscriptionService;
+  clipPreviewSync: TimelinePreviewSyncer;
   sidebar?: Sidebar | null;
 }
 
@@ -20,6 +22,7 @@ export function bindTranscription({
   timeline,
   preview,
   transcription,
+  clipPreviewSync,
   sidebar = null,
 }: BindTranscriptionOptions): () => void {
   const disposers: Array<() => void> = [];
@@ -57,7 +60,11 @@ export function bindTranscription({
           );
 
           if (result) {
-            workspace.setTranscriptionResult(result);
+            const clipId = clipPreviewSync.getClipIdForElement(source.id);
+            workspace.setTranscriptionResult({
+              ...result,
+              clipId,
+            });
             workspace.setTranscriptionStatus('Transcription complete.', false);
           }
         } catch (error) {
@@ -73,6 +80,9 @@ export function bindTranscription({
       onCaptionsRequested: (results) => {
         addCaptionClips(timeline, results);
         workspace.setTranscriptionStatus('Caption layers added to the timeline.', false);
+      },
+      onWordRemoved: (payload) => {
+        transcription.notifyWordRemoved(payload);
       },
     }),
   );

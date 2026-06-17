@@ -7,6 +7,7 @@ export interface TranscriptionResult {
   text: string;
   chunks: TranscriptionChunk[];
   sourceId?: string;
+  clipId?: string;
 }
 
 export interface TranscriptionProgress {
@@ -67,6 +68,14 @@ export interface TranscriptionEventMap {
   'transcription:progress': TranscriptionProgress;
   'transcription:complete': { result: TranscriptionResult };
   'transcription:error': { error: Error };
+  'transcription:word:removed': TranscriptionWordRemovedPayload;
+}
+
+export interface TranscriptionWordRemovedPayload {
+  clipId: string;
+  startTime: number;
+  duration: number;
+  text: string;
 }
 
 export type TranscriptionEventName = keyof TranscriptionEventMap;

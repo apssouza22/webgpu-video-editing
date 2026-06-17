@@ -45,6 +45,7 @@ export class TimelinePreviewSyncer {
       this.timeline.on('clip:drag:end', (payload) => this.onTimelineClipMoved(payload)),
       this.timeline.on('clip:trim', (payload) => this.onTimelineClipTrimmed(payload)),
       this.timeline.on('clip:split', (payload) => this.onTimelineClipSplit(payload)),
+      this.timeline.on('clip:cut', (payload) => this.onTimelineClipCut(payload)),
       this.timeline.on('clip:select', (payload) => this.onTimelineClipSelect(payload.primaryId)),
       this.timeline.on('track:reorder', () => this.syncAllZIndicesFromTimeline()),
       this.timeline.on('track:add', () => this.syncAllZIndicesFromTimeline()),
@@ -93,6 +94,14 @@ export class TimelinePreviewSyncer {
         usedElements.add(element.id);
       }
     }
+  }
+
+  getClipIdForElement(elementId: string): string | undefined {
+    return this.elementToClip.get(elementId);
+  }
+
+  getElementIdForClip(clipId: string): string | undefined {
+    return this.clipToElement.get(clipId);
   }
 
   private matchesClip(element: CanvasElement, clip: Clip): boolean {
@@ -288,6 +297,70 @@ export class TimelinePreviewSyncer {
 
       for (const clipId of orphanedClipIds) {
         this.unmapClip(clipId);
+      }
+    } finally {
+      this.source = null;
+      this.refreshCanvasPreview();
+    }
+  }
+
+  private onTimelineClipCut({
+    originalClipId,
+    clipIds,
+    mode,
+  }: {
+    originalClipId: string;
+    clipIds: string[];
+    startTime: number;
+    duration: number;
+    mode: 'start' | 'end' | 'middle';
+  }): void {
+    if (this.paused || this.source === 'preview') {
+      return;
+    }
+
+    this.source = 'timeline';
+    try {
+      if (mode === 'middle') {
+        const [firstId, secondId] = clipIds as [string, string];
+        const state = this.timeline.getState();
+        const firstClip = state.clips.find((item) => item.id === firstId);
+        const secondClip = state.clips.find((item) => item.id === secondId);
+        if (!firstClip || !secondClip) {
+          return;
+        }
+
+        const orphanedClipIds = this.getOrphanedClipIds(state);
+        const companionClipId = orphanedClipIds.find((id) => id !== originalClipId);
+
+        this.syncSplitClip(originalClipId, firstClip, secondClip);
+
+        if (companionClipId && firstClip.linkedClipId && secondClip.linkedClipId) {
+          const firstLinked = state.clips.find((item) => item.id === firstClip.linkedClipId);
+          const secondLinked = state.clips.find((item) => item.id === secondClip.linkedClipId);
+          if (firstLinked && secondLinked) {
+            this.syncSplitClip(companionClipId, firstLinked, secondLinked);
+          }
+        }
+
+        for (const clipId of orphanedClipIds) {
+          this.unmapClip(clipId);
+        }
+        return;
+      }
+
+      const clipId = clipIds[0];
+      const clip = this.timeline.getState().clips.find((item) => item.id === clipId);
+      if (!clip) {
+        return;
+      }
+
+      this.applyClipTimingToCanvas(clip);
+      if (clip.linkedClipId) {
+        const linked = this.timeline.getState().clips.find((item) => item.id === clip.linkedClipId);
+        if (linked) {
+          this.applyClipTimingToCanvas(linked);
+        }
       }
     } finally {
       this.source = null;

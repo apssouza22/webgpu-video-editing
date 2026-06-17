@@ -13,6 +13,7 @@ export class TranscriptionEventEmitter {
     'transcription:progress': new Set(),
     'transcription:complete': new Set(),
     'transcription:error': new Set(),
+    'transcription:word:removed': new Set(),
   };
 
   on<T extends TranscriptionEventName>(

@@ -8,7 +8,7 @@ import {
 } from '@opensource/sidebar';
 
 import { AnimationFrameLoop, bindEditorPlayback } from './loop';
-import { bindClipPreviewSync, TimelinePreviewSyncer } from './glueComponents';
+import { bindClipPreviewSync, bindTranscriptionTimelineCut, TimelinePreviewSyncer } from './glueComponents';
 import {
   bindSidebarExport,
   downloadBlob,
@@ -88,6 +88,10 @@ export class VideoEditor {
     });
     this.transcriptionWorkspace = new TranscriptionWorkspace();
 
+    const clipPreviewBinding = bindClipPreviewSync({ timeline: this.timeline, preview: this.preview });
+    this.clipPreviewSync = clipPreviewBinding.sync;
+    this.disposables.push(() => clipPreviewBinding.dispose());
+
     if (sidebarContainer) {
       if (options.sidebarClassName) {
         sidebarContainer.classList.add(...options.sidebarClassName.split(/\s+/).filter(Boolean));
@@ -110,6 +114,7 @@ export class VideoEditor {
             timeline: this.timeline,
             preview: this.preview,
             transcription: this.transcription,
+            clipPreviewSync: this.clipPreviewSync,
             sidebar: this.sidebar,
           }),
         );
@@ -144,8 +149,6 @@ export class VideoEditor {
     }
 
     this.frameLoop = new AnimationFrameLoop();
-    const clipPreviewBinding = bindClipPreviewSync({ timeline: this.timeline, preview: this.preview });
-    this.clipPreviewSync = clipPreviewBinding.sync;
     this.disposables.push(
       bindEditorPlayback({
         timeline: this.timeline,
@@ -153,7 +156,12 @@ export class VideoEditor {
         frameLoop: this.frameLoop,
       }),
     );
-    this.disposables.push(() => clipPreviewBinding.dispose());
+    this.disposables.push(
+      bindTranscriptionTimelineCut({
+        timeline: this.timeline,
+        transcription: this.transcription,
+      }),
+    );
 
     if (this.sidebar) {
       this.disposables.push(

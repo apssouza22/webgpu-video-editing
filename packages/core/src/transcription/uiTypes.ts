@@ -1,10 +1,12 @@
 import type { TranscriptionProgress, TranscriptionResult } from './types';
+import type { TranscriptionWordRemovedPayload } from './types';
 
 /** Wired by {@link bindTranscription}; not part of the public event surface. */
 export interface TranscriptionWorkspaceHandlers {
   onTranscriptionRequested?: (sourceId?: string) => void | Promise<void>;
   onSeek?: (timestamp: number, sourceId: string) => void;
   onCaptionsRequested?: (results: TranscriptionResult[]) => void;
+  onWordRemoved?: (payload: TranscriptionWordRemovedPayload) => void;
 }
 
 /** UI delegate registered by {@link TranscriptionPanel}. */

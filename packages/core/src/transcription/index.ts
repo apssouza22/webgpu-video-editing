@@ -29,6 +29,7 @@ export type {
   TranscriptionOptions,
   TranscriptionProgress,
   TranscriptionResult,
+  TranscriptionWordRemovedPayload,
   WorkerMessage,
   WorkerResponseMessage,
 } from './types';

@@ -6,12 +6,16 @@ export { CompositionPreview } from '@opensource/video-preview';
 export type { CompositionPreviewOptions } from '@opensource/video-preview';
 export {
   bindClipPreviewSync,
+  bindTranscriptionTimelineCut,
   TimelinePreviewSyncer,
   fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
   timelineClipToCanvasElement,
 } from './glueComponents';
-export type { ClipPreviewSyncOptions } from './glueComponents';
+export type {
+  BindTranscriptionTimelineCutOptions,
+  ClipPreviewSyncOptions,
+} from './glueComponents';
 export {
   AnimationFrameLoop,
   bindEditorPlayback,
@@ -105,6 +109,7 @@ export {
   type TranscriptionOptions,
   type TranscriptionProgress,
   type TranscriptionResult,
+  type TranscriptionWordRemovedPayload,
   type TranscriptionServiceHandlers,
   type TranscriptionWorkspaceHandlers,
   type TranscriptionWorkspaceView,

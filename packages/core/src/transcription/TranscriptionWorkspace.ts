@@ -1,4 +1,4 @@
-import type { TranscriptionResult } from './types';
+import type { TranscriptionResult, TranscriptionWordRemovedPayload } from './types';
 import type {
   TranscriptionWorkspaceHandlers,
   TranscriptionWorkspaceView,
@@ -49,6 +49,10 @@ export class TranscriptionWorkspace {
 
   requestTranscriptionCaptions(results: TranscriptionResult[]): void {
     this.handlers.onCaptionsRequested?.(results);
+  }
+
+  removeTranscriptionWord(payload: TranscriptionWordRemovedPayload): void {
+    this.handlers.onWordRemoved?.(payload);
   }
 
   setTranscriptionStatus(message: string, transcribing = false): void {

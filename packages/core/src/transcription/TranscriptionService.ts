@@ -10,6 +10,7 @@ import type {
   TranscriptionOptions,
   TranscriptionProgress,
   TranscriptionResult,
+  TranscriptionWordRemovedPayload,
   WorkerResponseMessage,
 } from './types';
 
@@ -110,6 +111,10 @@ export class TranscriptionService {
     handler: TranscriptionEventHandler<T>,
   ): void {
     this.events.off(event, handler);
+  }
+
+  notifyWordRemoved(payload: TranscriptionWordRemovedPayload): void {
+    this.events.emit('transcription:word:removed', payload);
   }
 
   destroy(): void {
