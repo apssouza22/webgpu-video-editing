@@ -7,18 +7,18 @@ import {
 } from '@opensource/timeline';
 import type { CompositionPreview } from '@opensource/video-preview';
 
-import type { ClipPreviewSyncService } from './ClipPreviewSyncService';
+import type { PreviewTimelineSync } from './PreviewTimelineSync';
 
 export interface CompositionPreviewSubscriberOptions {
   timeline: Timeline;
   preview: CompositionPreview;
-  sync: ClipPreviewSyncService;
+  sync: PreviewTimelineSync;
 }
 
 export class CompositionPreviewSubscriber {
   private readonly timeline: Timeline;
   private readonly preview: CompositionPreview;
-  private readonly sync: ClipPreviewSyncService;
+  private readonly sync: PreviewTimelineSync;
   private readonly disposables: Array<() => void> = [];
 
   constructor({ timeline, preview, sync }: CompositionPreviewSubscriberOptions) {

@@ -9,7 +9,7 @@ export {
   bindExport,
   bindMediaLibraryTimeline,
   bindTranscription,
-  ClipPreviewSyncService,
+  PreviewTimelineSync,
   CompositionPreviewSubscriber,
   TimelineSubscriber,
   ExportSubscriber,
@@ -73,15 +73,12 @@ export type { ExportProgress } from '@opensource/gpu-video-encode';
 export {
   MediaLibraryService,
   MediaLibraryPanel,
-  mountMediaLibraryPanel,
   type AddMediaFromFileOptions,
   type MediaLibraryEventHandler,
   type MediaLibraryEventMap,
   type MediaLibraryEventName,
   type MediaLibraryItem,
-  type MediaLibrarySource,
   type MediaType,
-  type ResolvedMediaInput,
 } from './mediaLibrary';
 export {
   createTranscriptionService,

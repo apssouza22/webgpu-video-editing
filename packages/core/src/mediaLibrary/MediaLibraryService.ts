@@ -5,7 +5,6 @@ import type {
   MediaLibraryEventHandler,
   MediaLibraryEventName,
   MediaLibraryItem,
-  ResolvedMediaInput,
 } from './types';
 
 let nextMediaId = 0;
@@ -23,10 +22,6 @@ export class MediaLibraryService {
   list(type?: MediaLibraryItem['type']): MediaLibraryItem[] {
     const all = [...this.items.values()].sort((a, b) => b.createdAt - a.createdAt);
     return type ? all.filter((item) => item.type === type) : all;
-  }
-
-  get(id: string): MediaLibraryItem | undefined {
-    return this.items.get(id);
   }
 
   requestUpload(
@@ -54,18 +49,6 @@ export class MediaLibraryService {
     this.events.off(event, handler);
   }
 
-  add(item: Omit<MediaLibraryItem, 'id' | 'createdAt'> & { id?: string }): MediaLibraryItem {
-    const entry: MediaLibraryItem = {
-      ...item,
-      id: item.id ?? createMediaId(),
-      createdAt: Date.now(),
-    };
-    this.items.set(entry.id, entry);
-    this.events.emit('added', { item: entry });
-    this.probeDuration(entry);
-    return entry;
-  }
-
   addFromFile(file: File): MediaLibraryItem {
     const src = URL.createObjectURL(file);
     this.objectUrls.add(src);
@@ -80,7 +63,6 @@ export class MediaLibraryService {
       type,
       name: file.name,
       src,
-      source: 'upload',
     });
   }
 
@@ -94,66 +76,14 @@ export class MediaLibraryService {
     this.events.emit('changed', {});
   }
 
-  addFromResolvedMedia(input: ResolvedMediaInput): MediaLibraryItem {
-    if (input.src.startsWith('blob:')) {
-      this.objectUrls.add(input.src);
-    }
-
-    return this.add({
-      id: input.id,
-      assetId: input.assetId,
-      type: input.type,
-      name: input.name,
-      src: input.src,
-      thumbnail: input.thumbnail,
-      duration: input.duration,
-      source: 'library',
-    });
-  }
-
-  loadPersistedItems(items: MediaLibraryItem[]): void {
-    for (const item of this.items.values()) {
-      if (item.source === 'upload' || item.source === 'library') {
-        if (item.src.startsWith('blob:')) {
-          URL.revokeObjectURL(item.src);
-          this.objectUrls.delete(item.src);
-        }
-      }
-    }
-
-    for (const [id, item] of [...this.items.entries()]) {
-      if (item.source === 'upload' || item.source === 'library') {
-        this.items.delete(id);
-      }
-    }
-
-    for (const item of items) {
-      if (item.src.startsWith('blob:')) {
-        this.objectUrls.add(item.src);
-      }
-      this.items.set(item.id, item);
-      this.probeDuration(item);
-    }
-
-    this.events.emit('changed', {});
-  }
-
-  getPersistedItems(): MediaLibraryItem[] {
-    return this.list().filter((item) => item.source === 'library' && item.assetId);
-  }
-
   remove(id: string): MediaLibraryItem | undefined {
     const item = this.items.get(id);
     if (!item) {
       return undefined;
     }
 
-    if (item.source === 'upload' && item.src.startsWith('blob:')) {
+    if (item.src.startsWith('blob:')) {
       URL.revokeObjectURL(item.src);
-      this.objectUrls.delete(item.src);
-    }
-
-    if (item.source === 'library' && item.src.startsWith('blob:')) {
       this.objectUrls.delete(item.src);
     }
 
@@ -168,6 +98,18 @@ export class MediaLibraryService {
     }
     this.objectUrls.clear();
     this.items.clear();
+  }
+
+  private add(item: Omit<MediaLibraryItem, 'id' | 'createdAt'> & { id?: string }): MediaLibraryItem {
+    const entry: MediaLibraryItem = {
+      ...item,
+      id: item.id ?? createMediaId(),
+      createdAt: Date.now(),
+    };
+    this.items.set(entry.id, entry);
+    this.events.emit('added', { item: entry });
+    this.probeDuration(entry);
+    return entry;
   }
 
   private probeDuration(item: MediaLibraryItem): void {

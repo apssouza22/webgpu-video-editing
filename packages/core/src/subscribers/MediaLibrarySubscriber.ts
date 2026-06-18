@@ -8,42 +8,31 @@ export interface MediaLibraryTimelineSubscriberOptions {
   timeline: Timeline;
   preview: CompositionPreviewAPI;
   mediaLibrary: MediaLibraryService;
-  /** When set, uploads are handled by this callback instead of the default file import. */
-  importUploadedFile?: (file: File) => Promise<MediaLibraryItem | null>;
 }
 
 export class MediaLibrarySubscriber {
   private readonly timeline: Timeline;
   private readonly preview: CompositionPreviewAPI;
   private readonly mediaLibrary: MediaLibraryService;
-  private readonly importUploadedFile?: (file: File) => Promise<MediaLibraryItem | null>;
   private readonly disposables: Array<() => void> = [];
 
   constructor({
     timeline,
     preview,
     mediaLibrary,
-    importUploadedFile,
   }: MediaLibraryTimelineSubscriberOptions) {
     this.timeline = timeline;
     this.preview = preview;
     this.mediaLibrary = mediaLibrary;
-    this.importUploadedFile = importUploadedFile;
   }
 
   bind(): () => void {
     this.disposables.push(
       this.mediaLibrary.on('upload:requested', async ({ file, addToCanvas, startTime }) => {
-        let item: MediaLibraryItem | null = null;
+        let item: MediaLibraryItem;
 
         try {
-          if (this.importUploadedFile) {
-            item = await this.importUploadedFile(file);
-          }
-
-          if (!item) {
-            item = this.mediaLibrary.addFromFile(file);
-          }
+          item = this.mediaLibrary.addFromFile(file);
         } catch (error) {
           console.error('Media upload failed:', error);
           return;

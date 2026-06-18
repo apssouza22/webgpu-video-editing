@@ -5,13 +5,13 @@ import type { Timeline } from '@opensource/timeline';
 
 import type { TranscriptionService } from '../transcription/transcription';
 import type { TranscriptionResult } from '../transcription/types';
-import type { ClipPreviewSyncService } from './ClipPreviewSyncService';
+import type { PreviewTimelineSync } from './PreviewTimelineSync';
 
 export interface TranscriptionSubscriberOptions {
   transcription: TranscriptionService;
   timeline: Timeline;
   preview: CompositionPreview;
-  clipPreviewSync: ClipPreviewSyncService;
+  clipPreviewSync: PreviewTimelineSync;
   leftNav?: LeftNav | null;
 }
 
@@ -19,7 +19,7 @@ export class TranscriptionSubscriber {
   private readonly transcription: TranscriptionService;
   private readonly timeline: Timeline;
   private readonly preview: CompositionPreview;
-  private readonly clipPreviewSync: ClipPreviewSyncService;
+  private readonly clipPreviewSync: PreviewTimelineSync;
   private readonly leftNav: LeftNav | null;
   private readonly disposables: Array<() => void> = [];
 

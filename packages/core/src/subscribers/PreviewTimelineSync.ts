@@ -4,7 +4,7 @@ import type { CanvasElement, CompositionPreview } from '@opensource/video-previe
 
 export type ClipPreviewSyncSource = 'preview' | 'timeline';
 
-export class ClipPreviewSyncService {
+export class PreviewTimelineSync {
   private source: ClipPreviewSyncSource | null = null;
   private paused = false;
   private readonly elementToClip = new Map<string, string>();

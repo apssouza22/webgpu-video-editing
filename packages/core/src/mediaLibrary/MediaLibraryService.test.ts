@@ -19,55 +19,13 @@ describe('MediaLibraryService', () => {
     const file = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
     const item = library.addFromFile(file);
 
-    expect(item.source).toBe('upload');
     expect(item.src).toBe('blob:upload-1');
     expect(library.list('video')).toHaveLength(1);
 
     library.remove(item.id);
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:upload-1');
-    expect(library.get(item.id)).toBeUndefined();
+    expect(library.list()).toHaveLength(0);
 
     vi.unstubAllGlobals();
-  });
-
-  it('returns only persisted library items', () => {
-    const library = new MediaLibraryService();
-
-    library.addFromResolvedMedia({
-      assetId: 'asset-1',
-      type: 'image',
-      name: 'Imported',
-      src: 'blob:asset-1',
-    });
-
-    library.addFromFile(new File(['x'], 'upload.png', { type: 'image/png' }));
-
-    expect(library.getPersistedItems()).toEqual([
-      expect.objectContaining({
-        assetId: 'asset-1',
-        source: 'library',
-        name: 'Imported',
-      }),
-    ]);
-  });
-
-  it('replaces persisted items when loading a project', () => {
-    const library = new MediaLibraryService();
-    library.addFromFile(new File(['x'], 'old.png', { type: 'image/png' }));
-
-    library.loadPersistedItems([
-      {
-        id: 'lib-1',
-        assetId: 'asset-1',
-        type: 'audio',
-        name: 'Restored',
-        src: 'blob:restored',
-        createdAt: 10,
-        source: 'library',
-      },
-    ]);
-
-    expect(library.list()).toHaveLength(1);
-    expect(library.get('lib-1')?.name).toBe('Restored');
   });
 });

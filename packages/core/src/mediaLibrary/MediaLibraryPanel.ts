@@ -166,8 +166,3 @@ export class MediaLibraryPanel {
     return card;
   }
 }
-
-export function mountMediaLibraryPanel(mediaLibrary: MediaLibraryService): () => void {
-  const panel = new MediaLibraryPanel(mediaLibrary);
-  return () => panel.destroy();
-}

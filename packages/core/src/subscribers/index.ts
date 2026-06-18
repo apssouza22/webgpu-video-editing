@@ -1,6 +1,6 @@
 export { bindClipPreviewSync } from './bindClipPreviewSync';
 export type { ClipPreviewSyncOptions } from './bindClipPreviewSync';
-export { ClipPreviewSyncService } from './ClipPreviewSyncService';
+export { PreviewTimelineSync } from './PreviewTimelineSync';
 export { CompositionPreviewSubscriber } from './CompositionPreviewSubscriber';
 export type { CompositionPreviewSubscriberOptions } from './CompositionPreviewSubscriber';
 export { TimelineSubscriber } from './TimelineSubscriber';

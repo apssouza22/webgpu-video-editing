@@ -1,7 +1,5 @@
 export type MediaType = 'video' | 'image' | 'audio';
 
-export type MediaLibrarySource = 'upload' | 'library';
-
 export interface MediaLibraryItem {
   id: string;
   type: MediaType;
@@ -11,19 +9,6 @@ export interface MediaLibraryItem {
   /** Duration in seconds for video and audio items. */
   duration?: number;
   createdAt: number;
-  source: MediaLibrarySource;
-  /** Stable reference to a persisted project media asset. */
-  assetId?: string;
-}
-
-export interface ResolvedMediaInput {
-  assetId: string;
-  type: MediaType;
-  name: string;
-  src: string;
-  thumbnail?: string;
-  duration?: number;
-  id?: string;
 }
 
 export interface AddMediaFromFileOptions {

@@ -2,7 +2,7 @@ import type { CanvasElement } from '@opensource/video-preview';
 
 import type { LeftNav } from './LeftNav';
 
-export type LeftNavPanelId = 'project' | 'media' | 'text' | 'properties' | 'export' | 'transcription';
+export type LeftNavPanelId = 'media' | 'text' | 'properties' | 'export' | 'transcription';
 
 export interface LeftNavEventMap {
   'property:changed': {
@@ -17,15 +17,6 @@ export interface LeftNavEventMap {
   };
   'panel:changed': { panel: LeftNavPanelId };
   'text:add:requested': { content: string; startTime: number };
-  'project:create:requested': { name: string };
-  'project:open:requested': Record<string, never>;
-  'project:status': {
-    message: string;
-    busy: boolean;
-    projectName?: string;
-    isOpen?: boolean;
-  };
-  'project:availability': { canManage: boolean };
 }
 
 export type LeftNavEventName = keyof LeftNavEventMap;

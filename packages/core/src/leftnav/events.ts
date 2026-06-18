@@ -14,10 +14,6 @@ export class LeftNavEventEmitter {
     'selection:changed': new Set(),
     'panel:changed': new Set(),
     'text:add:requested': new Set(),
-    'project:create:requested': new Set(),
-    'project:open:requested': new Set(),
-    'project:status': new Set(),
-    'project:availability': new Set(),
   };
 
   on<T extends LeftNavEventName>(event: T, handler: LeftNavEventHandler<T>): () => void {

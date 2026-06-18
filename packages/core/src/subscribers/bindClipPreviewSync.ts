@@ -1,7 +1,7 @@
 import type { Timeline } from '@opensource/timeline';
 import type { CompositionPreview } from '@opensource/video-preview';
 
-import { ClipPreviewSyncService } from './ClipPreviewSyncService';
+import { PreviewTimelineSync } from './PreviewTimelineSync';
 import { CompositionPreviewSubscriber } from './CompositionPreviewSubscriber';
 import { TimelineSubscriber } from './TimelineSubscriber';
 
@@ -15,9 +15,9 @@ export function bindClipPreviewSync({
   preview,
 }: ClipPreviewSyncOptions): {
   dispose: () => void;
-  sync: ClipPreviewSyncService;
+  sync: PreviewTimelineSync;
 } {
-  const sync = new ClipPreviewSyncService(timeline, preview);
+  const sync = new PreviewTimelineSync(timeline, preview);
   const timelineSubscriber = new TimelineSubscriber({ timeline, preview, sync });
   const previewSubscriber = new CompositionPreviewSubscriber({ timeline, preview, sync });
 

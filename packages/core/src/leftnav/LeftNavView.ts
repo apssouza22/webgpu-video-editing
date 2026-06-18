@@ -1,12 +1,10 @@
 import type { LeftNav } from './LeftNav';
 import type { LeftNavPanelId } from './types';
 import { LEFTNAV_ICONS } from './leftnavIcons';
-import { ProjectPanel } from './ProjectPanel';
 import { PropertiesPanel } from './PropertiesPanel';
 import { UIComponent } from './UIComponent';
 
 const PANELS: Array<{ id: LeftNavPanelId; label: string; icon: string }> = [
-  { id: 'project', label: 'Project', icon: LEFTNAV_ICONS.project },
   { id: 'media', label: 'Media', icon: LEFTNAV_ICONS.media },
   { id: 'text', label: 'Text', icon: LEFTNAV_ICONS.text },
   { id: 'properties', label: 'Properties', icon: LEFTNAV_ICONS.properties },
@@ -66,7 +64,6 @@ export class LeftNavView extends UIComponent<LeftNav> {
     const contentHost = document.createElement('div');
     contentHost.className = 'leftnav-tab-content';
 
-    const projectPanel = new ProjectPanel(this.leftNav);
     const mediaPanel =
       this.leftNav.createPanelElement('media') ?? this.createMissingPanel('Media');
     const textPanel = this.createTextPanel();
@@ -77,7 +74,6 @@ export class LeftNavView extends UIComponent<LeftNav> {
       this.leftNav.createPanelElement('transcription') ??
       this.createMissingPanel('Transcription');
 
-    panels.set('project', projectPanel.element);
     panels.set('media', mediaPanel);
     panels.set('text', textPanel);
     panels.set('properties', propertiesPanel.element);

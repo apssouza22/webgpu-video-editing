@@ -80,74 +80,6 @@ describe('MediaLibraryTimelineSubscriber', () => {
     vi.unstubAllGlobals();
   });
 
-  it('does not add persisted uploads to the timeline by default', async () => {
-    const mediaLibrary = new MediaLibraryService();
-    const canvas = createCanvasStub();
-    const timeline = createTimelineStub();
-    const persistedItem: MediaLibraryItem = {
-      id: 'lib-1',
-      assetId: 'asset-1',
-      type: 'video',
-      name: 'clip.mp4',
-      src: 'blob:persisted',
-      createdAt: 1,
-      source: 'library',
-    };
-
-    const added = vi.fn();
-    mediaLibrary.on('added', added);
-
-    const { dispose } = bindMediaLibraryTimeline({
-      timeline,
-      preview: canvas,
-      mediaLibrary,
-      importUploadedFile: async () => persistedItem,
-    });
-
-    mediaLibrary.requestUpload(new File(['video'], 'clip.mp4', { type: 'video/mp4' }));
-    await Promise.resolve();
-
-    expect(mediaLibrary.list()).toHaveLength(0);
-    expect(added).not.toHaveBeenCalled();
-    expect(timeline.addClip).not.toHaveBeenCalled();
-    expect(canvas.addElement).not.toHaveBeenCalled();
-
-    dispose();
-    mediaLibrary.destroy();
-  });
-
-  it('does not add to the timeline when persisted import throws', async () => {
-    const mediaLibrary = new MediaLibraryService();
-    const canvas = createCanvasStub();
-    const timeline = createTimelineStub();
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-
-    const added = vi.fn();
-    mediaLibrary.on('added', added);
-
-    const { dispose } = bindMediaLibraryTimeline({
-      timeline,
-      preview: canvas,
-      mediaLibrary,
-      importUploadedFile: async () => {
-        throw new Error('Save failed');
-      },
-    });
-
-    mediaLibrary.requestUpload(new File(['video'], 'clip.mp4', { type: 'video/mp4' }));
-    await Promise.resolve();
-
-    expect(mediaLibrary.list()).toHaveLength(0);
-    expect(added).not.toHaveBeenCalled();
-    expect(timeline.addClip).not.toHaveBeenCalled();
-    expect(canvas.addElement).not.toHaveBeenCalled();
-    expect(consoleError).toHaveBeenCalled();
-
-    dispose();
-    mediaLibrary.destroy();
-    consoleError.mockRestore();
-  });
-
   it('adds selected items to the timeline', () => {
     const mediaLibrary = new MediaLibraryService();
     const canvas = createCanvasStub();
@@ -160,7 +92,6 @@ describe('MediaLibraryTimelineSubscriber', () => {
       name: 'photo.png',
       src: 'blob:photo',
       createdAt: 1,
-      source: 'upload',
     };
 
     mediaLibrary.selectItem(item, 3);
@@ -190,7 +121,6 @@ describe('MediaLibraryTimelineSubscriber', () => {
       src: 'blob:clip',
       duration: 12.5,
       createdAt: 1,
-      source: 'upload',
     };
 
     mediaLibrary.selectItem(item);
