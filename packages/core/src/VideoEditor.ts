@@ -23,11 +23,6 @@ import {
 } from './export';
 import { MediaLibraryPanel, MediaLibraryService } from './mediaLibrary';
 import {
-  bindProjectPersistence,
-  type ProjectPersistenceApi,
-  type ProjectPersistenceOptions,
-} from './project';
-import {
   bindTranscription,
   createTranscriptionService,
   TranscriptionService,
@@ -49,7 +44,6 @@ export interface VideoEditorOptions {
   transcription?: TranscriptionOptions;
   /** When true (default), wires transcription panel and service. */
   bindTranscription?: boolean;
-  project?: ProjectPersistenceOptions;
 }
 
 export interface VideoEditorMount {
@@ -69,7 +63,6 @@ export class VideoEditor {
   readonly transcription: TranscriptionService;
   readonly frameLoop: AnimationFrameLoop;
   readonly clipPreviewSync: ClipPreviewSyncService;
-  projectPersistence?: ProjectPersistenceApi;
   private readonly disposables: Array<() => void> = [];
 
   constructor(
@@ -126,13 +119,6 @@ export class VideoEditor {
           timeline: this.timeline,
           preview: this.preview,
           mediaLibrary: this.mediaLibrary,
-          importUploadedFile: async (file) => {
-            const persistence = this.projectPersistence;
-            if (!persistence?.session.isOpen() || persistence.session.isBusy()) {
-              return null;
-            }
-            return persistence.importUploadedFile(file);
-          },
         }).dispose,
       );
 
@@ -178,15 +164,6 @@ export class VideoEditor {
       );
     }
 
-    if (options.project) {
-      this.disposables.push(
-        bindProjectPersistence({
-          editor: this,
-          clipPreviewSync: this.clipPreviewSync,
-          ...options.project,
-        }),
-      );
-    }
   }
 
   /**

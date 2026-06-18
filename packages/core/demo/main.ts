@@ -18,21 +18,13 @@ const editor = new VideoEditor(
   },
   {
     transcription: { mockTranscription: false },
-    project: {
-      onStatus: (status) => {
-        console.debug('[project]', status);
-      },
-      onReady: (restored) => {
-        if (!restored) {
-          void seedDemo();
-        }
-      },
-    },
     sidebar: {
       initialPanel: 'media',
     },
   },
 );
+
+void seedDemo();
 
 async function seedDemo(): Promise<void> {
   const duration = await probeUrlDuration(DEMO_VIDEO_URL);

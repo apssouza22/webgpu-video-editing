@@ -8,7 +8,7 @@ export interface MediaLibraryTimelineSubscriberOptions {
   timeline: Timeline;
   preview: CompositionPreviewAPI;
   mediaLibrary: MediaLibraryService;
-  /** When set, uploads are routed through project persistence when a project is open. */
+  /** When set, uploads are handled by this callback instead of the default file import. */
   importUploadedFile?: (file: File) => Promise<MediaLibraryItem | null>;
 }
 

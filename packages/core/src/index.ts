@@ -60,29 +60,6 @@ export {
 } from './export';
 export type { ExportProgress } from '@opensource/gpu-video-encode';
 export {
-  bindProjectPersistence,
-  captureProjectDocument,
-  createEmptyProjectDocument,
-  FileSystemProjectStore,
-  IndexedDbProjectIndex,
-  MediaAssetService,
-  pickMediaFiles,
-  pickProjectDirectory,
-  ProjectSession,
-  resolveProjectDocument,
-  PROJECT_DOCUMENT_VERSION,
-  PROJECT_JSON_FILENAME,
-  PROJECT_MEDIA_DIR,
-  type BindProjectPersistenceOptions,
-  type ImportMediaResult,
-  type PersistedMediaAsset,
-  type ProjectDocument,
-  type ProjectMetadata,
-  type ProjectPersistenceApi,
-  type ProjectPersistenceOptions,
-  type ProjectPersistenceStatus,
-} from './project';
-export {
   MediaLibraryService,
   MediaLibraryPanel,
   mountMediaLibraryPanel,
