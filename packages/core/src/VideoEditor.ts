@@ -2,29 +2,12 @@ import {CompositionPreview} from '@opensource/video-preview';
 import type {TimelineOptions} from '@opensource/timeline';
 import {Timeline} from '@opensource/timeline';
 
-import {LeftNav, mountLeftNav, type LeftNavOptions} from './leftnav';
+import {LeftNav, type LeftNavOptions, mountLeftNav} from './leftnav';
 import {AnimationFrameLoop, bindEditorPlayback} from './loop';
-import {
-  bindClipPreviewSync,
-  bindExport,
-  bindMediaLibraryTimeline,
-  bindTranscription,
-  PreviewTimelineSync,
-} from './subscribers';
-import {
-  downloadBlob,
-  ExportPanel,
-  ExportService,
-  exportVideoFromPreview,
-  type ExportVideoOptions,
-  type ExportVideoResult,
-} from './export';
+import {bindComponents} from './subscribers';
+import {ExportPanel, ExportService,} from './export';
 import {MediaLibraryPanel, MediaLibraryService} from './mediaLibrary';
-import {
-  createTranscriptionService,
-  TranscriptionService,
-  type TranscriptionOptions,
-} from './transcription';
+import {createTranscriptionService, type TranscriptionOptions, TranscriptionService,} from './transcription';
 
 import './leftnav/leftnav.css';
 import '@opensource/timeline/style.css';
@@ -56,12 +39,10 @@ export class VideoEditor {
   readonly timeline: Timeline;
   readonly preview: CompositionPreview;
   readonly mediaLibrary: MediaLibraryService;
-  readonly exportService: ExportService | null;
-  readonly leftNav: LeftNav | null;
+  readonly exportService: ExportService;
+  readonly leftNav: LeftNav;
   readonly transcription: TranscriptionService;
   readonly frameLoop: AnimationFrameLoop;
-  readonly clipPreviewSync: PreviewTimelineSync;
-  private readonly disposables: Array<() => void> = [];
 
   constructor(
       {timelineContainer, previewContainer, leftNavContainer}: VideoEditorMount,
@@ -77,14 +58,12 @@ export class VideoEditor {
     });
     this.mediaLibrary = new MediaLibraryService();
     this.exportService = new ExportService(this.preview);
+    this.frameLoop = new AnimationFrameLoop();
+
     this.transcription = createTranscriptionService({
       mockTranscription: options.transcription?.mockTranscription ?? false,
       language: options.transcription?.language,
     });
-
-    const clipPreviewBinding = bindClipPreviewSync({timeline: this.timeline, preview: this.preview});
-    this.clipPreviewSync = clipPreviewBinding.sync;
-    this.disposables.push(() => clipPreviewBinding.dispose());
 
     if (options.leftNavClassName) {
       leftNavContainer.classList.add(...options.leftNavClassName.split(/\s+/).filter(Boolean));
@@ -98,89 +77,34 @@ export class VideoEditor {
         transcription: () => this.transcription.view.element,
       },
     });
-    const unmountLeftNav = mountLeftNav(leftNavContainer, this.leftNav);
-    this.disposables.push(unmountLeftNav);
+    mountLeftNav(leftNavContainer, this.leftNav);
+    this.bindComponents();
 
-    this.disposables.push(
-        bindMediaLibraryTimeline({
-          timeline: this.timeline,
-          preview: this.preview,
-          mediaLibrary: this.mediaLibrary,
-        }).dispose,
-    );
-
-    if (options.bindExport !== false && this.exportService) {
-      this.disposables.push(
-          bindExport({
-            exportService: this.exportService,
-            exportVideo: (exportOptions) => this.exportVideo(exportOptions),
-          }).dispose,
-      );
-    }
-
-
-    this.frameLoop = new AnimationFrameLoop();
-    this.disposables.push(
-        bindEditorPlayback({
-          timeline: this.timeline,
-          preview: this.preview,
-          frameLoop: this.frameLoop,
-        }),
-    );
-    if (options.bindTranscription !== false) {
-      this.disposables.push(
-          bindTranscription({
-            transcription: this.transcription,
-            timeline: this.timeline,
-            preview: this.preview,
-            clipPreviewSync: this.clipPreviewSync,
-            leftNav: this.leftNav,
-          }).dispose,
-      );
-    }
-
-    if (this.leftNav) {
-      this.disposables.push(
-          this.leftNav.on('text:add:requested', ({content, startTime}) => {
-            this.timeline.addClip({
-              type: 'text',
-              name: content.slice(0, 32) || 'Text',
-              startTime,
-              duration: 5,
-              textContent: content,
-            });
-          }),
-      );
-    }
-
-  }
-
-  /**
-   * Renders the current canvas composition with WebGPU and encodes an MP4 download.
-   */
-  async exportVideo(options: ExportVideoOptions = {}): Promise<ExportVideoResult> {
-    this.timeline.pause();
-    this.preview.render(this.preview.getCurrentTime(), {playing: false});
-
-    const result = await exportVideoFromPreview(this.preview, {
-      ...options,
-      playbackRate: options.playbackRate ?? this.timeline.getPlaybackRate(),
+    this.leftNav.on('text:add:requested', ({content, startTime}) => {
+      this.timeline.addClip({
+        type: 'text',
+        name: content.slice(0, 32) || 'Text',
+        startTime,
+        duration: 5,
+        textContent: content,
+      });
     });
-    downloadBlob(result.blob, result.filename);
-    return result;
+
   }
 
-  destroy(): void {
-    for (const unsubscribe of this.disposables) {
-      unsubscribe();
-    }
-    this.disposables.length = 0;
-    this.frameLoop.destroy();
-    this.transcription.destroy();
-    this.mediaLibrary.destroy();
-    this.exportService?.destroy();
-    this.leftNav?.destroy();
-    this.timeline.destroy();
-    this.preview.destroy();
+  private bindComponents() {
+    bindComponents(
+        this.timeline,
+        this.preview,
+        this.leftNav,
+        this.transcription,
+        this.mediaLibrary,
+        this.exportService,
+    );
+    bindEditorPlayback({
+      timeline: this.timeline,
+      preview: this.preview,
+      frameLoop: this.frameLoop,
+    });
   }
 }

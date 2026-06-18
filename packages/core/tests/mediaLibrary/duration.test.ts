@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatMediaDuration } from './duration';
+import { formatMediaDuration } from '../../src/mediaLibrary/duration';
 
 describe('formatMediaDuration', () => {
   it('formats seconds as m:ss', () => {

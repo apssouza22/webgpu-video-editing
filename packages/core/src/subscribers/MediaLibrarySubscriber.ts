@@ -10,11 +10,10 @@ export interface MediaLibraryTimelineSubscriberOptions {
   mediaLibrary: MediaLibraryService;
 }
 
-export class MediaLibrarySubscriber {
+class MediaLibrarySubscriber {
   private readonly timeline: Timeline;
   private readonly preview: CompositionPreviewAPI;
   private readonly mediaLibrary: MediaLibraryService;
-  private readonly disposables: Array<() => void> = [];
 
   constructor({
     timeline,
@@ -26,34 +25,25 @@ export class MediaLibrarySubscriber {
     this.mediaLibrary = mediaLibrary;
   }
 
-  bind(): () => void {
-    this.disposables.push(
-      this.mediaLibrary.on('upload:requested', async ({ file, addToCanvas, startTime }) => {
-        let item: MediaLibraryItem;
+  bind(): void {
+    this.mediaLibrary.on('upload:requested', async ({ file, addToCanvas, startTime }) => {
+      let item: MediaLibraryItem;
 
-        try {
-          item = this.mediaLibrary.addFromFile(file);
-        } catch (error) {
-          console.error('Media upload failed:', error);
-          return;
-        }
+      try {
+        item = this.mediaLibrary.addFromFile(file);
+      } catch (error) {
+        console.error('Media upload failed:', error);
+        return;
+      }
 
-        if (addToCanvas === true) {
-          this.addMediaToTimeline(item, startTime);
-        }
-      }),
-      this.mediaLibrary.on('selected', ({ item, startTime }) => {
+      if (addToCanvas === true) {
         this.addMediaToTimeline(item, startTime);
-      }),
-    );
+      }
+    });
 
-    return () => this.destroy();
-  }
-
-  destroy(): void {
-    while (this.disposables.length > 0) {
-      this.disposables.pop()?.();
-    }
+    this.mediaLibrary.on('selected', ({ item, startTime }) => {
+      this.addMediaToTimeline(item, startTime);
+    });
   }
 
   private addMediaToTimeline(item: MediaLibraryItem, startTime?: number): void {
@@ -98,19 +88,9 @@ function mediaLibraryItemToAddClipInput(
   }
 }
 
-export function bindMediaLibraryTimeline(
+export function bindMediaLibrary(
   options: MediaLibraryTimelineSubscriberOptions,
-): {
-  dispose: () => void;
-  subscriber: MediaLibrarySubscriber;
-} {
+): void {
   const subscriber = new MediaLibrarySubscriber(options);
-  const unbind = subscriber.bind();
-  return {
-    subscriber,
-    dispose: () => {
-      unbind();
-      subscriber.destroy();
-    },
-  };
+  subscriber.bind();
 }

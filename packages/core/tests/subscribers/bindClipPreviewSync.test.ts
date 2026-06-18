@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CompositionPreview } from '@opensource/video-preview';
 import type { Timeline } from '@opensource/timeline';
 
-import { bindClipPreviewSync } from './bindClipPreviewSync';
+import type { LeftNav } from '../../src/leftnav';
+import { bindClipPreviewSync } from '../../src/subscribers/bindClipPreviewSync';
+import { PreviewTimelineSync } from '../../src/subscribers/PreviewTimelineSync';
 
 function createPreviewStub(): CompositionPreview {
   const elements: Array<{ id: string; type: string; src?: string; startTime: number; duration: number; name: string }> = [];
@@ -64,11 +66,33 @@ function createTimelineStub(): Timeline & { emit: (event: string, payload: unkno
   return timeline as unknown as Timeline & { emit: (event: string, payload: unknown) => void };
 }
 
+function createLeftNavStub(): LeftNav {
+  return {
+    handlePreviewElementUpdated: vi.fn(),
+    handlePreviewSelectionChanged: vi.fn(),
+    handlePreviewElementAdded: vi.fn(),
+  } as unknown as LeftNav;
+}
+
+function bindSync(
+  timeline: Timeline & { emit: (event: string, payload: unknown) => void },
+  preview: CompositionPreview,
+) {
+  const timelinePreviewSync = new PreviewTimelineSync(timeline, preview);
+  bindClipPreviewSync({
+    timeline,
+    preview,
+    leftNav: createLeftNavStub(),
+    timelinePreviewSync,
+  });
+  return timelinePreviewSync;
+}
+
 describe('bindClipPreviewSync', () => {
   it('exposes pause, resume, and mapping helpers through the sync service', () => {
     const timeline = createTimelineStub();
     const preview = createPreviewStub();
-    const { sync, dispose } = bindClipPreviewSync({ timeline, preview });
+    const sync = bindSync(timeline, preview);
 
     sync.pause();
     sync.resume();
@@ -76,14 +100,12 @@ describe('bindClipPreviewSync', () => {
 
     expect(sync.getClipIdForElement('missing')).toBeUndefined();
     expect(sync.getElementIdForClip('missing')).toBeUndefined();
-
-    dispose();
   });
 
   it('adds a canvas element when the timeline emits clip:add', () => {
     const timeline = createTimelineStub();
     const preview = createPreviewStub();
-    const { sync, dispose } = bindClipPreviewSync({ timeline, preview });
+    const sync = bindSync(timeline, preview);
 
     timeline.emit('clip:add', {
       clips: [{
@@ -101,14 +123,12 @@ describe('bindClipPreviewSync', () => {
     expect(preview.addElement).toHaveBeenCalledTimes(1);
     expect(sync.getElementIdForClip('clip-1')).toBe('element-1');
     expect(sync.getClipIdForElement('element-1')).toBe('clip-1');
-
-    dispose();
   });
 
   it('ignores timeline clip:add while paused', () => {
     const timeline = createTimelineStub();
     const preview = createPreviewStub();
-    const { sync, dispose } = bindClipPreviewSync({ timeline, preview });
+    const sync = bindSync(timeline, preview);
 
     sync.pause();
     timeline.emit('clip:add', {
@@ -126,7 +146,5 @@ describe('bindClipPreviewSync', () => {
 
     expect(preview.addElement).not.toHaveBeenCalled();
     expect(sync.getElementIdForClip('clip-1')).toBeUndefined();
-
-    dispose();
   });
 });

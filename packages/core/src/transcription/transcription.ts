@@ -163,12 +163,6 @@ export class TranscriptionService {
     this.events.off(event, handler);
   }
 
-  destroy(): void {
-    this.worker.terminate();
-    this.transcribing = false;
-    this.pendingAudioTranscription = null;
-  }
-
   #addEventListener(): void {
     this.worker.addEventListener('message', (event: MessageEvent<WorkerResponseMessage>) => {
       const message = event.data;

@@ -11,7 +11,6 @@ export class ExportPanel {
   private readonly form: HTMLFormElement;
   private readonly exportButton: HTMLButtonElement;
   private readonly statusEl: HTMLParagraphElement;
-  private readonly disposers: Array<() => void> = [];
   private exporting = false;
 
   constructor(private readonly exportService: ExportService) {
@@ -87,29 +86,21 @@ export class ExportPanel {
     this.form.append(this.exportButton);
     this.root.append(title, description, this.form, this.statusEl);
 
-    this.disposers.push(
-      this.exportService.on('export:status', ({ message, exporting }) => {
-        this.exporting = exporting;
-        this.statusEl.textContent = message;
-        this.updateButtonState(this.exportService.canExport());
-      }),
-      this.exportService.on('export:availability', ({ canExport }) => {
-        this.updateButtonState(canExport);
-      }),
-    );
+    this.exportService.on('export:status', ({ message, exporting }) => {
+      this.exporting = exporting;
+      this.statusEl.textContent = message;
+      this.updateButtonState(this.exportService.canExport());
+    });
+
+    this.exportService.on('export:availability', ({ canExport }) => {
+      this.updateButtonState(canExport);
+    });
 
     this.updateButtonState(this.exportService.canExport());
   }
 
   get element(): HTMLElement {
     return this.root;
-  }
-
-  destroy(): void {
-    for (const dispose of this.disposers) {
-      dispose();
-    }
-    this.disposers.length = 0;
   }
 
   private readSettings(): ExportSettings {
@@ -137,8 +128,7 @@ export class ExportPanel {
 export function mountExportPanel(
   container: HTMLElement,
   exportService: ExportService,
-): () => void {
+): void {
   const panel = new ExportPanel(exportService);
   container.append(panel.element);
-  return () => panel.destroy();
 }

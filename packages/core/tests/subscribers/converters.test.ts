@@ -6,7 +6,7 @@ import {
   getTimelineClipZIndex,
   isLinkedAudioCompanion,
   timelineClipToCanvasElement,
-} from './converters';
+} from '../../src/subscribers/converters';
 
 describe('getTimelineClipZIndex', () => {
   const tracks = [{ id: 'v1' }, { id: 'v2' }, { id: 'a1' }];

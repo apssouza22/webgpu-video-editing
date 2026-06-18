@@ -30,7 +30,6 @@ export class AnimationFrameLoop {
   private rafId: number | null = null;
   private running = false;
   private lastTimestamp: number | null = null;
-  private destroyed = false;
   private readonly onVisibilityChange = (): void => {
     if (document.hidden) {
       this.lastTimestamp = null;
@@ -59,7 +58,7 @@ export class AnimationFrameLoop {
   }
 
   start(): void {
-    if (this.destroyed || this.running) {
+    if (this.running) {
       return;
     }
 
@@ -72,20 +71,6 @@ export class AnimationFrameLoop {
     this.running = false;
     this.cancelScheduledFrame();
     this.lastTimestamp = null;
-  }
-
-  destroy(): void {
-    if (this.destroyed) {
-      return;
-    }
-
-    this.destroyed = true;
-    this.stop();
-    this.subscribers.clear();
-
-    if (typeof document !== 'undefined') {
-      document.removeEventListener('visibilitychange', this.onVisibilityChange);
-    }
   }
 
   private schedule(): void {

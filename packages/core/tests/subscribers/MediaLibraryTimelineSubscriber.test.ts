@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CompositionPreviewAPI } from '@opensource/video-preview';
 import type { Timeline } from '@opensource/timeline';
 
-import { MediaLibraryService } from '../mediaLibrary/MediaLibraryService';
-import type { MediaLibraryItem } from '../mediaLibrary/types';
-import { bindMediaLibraryTimeline } from './MediaLibrarySubscriber';
+import { MediaLibraryService } from '../../src/mediaLibrary/MediaLibraryService';
+import type { MediaLibraryItem } from '../../src/mediaLibrary/types';
+import { bindMediaLibraryTimeline } from '../../src/subscribers/MediaLibrarySubscriber';
 
 function createCanvasStub(): CompositionPreviewAPI {
   return {
@@ -29,7 +29,7 @@ describe('MediaLibraryTimelineSubscriber', () => {
     const mediaLibrary = new MediaLibraryService();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
-    const { dispose } = bindMediaLibraryTimeline({ timeline, preview: canvas, mediaLibrary });
+    bindMediaLibraryTimeline({ timeline, preview: canvas, mediaLibrary });
 
     const added = vi.fn();
     mediaLibrary.on('added', added);
@@ -43,8 +43,6 @@ describe('MediaLibraryTimelineSubscriber', () => {
     expect(timeline.addClip).not.toHaveBeenCalled();
     expect(canvas.addElement).not.toHaveBeenCalled();
 
-    dispose();
-    mediaLibrary.destroy();
     vi.unstubAllGlobals();
   });
 
@@ -57,7 +55,7 @@ describe('MediaLibraryTimelineSubscriber', () => {
     const mediaLibrary = new MediaLibraryService();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
-    const { dispose } = bindMediaLibraryTimeline({ timeline, preview: canvas, mediaLibrary });
+    bindMediaLibraryTimeline({ timeline, preview: canvas, mediaLibrary });
 
     const file = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
     mediaLibrary.requestUpload(file, { addToCanvas: true });
@@ -75,8 +73,6 @@ describe('MediaLibraryTimelineSubscriber', () => {
     );
     expect(canvas.addElement).not.toHaveBeenCalled();
 
-    dispose();
-    mediaLibrary.destroy();
     vi.unstubAllGlobals();
   });
 
@@ -84,7 +80,7 @@ describe('MediaLibraryTimelineSubscriber', () => {
     const mediaLibrary = new MediaLibraryService();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
-    const { dispose } = bindMediaLibraryTimeline({ timeline, preview: canvas, mediaLibrary });
+    bindMediaLibraryTimeline({ timeline, preview: canvas, mediaLibrary });
 
     const item: MediaLibraryItem = {
       id: 'lib-1',
@@ -103,16 +99,13 @@ describe('MediaLibraryTimelineSubscriber', () => {
         startTime: 3,
       }),
     );
-
-    dispose();
-    mediaLibrary.destroy();
   });
 
   it('uses the media duration when adding video clips', () => {
     const mediaLibrary = new MediaLibraryService();
     const canvas = createCanvasStub();
     const timeline = createTimelineStub();
-    const { dispose } = bindMediaLibraryTimeline({ timeline, preview: canvas, mediaLibrary });
+    bindMediaLibraryTimeline({ timeline, preview: canvas, mediaLibrary });
 
     const item: MediaLibraryItem = {
       id: 'lib-2',
@@ -132,8 +125,5 @@ describe('MediaLibraryTimelineSubscriber', () => {
         sourceDuration: 12.5,
       }),
     );
-
-    dispose();
-    mediaLibrary.destroy();
   });
 });

@@ -92,14 +92,6 @@ export class MediaLibraryService {
     return item;
   }
 
-  destroy(): void {
-    for (const url of this.objectUrls) {
-      URL.revokeObjectURL(url);
-    }
-    this.objectUrls.clear();
-    this.items.clear();
-  }
-
   private add(item: Omit<MediaLibraryItem, 'id' | 'createdAt'> & { id?: string }): MediaLibraryItem {
     const entry: MediaLibraryItem = {
       ...item,

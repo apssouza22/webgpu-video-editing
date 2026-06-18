@@ -10,7 +10,6 @@ export class MediaLibraryPanel {
   private readonly emptyState: HTMLElement;
   private readonly searchInput: HTMLInputElement;
   private readonly fileInput: HTMLInputElement;
-  private readonly disposers: Array<() => void> = [];
   private query = '';
 
   constructor(private readonly mediaLibrary: MediaLibraryService) {
@@ -66,11 +65,9 @@ export class MediaLibraryPanel {
       this.renderItems();
     });
 
-    this.disposers.push(
-      this.mediaLibrary.on('added', () => this.renderItems()),
-      this.mediaLibrary.on('removed', () => this.renderItems()),
-      this.mediaLibrary.on('changed', () => this.renderItems()),
-    );
+    this.mediaLibrary.on('added', () => this.renderItems());
+    this.mediaLibrary.on('removed', () => this.renderItems());
+    this.mediaLibrary.on('changed', () => this.renderItems());
 
     this.root.append(header, this.searchInput, uploadButton, this.fileInput, this.grid, this.emptyState);
     this.renderItems();
@@ -78,12 +75,6 @@ export class MediaLibraryPanel {
 
   get element(): HTMLElement {
     return this.root;
-  }
-
-  destroy(): void {
-    while (this.disposers.length > 0) {
-      this.disposers.pop()?.();
-    }
   }
 
   private renderItems(): void {

@@ -1,60 +1,47 @@
-import type { Clip, Timeline } from '@opensource/timeline';
-import type { CompositionPreview } from '@opensource/video-preview';
+import type {Clip, Timeline} from '@opensource/timeline';
+import type {CompositionPreview} from '@opensource/video-preview';
 
-import type { PreviewTimelineSync } from './PreviewTimelineSync';
-import {
-  getTimelineClipZIndex,
-  timelineClipToCanvasElement,
-} from './converters';
+import type {PreviewTimelineSync} from './PreviewTimelineSync';
+
+import {getTimelineClipZIndex, timelineClipToCanvasElement,} from './converters';
 
 export interface TimelineSubscriberOptions {
   timeline: Timeline;
   preview: CompositionPreview;
-  sync: PreviewTimelineSync;
+  timelinePreviewSync: PreviewTimelineSync;
 }
 
-export class TimelineSubscriber {
+class TimelineSubscriber {
   private readonly timeline: Timeline;
   private readonly preview: CompositionPreview;
-  private readonly sync: PreviewTimelineSync;
-  private readonly disposables: Array<() => void> = [];
+  private readonly timelinePreviewSync: PreviewTimelineSync;
 
-  constructor({ timeline, preview, sync }: TimelineSubscriberOptions) {
+  constructor({timeline, preview, timelinePreviewSync}: TimelineSubscriberOptions) {
     this.timeline = timeline;
     this.preview = preview;
-    this.sync = sync;
+    this.timelinePreviewSync = timelinePreviewSync;
   }
 
-  bind(): () => void {
-    this.disposables.push(
-      this.timeline.on('clip:add', (payload) => this.onTimelineClipAdd(payload.clips)),
-      this.timeline.on('clip:remove', (payload) => this.onTimelineClipRemove(payload.clipIds)),
-      this.timeline.on('clip:drag', (payload) => this.onTimelineClipMoved(payload)),
-      this.timeline.on('clip:drag:end', (payload) => this.onTimelineClipMoved(payload)),
-      this.timeline.on('clip:trim', (payload) => this.onTimelineClipTrimmed(payload)),
-      this.timeline.on('clip:split', (payload) => this.onTimelineClipSplit(payload)),
-      this.timeline.on('clip:cut', (payload) => this.onTimelineClipCut(payload)),
-      this.timeline.on('clip:select', (payload) => this.onTimelineClipSelect(payload.primaryId)),
-      this.timeline.on('track:reorder', () => this.syncAllZIndicesFromTimeline()),
-      this.timeline.on('track:add', () => this.syncAllZIndicesFromTimeline()),
-      this.timeline.on('track:remove', () => this.syncAllZIndicesFromTimeline()),
-    );
-
-    return () => this.destroy();
-  }
-
-  destroy(): void {
-    while (this.disposables.length > 0) {
-      this.disposables.pop()?.();
-    }
+  bind(): void {
+    this.timeline.on('clip:add', (payload) => this.onTimelineClipAdd(payload.clips));
+    this.timeline.on('clip:remove', (payload) => this.onTimelineClipRemove(payload.clipIds));
+    this.timeline.on('clip:drag', (payload) => this.onTimelineClipMoved(payload));
+    this.timeline.on('clip:drag:end', (payload) => this.onTimelineClipMoved(payload));
+    this.timeline.on('clip:trim', (payload) => this.onTimelineClipTrimmed(payload));
+    this.timeline.on('clip:split', (payload) => this.onTimelineClipSplit(payload));
+    this.timeline.on('clip:cut', (payload) => this.onTimelineClipCut(payload));
+    this.timeline.on('clip:select', (payload) => this.onTimelineClipSelect(payload.primaryId));
+    this.timeline.on('track:reorder', () => this.syncAllZIndicesFromTimeline());
+    this.timeline.on('track:add', () => this.syncAllZIndicesFromTimeline());
+    this.timeline.on('track:remove', () => this.syncAllZIndicesFromTimeline());
   }
 
   private onTimelineClipAdd(clips: Clip[]): void {
-    if (this.sync.isPaused()) {
+    if (this.timelinePreviewSync.isPaused()) {
       return;
     }
 
-    this.sync.runAs('timeline', () => {
+    this.timelinePreviewSync.runAs('timeline', () => {
       for (const clip of clips) {
         this.addCanvasLayerForClip(clip);
       }
@@ -62,50 +49,50 @@ export class TimelineSubscriber {
   }
 
   private onTimelineClipRemove(clipIds: string[]): void {
-    if (this.sync.shouldIgnoreTimelineOrigin()) {
+    if (this.timelinePreviewSync.shouldIgnoreTimelineOrigin()) {
       return;
     }
 
-    this.sync.runAs('timeline', () => {
+    this.timelinePreviewSync.runAs('timeline', () => {
       const removedElements = new Set<string>();
 
       for (const clipId of clipIds) {
-        const elementId = this.sync.getElementIdForClip(clipId);
+        const elementId = this.timelinePreviewSync.getElementIdForClip(clipId);
         if (!elementId || removedElements.has(elementId)) {
-          this.sync.unmapClip(clipId);
+          this.timelinePreviewSync.unmapClip(clipId);
           continue;
         }
 
-        if (this.sync.getClipIdForElement(elementId) !== clipId) {
-          this.sync.unmapClip(clipId);
+        if (this.timelinePreviewSync.getClipIdForElement(elementId) !== clipId) {
+          this.timelinePreviewSync.unmapClip(clipId);
           continue;
         }
 
         this.preview.removeElement(elementId);
-        this.sync.unmapElement(elementId);
+        this.timelinePreviewSync.unmapElement(elementId);
         removedElements.add(elementId);
       }
     });
   }
 
   private onTimelineClipMoved({
-    clipId,
-    linkedClipId,
-  }: {
+                                clipId,
+                                linkedClipId,
+                              }: {
     clipId: string;
     startTime: number;
     trackId: string;
     linkedClipId?: string;
   }): void {
-    if (this.sync.isPaused()) {
+    if (this.timelinePreviewSync.isPaused()) {
       return;
     }
 
     this.syncTimelineClipsToCanvas([clipId, linkedClipId]);
   }
 
-  private onTimelineClipTrimmed({ clipId }: { clipId: string }): void {
-    if (this.sync.isPaused()) {
+  private onTimelineClipTrimmed({clipId}: { clipId: string }): void {
+    if (this.timelinePreviewSync.isPaused()) {
       return;
     }
 
@@ -118,14 +105,14 @@ export class TimelineSubscriber {
   }
 
   private onTimelineClipSplit({
-    originalClipId,
-    newClipIds,
-  }: {
+                                originalClipId,
+                                newClipIds,
+                              }: {
     originalClipId: string;
     newClipIds: [string, string];
     time: number;
   }): void {
-    if (this.sync.shouldIgnoreTimelineOrigin()) {
+    if (this.timelinePreviewSync.shouldIgnoreTimelineOrigin()) {
       return;
     }
 
@@ -137,10 +124,10 @@ export class TimelineSubscriber {
       return;
     }
 
-    const orphanedClipIds = this.sync.getOrphanedClipIds();
+    const orphanedClipIds = this.timelinePreviewSync.getOrphanedClipIds();
     const companionClipId = orphanedClipIds.find((id) => id !== originalClipId);
 
-    this.sync.runAs('timeline', () => {
+    this.timelinePreviewSync.runAs('timeline', () => {
       this.syncSplitClip(originalClipId, firstClip, secondClip);
 
       if (companionClipId && firstClip.linkedClipId && secondClip.linkedClipId) {
@@ -152,7 +139,7 @@ export class TimelineSubscriber {
       }
 
       for (const clipId of orphanedClipIds) {
-        this.sync.unmapClip(clipId);
+        this.timelinePreviewSync.unmapClip(clipId);
       }
     });
 
@@ -160,21 +147,21 @@ export class TimelineSubscriber {
   }
 
   private onTimelineClipCut({
-    originalClipId,
-    clipIds,
-    mode,
-  }: {
+                              originalClipId,
+                              clipIds,
+                              mode,
+                            }: {
     originalClipId: string;
     clipIds: string[];
     startTime: number;
     duration: number;
     mode: 'start' | 'end' | 'middle';
   }): void {
-    if (this.sync.shouldIgnoreTimelineOrigin()) {
+    if (this.timelinePreviewSync.shouldIgnoreTimelineOrigin()) {
       return;
     }
 
-    this.sync.runAs('timeline', () => {
+    this.timelinePreviewSync.runAs('timeline', () => {
       if (mode === 'middle') {
         const [firstId, secondId] = clipIds as [string, string];
         const state = this.timeline.getState();
@@ -184,7 +171,7 @@ export class TimelineSubscriber {
           return;
         }
 
-        const orphanedClipIds = this.sync.getOrphanedClipIds();
+        const orphanedClipIds = this.timelinePreviewSync.getOrphanedClipIds();
         const companionClipId = orphanedClipIds.find((id) => id !== originalClipId);
 
         this.syncSplitClip(originalClipId, firstClip, secondClip);
@@ -198,7 +185,7 @@ export class TimelineSubscriber {
         }
 
         for (const clipId of orphanedClipIds) {
-          this.sync.unmapClip(clipId);
+          this.timelinePreviewSync.unmapClip(clipId);
         }
         return;
       }
@@ -222,22 +209,22 @@ export class TimelineSubscriber {
   }
 
   private onTimelineClipSelect(primaryId: string | null): void {
-    if (this.sync.shouldIgnoreTimelineOrigin()) {
+    if (this.timelinePreviewSync.shouldIgnoreTimelineOrigin()) {
       return;
     }
 
-    const elementId = primaryId ? this.sync.getElementIdForClip(primaryId) ?? null : null;
+    const elementId = primaryId ? this.timelinePreviewSync.getElementIdForClip(primaryId) ?? null : null;
     if (elementId === this.preview.getSelectedId()) {
       return;
     }
 
-    this.sync.runAs('timeline', () => {
+    this.timelinePreviewSync.runAs('timeline', () => {
       this.preview.selectElement(elementId);
     });
   }
 
   private syncTimelineClipsToCanvas(clipIds: Array<string | undefined>): void {
-    if (this.sync.isPaused()) {
+    if (this.timelinePreviewSync.isPaused()) {
       return;
     }
 
@@ -246,7 +233,7 @@ export class TimelineSubscriber {
       return;
     }
 
-    this.sync.runAs('timeline', () => {
+    this.timelinePreviewSync.runAs('timeline', () => {
       for (const clipId of uniqueIds) {
         const clip = this.timeline.getState().clips.find((item) => item.id === clipId);
         if (clip) {
@@ -259,10 +246,10 @@ export class TimelineSubscriber {
   }
 
   private syncSplitClip(originalClipId: string, firstClip: Clip, secondClip: Clip): void {
-    const elementId = this.sync.getElementIdForClip(originalClipId);
+    const elementId = this.timelinePreviewSync.getElementIdForClip(originalClipId);
     if (elementId) {
       this.applyClipTimingToCanvas(firstClip, elementId);
-      this.sync.register(elementId, firstClip.id);
+      this.timelinePreviewSync.register(elementId, firstClip.id);
     } else {
       this.addCanvasLayerForClip(firstClip);
     }
@@ -271,27 +258,27 @@ export class TimelineSubscriber {
   }
 
   private addCanvasLayerForClip(clip: Clip): void {
-    if (this.sync.getElementIdForClip(clip.id)) {
+    if (this.timelinePreviewSync.getElementIdForClip(clip.id)) {
       return;
     }
 
-    const { tracks } = this.timeline.getState();
+    const {tracks} = this.timeline.getState();
     const element = timelineClipToCanvasElement(clip, {
       zIndex: getTimelineClipZIndex(clip, tracks),
       playerSize: this.preview.getPlayerSize(),
     });
     const elementId = this.preview.addElement(element);
-    this.sync.register(elementId, clip.id);
+    this.timelinePreviewSync.register(elementId, clip.id);
   }
 
   private applyClipTimingToCanvas(clip: Clip, elementId?: string): void {
-    const targetId = elementId ?? this.sync.getElementIdForClip(clip.id);
+    const targetId = elementId ?? this.timelinePreviewSync.getElementIdForClip(clip.id);
     if (!targetId) {
       return;
     }
 
     if (!elementId) {
-      const mappedClipId = this.sync.getClipIdForElement(targetId);
+      const mappedClipId = this.timelinePreviewSync.getClipIdForElement(targetId);
       if (mappedClipId && mappedClipId !== clip.id) {
         return;
       }
@@ -306,16 +293,16 @@ export class TimelineSubscriber {
   }
 
   private syncAllZIndicesFromTimeline(): void {
-    if (this.sync.shouldIgnoreTimelineOrigin()) {
+    if (this.timelinePreviewSync.shouldIgnoreTimelineOrigin()) {
       return;
     }
 
-    const { tracks, clips } = this.timeline.getState();
+    const {tracks, clips} = this.timeline.getState();
 
-    this.sync.runAs('timeline', () => {
+    this.timelinePreviewSync.runAs('timeline', () => {
       for (const clip of clips) {
-        const elementId = this.sync.getElementIdForClip(clip.id);
-        if (!elementId || this.sync.getClipIdForElement(elementId) !== clip.id) {
+        const elementId = this.timelinePreviewSync.getElementIdForClip(clip.id);
+        if (!elementId || this.timelinePreviewSync.getClipIdForElement(elementId) !== clip.id) {
           continue;
         }
 
@@ -333,6 +320,18 @@ export class TimelineSubscriber {
       return;
     }
 
-    this.preview.render(this.preview.getCurrentTime(), { playing: false });
+    this.preview.render(this.preview.getCurrentTime(), {playing: false});
   }
+}
+
+
+export interface TimelineSubsOptions {
+  timeline: Timeline;
+  preview: CompositionPreview;
+  timelinePreviewSync: PreviewTimelineSync;
+}
+
+export function bindTimeline({timeline,preview,timelinePreviewSync}: TimelineSubsOptions): void {
+  const timelineSubscriber = new TimelineSubscriber({timeline, preview, timelinePreviewSync});
+  timelineSubscriber.bind();
 }

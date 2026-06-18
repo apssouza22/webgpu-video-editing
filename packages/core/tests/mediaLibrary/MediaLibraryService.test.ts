@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { MediaLibraryService } from './MediaLibraryService';
+import { MediaLibraryService } from '../../src/mediaLibrary/MediaLibraryService';
 
 describe('MediaLibraryService', () => {
   it('starts empty', () => {

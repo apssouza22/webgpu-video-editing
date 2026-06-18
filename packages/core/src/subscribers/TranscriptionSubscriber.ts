@@ -21,7 +21,6 @@ export class TranscriptionSubscriber {
   private readonly preview: CompositionPreview;
   private readonly clipPreviewSync: PreviewTimelineSync;
   private readonly leftNav: LeftNav | null;
-  private readonly disposables: Array<() => void> = [];
 
   constructor({
     transcription,
@@ -37,81 +36,77 @@ export class TranscriptionSubscriber {
     this.leftNav = leftNav;
   }
 
-  bind(): () => void {
-    this.disposables.push(
-      this.transcription.on('transcription:requested', async ({ sourceId }) => {
-        const source = findTranscriptionSource(this.preview, sourceId);
-        if (!source) {
-          this.transcription.setTranscriptionStatus(
-            'Add a video or audio layer before transcribing.',
-            false,
-          );
-          return;
-        }
+  bind(): void {
+    this.transcription.on('transcription:requested', async ({ sourceId }) => {
+      const source = findTranscriptionSource(this.preview, sourceId);
+      if (!source) {
+        this.transcription.setTranscriptionStatus(
+          'Add a video or audio layer before transcribing.',
+          false,
+        );
+        return;
+      }
 
-        this.leftNav?.setActivePanel('transcription');
-        this.transcription.setTranscriptionStatus('Preparing audio for transcription…', true);
+      this.leftNav?.setActivePanel('transcription');
+      this.transcription.setTranscriptionStatus('Preparing audio for transcription…', true);
 
-        try {
-          this.transcription.loadModel();
-          const result = await this.transcription.transcribeMedia(
-            getMediaSourceUrl(source),
-            source.type === 'audio' ? 'audio' : 'video',
-            source.id,
-            getTranscriptionClipOptions(source),
-          );
+      try {
+        this.transcription.loadModel();
+        const result = await this.transcription.transcribeMedia(
+          getMediaSourceUrl(source),
+          source.type === 'audio' ? 'audio' : 'video',
+          source.id,
+          getTranscriptionClipOptions(source),
+        );
 
-          if (result) {
-            const clipId = this.clipPreviewSync.getClipIdForElement(source.id);
-            this.transcription.setTranscriptionResult({
-              ...result,
-              clipId,
-            });
-            this.transcription.setTranscriptionStatus('Transcription complete.', false);
-          }
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          this.transcription.setTranscriptionStatus(`Transcription failed: ${message}`, false);
-          console.error(error);
+        if (result) {
+          const clipId = this.clipPreviewSync.getClipIdForElement(source.id);
+          this.transcription.setTranscriptionResult({
+            ...result,
+            clipId,
+          });
+          this.transcription.setTranscriptionStatus('Transcription complete.', false);
         }
-      }),
-      this.transcription.on('transcription:seek', ({ timestamp }) => {
-        this.timeline.pause();
-        this.timeline.setPlayhead(timestamp);
-      }),
-      this.transcription.on('transcription:captions:requested', ({ results }) => {
-        addCaptionClips(this.timeline, results);
-        this.transcription.setTranscriptionStatus('Caption layers added to the timeline.', false);
-      }),
-      this.transcription.on('transcription:progress', (progress) => {
-        if (progress.message || progress.status) {
-          this.transcription.setTranscriptionStatus(progress.message ?? progress.status, true);
-        }
-      }),
-      this.transcription.on('transcription:word:removed', ({ clipId, startTime, duration }) => {
-        const target = resolveClipCutTarget(this.timeline, clipId, startTime);
-        if (!target) {
-          return;
-        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.transcription.setTranscriptionStatus(`Transcription failed: ${message}`, false);
+        console.error(error);
+      }
+    });
 
-        this.timeline.cut(target.clipId, target.localStartTime, duration);
-      }),
-      this.timeline.on('playhead:change', ({ time }) => {
-        this.transcription.highlightTranscriptionAt(time);
-      }),
-      this.preview.on('element:added', () => this.updateAvailability()),
-      this.preview.on('element:removed', () => this.updateAvailability()),
-    );
+    this.transcription.on('transcription:seek', ({ timestamp }) => {
+      this.timeline.pause();
+      this.timeline.setPlayhead(timestamp);
+    });
+
+    this.transcription.on('transcription:captions:requested', ({ results }) => {
+      addCaptionClips(this.timeline, results);
+      this.transcription.setTranscriptionStatus('Caption layers added to the timeline.', false);
+    });
+
+    this.transcription.on('transcription:progress', (progress) => {
+      if (progress.message || progress.status) {
+        this.transcription.setTranscriptionStatus(progress.message ?? progress.status, true);
+      }
+    });
+
+    this.transcription.on('transcription:word:removed', ({ clipId, startTime, duration }) => {
+      const target = resolveClipCutTarget(this.timeline, clipId, startTime);
+      if (!target) {
+        return;
+      }
+
+      this.timeline.cut(target.clipId, target.localStartTime, duration);
+    });
+
+    this.timeline.on('playhead:change', ({ time }) => {
+      this.transcription.highlightTranscriptionAt(time);
+    });
+
+    this.preview.on('element:added', () => this.updateAvailability());
+    this.preview.on('element:removed', () => this.updateAvailability());
 
     this.updateAvailability();
-
-    return () => this.destroy();
-  }
-
-  destroy(): void {
-    while (this.disposables.length > 0) {
-      this.disposables.pop()?.();
-    }
   }
 
   private updateAvailability(): void {
@@ -123,19 +118,9 @@ export class TranscriptionSubscriber {
   }
 }
 
-export function bindTranscription(options: TranscriptionSubscriberOptions): {
-  dispose: () => void;
-  subscriber: TranscriptionSubscriber;
-} {
+export function bindTranscription(options: TranscriptionSubscriberOptions): void {
   const subscriber = new TranscriptionSubscriber(options);
-  const unbind = subscriber.bind();
-  return {
-    subscriber,
-    dispose: () => {
-      unbind();
-      subscriber.destroy();
-    },
-  };
+  subscriber.bind();
 }
 
 function findTranscriptionSource(

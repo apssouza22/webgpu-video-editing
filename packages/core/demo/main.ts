@@ -48,10 +48,6 @@ editor.leftNav?.on('property:changed', (payload) => {
   });
 });
 
-window.addEventListener('beforeunload', () => {
-  editor.destroy();
-});
-
 function probeUrlDuration(url: string): Promise<number> {
   return new Promise((resolve) => {
     const video = document.createElement('video');

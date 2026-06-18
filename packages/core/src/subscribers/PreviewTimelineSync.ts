@@ -48,13 +48,6 @@ export class PreviewTimelineSync {
     }
   }
 
-  destroy(): void {
-    this.elementToClip.clear();
-    this.clipToElement.clear();
-    this.source = null;
-    this.paused = false;
-  }
-
   rebuildMappings(): void {
     this.elementToClip.clear();
     this.clipToElement.clear();

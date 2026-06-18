@@ -146,7 +146,7 @@ git checkout -b my-feature
 - When touching a submodule, commit and push in the submodule repo, then pin the SHA in the assembly repo.
 - Build submodule packages before relying on their `dist/` artifacts.
 - Organize code by domain package, not by technical layer
-- Write domain tests in the domain packages
+- Write domain tests in the tests folder outside the src folder
 - Tests should cover domain logic, not implementation details
 - Prefer object oriented patterns over functional patterns
 - Assume that webgpu is available
@@ -157,6 +157,7 @@ git checkout -b my-feature
 - Create a component subscriber class for each component in the core subscribers package. Ex TimelineSubscriber
 - Create a service class for each component to facilitate communication between the component and the outside world
 - Only services and data objects should be available outside of the packages
+- Avoid object deconstruction in the public API of the packages. `This is Bad {timeline, preview, leftNav, timelinePreviewSync}: PreviewOptions`
 
 
 ## Component subscribers

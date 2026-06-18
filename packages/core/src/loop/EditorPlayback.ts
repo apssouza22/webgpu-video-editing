@@ -16,7 +16,6 @@ export class EditorPlayback {
   private readonly timeline: Timeline;
   private readonly preview: CompositionPreview;
   private readonly frameLoop: AnimationFrameLoop;
-  private readonly disposables: Array<() => void> = [];
   private playbackStartedAt: number;
 
   constructor({ timeline, preview, frameLoop }: EditorPlaybackOptions) {
@@ -26,25 +25,14 @@ export class EditorPlayback {
     this.playbackStartedAt = timeline.getPlayhead();
   }
 
-  bind(): () => void {
-    this.disposables.push(
-      this.timeline.on('playhead:change', (payload) => this.syncCanvasOnScrub(payload)),
-      this.timeline.on('playhead:play', (payload) => this.onPlay(payload)),
-      this.timeline.on('playhead:pause', (payload) => this.onPause(payload)),
-      this.timeline.on('playhead:rate', () => this.onRateChange()),
-      this.frameLoop.subscribe(({ deltaTime }) => this.onFrame(deltaTime)),
-    );
+  bind(): void {
+    this.timeline.on('playhead:change', (payload) => this.syncCanvasOnScrub(payload));
+    this.timeline.on('playhead:play', (payload) => this.onPlay(payload));
+    this.timeline.on('playhead:pause', (payload) => this.onPause(payload));
+    this.timeline.on('playhead:rate', () => this.onRateChange());
+    this.frameLoop.subscribe(({ deltaTime }) => this.onFrame(deltaTime));
 
     this.renderCanvas(this.timeline.getPlayhead(), false);
-
-    return () => this.destroy();
-  }
-
-  destroy(): void {
-    this.frameLoop.stop();
-    while (this.disposables.length > 0) {
-      this.disposables.pop()?.();
-    }
   }
 
   private renderCanvas(time: number, playing: boolean): void {
@@ -104,7 +92,7 @@ export class EditorPlayback {
   }
 }
 
-export function bindEditorPlayback(options: EditorPlaybackOptions): () => void {
+export function bindEditorPlayback(options: EditorPlaybackOptions): void {
   const playback = new EditorPlayback(options);
-  return playback.bind();
+  playback.bind();
 }

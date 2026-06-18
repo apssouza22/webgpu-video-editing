@@ -1,8 +1,5 @@
-import type { Disposable } from '@opensource/video-preview';
-
-export abstract class UIComponent<TContext = void> implements Disposable {
+export abstract class UIComponent<TContext = void> {
   readonly element: HTMLElement;
-  private readonly disposers: Array<() => void> = [];
   protected readonly container: HTMLElement;
   protected readonly context: TContext;
 
@@ -12,10 +9,6 @@ export abstract class UIComponent<TContext = void> implements Disposable {
     this.element = this.createElement();
     this.container.append(this.element);
     this.bind();
-  }
-
-  protected track(disposer: () => void): void {
-    this.disposers.push(disposer);
   }
 
   protected tagRef<T extends HTMLElement>(element: T, name: string): T {
@@ -29,13 +22,6 @@ export abstract class UIComponent<TContext = void> implements Disposable {
       throw new Error(`UI ref "${name}" not found in ${this.constructor.name}`);
     }
     return node;
-  }
-
-  destroy(): void {
-    while (this.disposers.length > 0) {
-      this.disposers.pop()?.();
-    }
-    this.element.remove();
   }
 
   /**

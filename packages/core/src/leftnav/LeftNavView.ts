@@ -90,11 +90,9 @@ export class LeftNavView extends UIComponent<LeftNav> {
   }
 
   protected bind(): void {
-    this.track(
-      this.leftNav.on('panel:changed', ({ panel }) => {
-        this.showPanel(panel);
-      }),
-    );
+    this.leftNav.on('panel:changed', ({ panel }) => {
+      this.showPanel(panel);
+    });
   }
 
   private showPanel(panel: LeftNavPanelId): void {
@@ -154,7 +152,6 @@ export class LeftNavView extends UIComponent<LeftNav> {
   }
 }
 
-export function mountLeftNav(container: HTMLElement, leftNav: LeftNav): () => void {
-  const view = new LeftNavView(container, leftNav);
-  return () => view.destroy();
+export function mountLeftNav(container: HTMLElement, leftNav: LeftNav): void {
+  new LeftNavView(container, leftNav);
 }

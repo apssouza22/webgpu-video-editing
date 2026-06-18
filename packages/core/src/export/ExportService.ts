@@ -6,7 +6,6 @@ import type { ExportEventHandler, ExportEventName, ExportSettings } from './even
 export class ExportService {
   readonly events = new ExportEventEmitter();
   private readonly preview: CompositionPreviewAPI;
-  private readonly disposables: Array<() => void> = [];
 
   constructor(preview: CompositionPreviewAPI) {
     this.preview = preview;
@@ -35,22 +34,13 @@ export class ExportService {
     this.events.off(event, handler);
   }
 
-  destroy(): void {
-    for (const unsubscribe of this.disposables) {
-      unsubscribe();
-    }
-    this.disposables.length = 0;
-  }
-
   private bindPreview(): void {
     const notifyExportAvailability = (): void => {
       this.events.emit('export:availability', { canExport: this.canExport() });
     };
 
-    this.disposables.push(
-      this.preview.on('element:added', notifyExportAvailability),
-      this.preview.on('element:removed', notifyExportAvailability),
-    );
+    this.preview.on('element:added', notifyExportAvailability);
+    this.preview.on('element:removed', notifyExportAvailability);
     notifyExportAvailability();
   }
 }

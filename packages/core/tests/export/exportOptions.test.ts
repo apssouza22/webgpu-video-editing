@@ -5,7 +5,7 @@ import {
   resolveExportDimensions,
   resolveExportSettings,
   resolveOutputFilename,
-} from './exportOptions';
+} from '../../src/export/exportOptions';
 
 function createCanvasStub(size: { width: number; height: number }): CompositionPreview {
   return {
