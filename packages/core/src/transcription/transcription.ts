@@ -74,8 +74,8 @@ export class TranscriptionService {
     }
   }
 
-  seekToTimestamp(timestamp: number, sourceId: string): void {
-    this.events.emit('transcription:seek', { timestamp, sourceId });
+  seekToTimestamp(timestamp: number, sourceId: string, clipId?: string): void {
+    this.events.emit('transcription:seek', { timestamp, sourceId, clipId });
   }
 
   setCanTranscribe(value: boolean): void {
@@ -95,7 +95,7 @@ export class TranscriptionService {
     this.transcriptionView.setStatus('', false);
   }
 
-  highlightTranscriptionAt(time: number): void {
+  highlightTranscriptionAt(time: number | null): void {
     this.transcriptionView.highlightChunksByTime(time);
   }
 

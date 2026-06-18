@@ -1,7 +1,7 @@
 import type { LeftNav } from '../leftnav';
 import type { CompositionPreview } from '@opensource/video-preview';
 import type { CanvasElement } from '@opensource/video-preview';
-import type { Timeline } from '@opensource/timeline';
+import type { Clip, Timeline } from '@opensource/timeline';
 
 import type { TranscriptionService } from '../transcription/transcription';
 import type { TranscriptionResult } from '../transcription/types';
@@ -21,6 +21,7 @@ export class TranscriptionSubscriber {
   private readonly preview: CompositionPreview;
   private readonly clipPreviewSync: PreviewTimelineSync;
   private readonly leftNav: LeftNav | null;
+  private activeTranscriptionClipId: string | undefined;
 
   constructor({
     transcription,
@@ -61,6 +62,7 @@ export class TranscriptionSubscriber {
 
         if (result) {
           const clipId = this.clipPreviewSync.getClipIdForElement(source.id);
+          this.activeTranscriptionClipId = clipId;
           this.transcription.setTranscriptionResult({
             ...result,
             clipId,
@@ -74,9 +76,13 @@ export class TranscriptionSubscriber {
       }
     });
 
-    this.transcription.on('transcription:seek', ({ timestamp }) => {
-      this.timeline.pause();
-      this.timeline.setPlayhead(timestamp);
+    this.transcription.on('transcription:seek', ({ timestamp, sourceId, clipId }) => {
+      const timelineTime = resolveTranscriptSeekTimelineTime(this.timeline, timestamp, {
+        clipId,
+        sourceId,
+        clipPreviewSync: this.clipPreviewSync,
+      });
+      this.timeline.setPlayhead(timelineTime);
     });
 
     this.transcription.on('transcription:captions:requested', ({ results }) => {
@@ -100,7 +106,11 @@ export class TranscriptionSubscriber {
     });
 
     this.timeline.on('playhead:change', ({ time }) => {
-      this.transcription.highlightTranscriptionAt(time);
+      const transcriptTime = resolveTimelineToTranscriptTime(this.timeline, time, {
+        clipId: this.activeTranscriptionClipId,
+        clipPreviewSync: this.clipPreviewSync,
+      });
+      this.transcription.highlightTranscriptionAt(transcriptTime);
     });
 
     this.preview.on('element:added', () => this.updateAvailability());
@@ -121,6 +131,79 @@ export class TranscriptionSubscriber {
 export function bindTranscription(options: TranscriptionSubscriberOptions): void {
   const subscriber = new TranscriptionSubscriber(options);
   subscriber.bind();
+}
+
+export function resolveTranscriptSeekTimelineTime(
+  timeline: Timeline,
+  transcriptTime: number,
+  options: {
+    clipId?: string;
+    sourceId?: string;
+    clipPreviewSync?: PreviewTimelineSync;
+  } = {},
+): number {
+  const clip = resolveTranscriptionMediaClip(timeline, options);
+  if (!clip) {
+    return transcriptTime;
+  }
+
+  return clip.startTime + transcriptTime;
+}
+
+export function resolveTimelineToTranscriptTime(
+  timeline: Timeline,
+  timelineTime: number,
+  options: {
+    clipId?: string;
+    sourceId?: string;
+    clipPreviewSync?: PreviewTimelineSync;
+  } = {},
+): number | null {
+  const clip = resolveTranscriptionMediaClip(timeline, options);
+  if (!clip) {
+    return null;
+  }
+
+  const transcriptTime = timelineTime - clip.startTime;
+  if (transcriptTime < -0.001 || transcriptTime > clip.duration + 0.001) {
+    return null;
+  }
+
+  return Math.max(0, transcriptTime);
+}
+
+function resolveTranscriptionMediaClip(
+  timeline: Timeline,
+  options: {
+    clipId?: string;
+    sourceId?: string;
+    clipPreviewSync?: PreviewTimelineSync;
+  },
+): Clip | undefined {
+  const clips = timeline.getState().clips;
+
+  if (options.clipId) {
+    const clip = clips.find((item) => item.id === options.clipId);
+    if (clip && isMediaClip(clip)) {
+      return clip;
+    }
+  }
+
+  if (options.sourceId && options.clipPreviewSync) {
+    const mappedClipId = options.clipPreviewSync.getClipIdForElement(options.sourceId);
+    if (mappedClipId) {
+      const clip = clips.find((item) => item.id === mappedClipId);
+      if (clip && isMediaClip(clip)) {
+        return clip;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function isMediaClip(clip: Clip): boolean {
+  return clip.type === 'video' || clip.type === 'audio';
 }
 
 function findTranscriptionSource(

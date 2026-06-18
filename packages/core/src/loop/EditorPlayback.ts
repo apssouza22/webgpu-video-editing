@@ -17,6 +17,7 @@ export class EditorPlayback {
   private readonly preview: CompositionPreview;
   private readonly frameLoop: AnimationFrameLoop;
   private playbackStartedAt: number;
+  private advancingFrame = false;
 
   constructor({ timeline, preview, frameLoop }: EditorPlaybackOptions) {
     this.timeline = timeline;
@@ -32,10 +33,10 @@ export class EditorPlayback {
     this.timeline.on('playhead:rate', () => this.onRateChange());
     this.frameLoop.subscribe(({ deltaTime }) => this.onFrame(deltaTime));
 
-    this.renderCanvas(this.timeline.getPlayhead(), false);
+    this.renderPreview(this.timeline.getPlayhead(), false);
   }
 
-  private renderCanvas(time: number, playing: boolean): void {
+  private renderPreview(time: number, playing: boolean): void {
     this.preview.render(time, {
       playing,
       playbackRate: this.timeline.getPlaybackRate(),
@@ -45,32 +46,39 @@ export class EditorPlayback {
 
   private syncCanvasOnScrub({ time }: { time: number }): void {
     if (this.timeline.getState().isPlaying) {
+      if (this.advancingFrame) {
+        return;
+      }
+
+      this.playbackStartedAt = time;
+      this.renderPreview(time, true);
       return;
     }
-    this.renderCanvas(time, false);
+
+    this.renderPreview(time, false);
   }
 
   private onPlay({ time }: { time: number }): void {
     this.playbackStartedAt = time;
     this.preview.selectElement(null);
-    this.renderCanvas(time, true);
+    this.renderPreview(time, true);
     this.frameLoop.start();
   }
 
   private onPause({ time }: { time: number }): void {
     this.frameLoop.stop();
-    this.renderCanvas(time, false);
+    this.renderPreview(time, false);
   }
 
   private onRateChange(): void {
     const state = this.timeline.getState();
     if (!state.isPlaying) {
-      this.renderCanvas(state.playheadPosition, false);
+      this.renderPreview(state.playheadPosition, false);
       return;
     }
 
     this.playbackStartedAt = state.playheadPosition;
-    this.renderCanvas(this.playbackStartedAt, true);
+    this.renderPreview(this.playbackStartedAt, true);
   }
 
   private onFrame(deltaTime: number): void {
@@ -83,12 +91,17 @@ export class EditorPlayback {
     if (nextTime >= state.duration) {
       this.timeline.render(state.duration, { scroll: 'visible' });
       this.timeline.pause();
-      this.renderCanvas(state.duration, false);
+      this.renderPreview(state.duration, false);
       return;
     }
 
-    this.timeline.render(nextTime, { scroll: 'visible' });
-    this.renderCanvas(nextTime, true);
+    this.advancingFrame = true;
+    try {
+      this.timeline.render(nextTime, { scroll: 'visible' });
+      this.renderPreview(nextTime, true);
+    } finally {
+      this.advancingFrame = false;
+    }
   }
 }
 

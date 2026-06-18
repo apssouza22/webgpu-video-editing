@@ -70,7 +70,7 @@ export interface TranscriptionEventMap {
   'transcription:error': { error: Error };
   'transcription:word:removed': TranscriptionWordRemovedPayload;
   'transcription:requested': { sourceId?: string };
-  'transcription:seek': { timestamp: number; sourceId: string };
+  'transcription:seek': { timestamp: number; sourceId: string; clipId?: string };
   'transcription:captions:requested': { results: TranscriptionResult[] };
 }
 

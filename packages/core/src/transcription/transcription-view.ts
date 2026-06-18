@@ -90,12 +90,17 @@ export class TranscriptionView {
     }
   }
 
-  highlightChunksByTime(currentTime: number): void {
+  highlightChunksByTime(currentTime: number | null): void {
     const chunks = this.chunksContainer.querySelectorAll<HTMLElement>(
       '.leftnav-transcription-chunk',
     );
 
     for (const chunk of chunks) {
+      if (currentTime === null) {
+        chunk.classList.remove('is-active');
+        continue;
+      }
+
       const startTime = Number(chunk.dataset.startTime ?? 0);
       const endTime = Number(chunk.dataset.endTime ?? 0);
       chunk.classList.toggle(
@@ -154,7 +159,7 @@ export class TranscriptionView {
     });
 
     chunkEl.addEventListener('click', () => {
-      this.transcriptionManager.seekToTimestamp(chunk.timestamp[0], sourceId);
+      this.transcriptionManager.seekToTimestamp(chunk.timestamp[0], sourceId, clipId);
     });
 
     chunkEl.append(text, remove);
