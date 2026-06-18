@@ -12,6 +12,7 @@ import {TranscriptionService} from "../transcription";
 import {LeftNav} from "../leftnav";
 import {Timeline} from "@opensource/timeline";
 import {CompositionPreview} from "@opensource/video-preview";
+import {AnimationFrameLoop, EditorPlayback} from "../loop";
 export {
   fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
@@ -27,8 +28,12 @@ export function bindComponents(
     transcription: TranscriptionService,
     mediaLibrary: MediaLibraryService,
     exportService: ExportService,
+    frameLoop: AnimationFrameLoop,
 ) {
   const clipPreviewSync = new PreviewTimelineSync(timeline, preview);
+  const editorPlayback = new EditorPlayback({timeline, preview, frameLoop});
+  editorPlayback.bind();
+
   bindPreview({
     timeline: timeline,
     preview: preview,
@@ -57,5 +62,6 @@ export function bindComponents(
     timeline: timeline,
     preview: preview,
     timelinePreviewSync: clipPreviewSync,
+    editorPlayback,
   });
 }

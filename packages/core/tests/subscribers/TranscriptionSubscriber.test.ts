@@ -254,7 +254,7 @@ describe('TranscriptionSubscriber', () => {
 
     await handlers.get('transcription:requested')?.({ sourceId: 'element-1' });
 
-    timeline.emit('playhead:change', { time: 15 });
+    timeline.emit('playhead:change', { time: 15, state });
 
     expect(transcription.highlightTranscriptionAt).toHaveBeenCalledWith(5);
   });

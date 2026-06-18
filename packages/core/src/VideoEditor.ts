@@ -3,7 +3,7 @@ import type {TimelineOptions} from '@opensource/timeline';
 import {Timeline} from '@opensource/timeline';
 
 import {LeftNav, type LeftNavOptions, mountLeftNav} from './leftnav';
-import {AnimationFrameLoop, bindEditorPlayback} from './loop';
+import {AnimationFrameLoop} from './loop';
 import {bindComponents} from './subscribers';
 import {ExportPanel, ExportService,} from './export';
 import {MediaLibraryPanel, MediaLibraryService} from './mediaLibrary';
@@ -100,11 +100,7 @@ export class VideoEditor {
         this.transcription,
         this.mediaLibrary,
         this.exportService,
+        this.frameLoop,
     );
-    bindEditorPlayback({
-      timeline: this.timeline,
-      preview: this.preview,
-      frameLoop: this.frameLoop,
-    });
   }
 }

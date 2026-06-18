@@ -1,4 +1,4 @@
-import type { Timeline } from '@opensource/timeline';
+import type { Timeline, TimelineEventMap } from '@opensource/timeline';
 import type { CompositionPreview } from '@opensource/video-preview';
 
 import type { AnimationFrameLoop } from './AnimationFrameLoop';
@@ -27,58 +27,68 @@ export class EditorPlayback {
   }
 
   bind(): void {
-    this.timeline.on('playhead:change', (payload) => this.syncCanvasOnScrub(payload));
-    this.timeline.on('playhead:play', (payload) => this.onPlay(payload));
-    this.timeline.on('playhead:pause', (payload) => this.onPause(payload));
-    this.timeline.on('playhead:rate', () => this.onRateChange());
     this.frameLoop.subscribe(({ deltaTime }) => this.onFrame(deltaTime));
-
-    this.renderPreview(this.timeline.getPlayhead(), false);
+    this.renderPreview(this.timeline.getPlayhead(), false, this.timeline.getPlaybackRate());
   }
 
-  private renderPreview(time: number, playing: boolean): void {
+  onPlayheadChange(payload: TimelineEventMap['playhead:change']): void {
+    this.syncCanvasOnScrub(payload);
+  }
+
+  onPlay(payload: TimelineEventMap['playhead:play']): void {
+    this.handlePlay(payload);
+  }
+
+  onPause(payload: TimelineEventMap['playhead:pause']): void {
+    this.handlePause(payload);
+  }
+
+  onRateChange(payload: TimelineEventMap['playhead:rate']): void {
+    this.handleRateChange(payload);
+  }
+
+  private renderPreview(time: number, playing: boolean, playbackRate: number): void {
     this.preview.render(time, {
       playing,
-      playbackRate: this.timeline.getPlaybackRate(),
+      playbackRate,
       ...(playing ? { playbackStartedAt: this.playbackStartedAt } : {}),
     });
   }
 
-  private syncCanvasOnScrub({ time }: { time: number }): void {
-    if (this.timeline.getState().isPlaying) {
+  private syncCanvasOnScrub({ time, state }: TimelineEventMap['playhead:change']): void {
+    if (state.isPlaying) {
       if (this.advancingFrame) {
         return;
       }
 
       this.playbackStartedAt = time;
-      this.renderPreview(time, true);
+      this.renderPreview(time, true, state.playbackRate);
       return;
     }
 
-    this.renderPreview(time, false);
+    this.renderPreview(time, false, state.playbackRate);
   }
 
-  private onPlay({ time }: { time: number }): void {
+  private handlePlay({ time, state }: TimelineEventMap['playhead:play']): void {
     this.playbackStartedAt = time;
     this.preview.selectElement(null);
-    this.renderPreview(time, true);
+    this.renderPreview(time, true, state.playbackRate);
     this.frameLoop.start();
   }
 
-  private onPause({ time }: { time: number }): void {
+  private handlePause({ time, state }: TimelineEventMap['playhead:pause']): void {
     this.frameLoop.stop();
-    this.renderPreview(time, false);
+    this.renderPreview(time, false, state.playbackRate);
   }
 
-  private onRateChange(): void {
-    const state = this.timeline.getState();
+  private handleRateChange({ state }: TimelineEventMap['playhead:rate']): void {
     if (!state.isPlaying) {
-      this.renderPreview(state.playheadPosition, false);
+      this.renderPreview(state.playheadPosition, false, state.playbackRate);
       return;
     }
 
     this.playbackStartedAt = state.playheadPosition;
-    this.renderPreview(this.playbackStartedAt, true);
+    this.renderPreview(this.playbackStartedAt, true, state.playbackRate);
   }
 
   private onFrame(deltaTime: number): void {
@@ -91,14 +101,14 @@ export class EditorPlayback {
     if (nextTime >= state.duration) {
       this.timeline.render(state.duration, { scroll: 'visible' });
       this.timeline.pause();
-      this.renderPreview(state.duration, false);
+      this.renderPreview(state.duration, false, state.playbackRate);
       return;
     }
 
     this.advancingFrame = true;
     try {
       this.timeline.render(nextTime, { scroll: 'visible' });
-      this.renderPreview(nextTime, true);
+      this.renderPreview(nextTime, true, state.playbackRate);
     } finally {
       this.advancingFrame = false;
     }
