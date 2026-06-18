@@ -1,6 +1,6 @@
 import type { CanvasElement } from '@opensource/video-preview';
 
-import type { Sidebar } from '../common/Sidebar';
+import type { LeftNav } from './LeftNav';
 
 const labelClass = 'flex flex-col gap-1.5 text-[0.8rem] text-es-muted';
 const inputClass =
@@ -10,11 +10,11 @@ export class PropertiesPanel {
   private readonly root: HTMLElement;
   private mountedId: string | null = null;
 
-  constructor(private readonly sidebar: Sidebar) {
+  constructor(private readonly leftNav: LeftNav) {
     this.root = document.createElement('div');
     this.root.className = 'flex flex-col gap-3';
-    this.sidebar.on('selection:changed', () => this.render());
-    this.sidebar.on('property:changed', () => this.render());
+    this.leftNav.on('selection:changed', () => this.render());
+    this.leftNav.on('property:changed', () => this.render());
     this.render();
   }
 
@@ -23,12 +23,12 @@ export class PropertiesPanel {
   }
 
   private render(): void {
-    const selected = this.sidebar.getSelectedElement();
+    const selected = this.leftNav.getSelectedElement();
 
     if (!selected) {
       this.mountedId = null;
       this.root.innerHTML = `
-        <h2 class="sidebar-section-title">Properties</h2>
+        <h2 class="leftnav-section-title">Properties</h2>
         <p class="m-0 text-es-muted text-sm leading-snug">Select an element on the canvas to edit its properties.</p>
       `;
       return;
@@ -72,7 +72,7 @@ export class PropertiesPanel {
     const fragment = document.createDocumentFragment();
 
     const title = document.createElement('h2');
-    title.className = 'sidebar-section-title';
+    title.className = 'leftnav-section-title';
     title.textContent = element.name;
 
     const type = document.createElement('p');
@@ -85,7 +85,7 @@ export class PropertiesPanel {
     nameInput.dataset.field = 'name';
     nameInput.value = element.name;
     nameInput.addEventListener('input', () => {
-      this.sidebar.updateElement(element.id, { name: nameInput.value });
+      this.leftNav.updateElement(element.id, { name: nameInput.value });
     });
     nameLabel.append(nameInput);
 
@@ -93,22 +93,22 @@ export class PropertiesPanel {
     grid.className = 'grid grid-cols-2 gap-2.5';
     grid.append(
       this.createNumberField('X', 'x', element.x, (value) =>
-        this.sidebar.updateElement(element.id, { x: value }),
+        this.leftNav.updateElement(element.id, { x: value }),
       ),
       this.createNumberField('Y', 'y', element.y, (value) =>
-        this.sidebar.updateElement(element.id, { y: value }),
+        this.leftNav.updateElement(element.id, { y: value }),
       ),
       this.createNumberField('Width', 'width', element.width, (value) =>
-        this.sidebar.updateElement(element.id, { width: value }),
+        this.leftNav.updateElement(element.id, { width: value }),
       ),
       this.createNumberField('Height', 'height', element.height, (value) =>
-        this.sidebar.updateElement(element.id, { height: value }),
+        this.leftNav.updateElement(element.id, { height: value }),
       ),
       this.createNumberField('Rotation', 'rotation', element.rotation, (value) =>
-        this.sidebar.updateElement(element.id, { rotation: value }),
+        this.leftNav.updateElement(element.id, { rotation: value }),
       ),
       this.createNumberField('Opacity', 'opacity', element.opacity, (value) =>
-        this.sidebar.updateElement(element.id, { opacity: value }),
+        this.leftNav.updateElement(element.id, { opacity: value }),
       ),
     );
 
@@ -125,10 +125,10 @@ export class PropertiesPanel {
     if (element.type === 'video') {
       fragment.append(
         this.createCheckbox('Muted', element.muted, (checked) =>
-          this.sidebar.updateElement(element.id, { muted: checked }),
+          this.leftNav.updateElement(element.id, { muted: checked }),
         ),
         this.createCheckbox('Loop', element.loop, (checked) =>
-          this.sidebar.updateElement(element.id, { loop: checked }),
+          this.leftNav.updateElement(element.id, { loop: checked }),
         ),
       );
     }
@@ -136,10 +136,10 @@ export class PropertiesPanel {
     if (element.type === 'audio') {
       fragment.append(
         this.createNumberField('Volume', 'volume', element.volume, (value) =>
-          this.sidebar.updateElement(element.id, { volume: value }),
+          this.leftNav.updateElement(element.id, { volume: value }),
         ),
         this.createCheckbox('Loop', element.loop, (checked) =>
-          this.sidebar.updateElement(element.id, { loop: checked }),
+          this.leftNav.updateElement(element.id, { loop: checked }),
         ),
       );
     }
@@ -155,7 +155,7 @@ export class PropertiesPanel {
     contentInput.rows = 3;
     contentInput.value = element.content;
     contentInput.addEventListener('input', () => {
-      this.sidebar.updateElement(element.id, { content: contentInput.value });
+      this.leftNav.updateElement(element.id, { content: contentInput.value });
     });
     contentLabel.append(contentInput);
 
@@ -166,7 +166,7 @@ export class PropertiesPanel {
     fontSizeInput.dataset.field = 'fontSize';
     fontSizeInput.value = String(element.fontSize);
     fontSizeInput.addEventListener('input', () => {
-      this.sidebar.updateElement(element.id, { fontSize: Number(fontSizeInput.value) });
+      this.leftNav.updateElement(element.id, { fontSize: Number(fontSizeInput.value) });
     });
     fontSizeLabel.append(fontSizeInput);
 
@@ -177,7 +177,7 @@ export class PropertiesPanel {
     colorInput.dataset.field = 'color';
     colorInput.value = element.color;
     colorInput.addEventListener('input', () => {
-      this.sidebar.updateElement(element.id, { color: colorInput.value });
+      this.leftNav.updateElement(element.id, { color: colorInput.value });
     });
     colorLabel.append(colorInput);
 
@@ -192,7 +192,7 @@ export class PropertiesPanel {
     }
     alignSelect.value = element.textAlign;
     alignSelect.addEventListener('change', () => {
-      this.sidebar.updateElement(element.id, {
+      this.leftNav.updateElement(element.id, {
         textAlign: alignSelect.value as 'left' | 'center' | 'right',
       });
     });
@@ -213,7 +213,7 @@ export class PropertiesPanel {
     }
     fitSelect.value = element.objectFit;
     fitSelect.addEventListener('change', () => {
-      this.sidebar.updateElement(element.id, {
+      this.leftNav.updateElement(element.id, {
         objectFit: fitSelect.value as 'cover' | 'contain' | 'fill',
       });
     });

@@ -15,7 +15,7 @@ export class TranscriptionView {
     this.root.className = 'flex flex-col gap-4';
 
     const title = document.createElement('h2');
-    title.className = 'sidebar-section-title';
+    title.className = 'leftnav-section-title';
     title.textContent = 'Transcription';
 
     const description = document.createElement('p');
@@ -25,21 +25,21 @@ export class TranscriptionView {
 
     this.transcribeButton = document.createElement('button');
     this.transcribeButton.type = 'button';
-    this.transcribeButton.className = 'sidebar-action-button sidebar-action-button--primary';
+    this.transcribeButton.className = 'leftnav-action-button leftnav-action-button--primary';
     this.transcribeButton.textContent = 'Transcribe media';
 
     this.captionsButton = document.createElement('button');
     this.captionsButton.type = 'button';
-    this.captionsButton.className = 'sidebar-action-button';
+    this.captionsButton.className = 'leftnav-action-button';
     this.captionsButton.textContent = 'Add caption layers';
     this.captionsButton.hidden = true;
 
     this.statusEl = document.createElement('p');
-    this.statusEl.className = 'sidebar-transcription-status';
+    this.statusEl.className = 'leftnav-transcription-status';
     this.statusEl.setAttribute('aria-live', 'polite');
 
     this.chunksContainer = document.createElement('div');
-    this.chunksContainer.className = 'sidebar-transcription-chunks';
+    this.chunksContainer.className = 'leftnav-transcription-chunks';
 
     this.transcribeButton.addEventListener('click', () => {
       this.transcriptionManager.requestTranscription();
@@ -92,7 +92,7 @@ export class TranscriptionView {
 
   highlightChunksByTime(currentTime: number): void {
     const chunks = this.chunksContainer.querySelectorAll<HTMLElement>(
-      '.sidebar-transcription-chunk',
+      '.leftnav-transcription-chunk',
     );
 
     for (const chunk of chunks) {
@@ -130,7 +130,7 @@ export class TranscriptionView {
   ): HTMLElement {
     const chunkEl = document.createElement('button');
     chunkEl.type = 'button';
-    chunkEl.className = 'sidebar-transcription-chunk';
+    chunkEl.className = 'leftnav-transcription-chunk';
     chunkEl.dataset.index = String(index);
     chunkEl.dataset.startTime = String(chunk.timestamp[0]);
     chunkEl.dataset.endTime = String(chunk.timestamp[1]);
@@ -138,11 +138,11 @@ export class TranscriptionView {
     chunkEl.dataset.clipId = clipId;
 
     const text = document.createElement('span');
-    text.className = 'sidebar-transcription-chunk-text';
+    text.className = 'leftnav-transcription-chunk-text';
     text.textContent = chunk.text;
 
     const remove = document.createElement('span');
-    remove.className = 'sidebar-transcription-chunk-remove';
+    remove.className = 'leftnav-transcription-chunk-remove';
     remove.setAttribute('aria-label', 'Remove chunk');
     remove.textContent = '×';
 
@@ -170,7 +170,7 @@ export class TranscriptionView {
     const sourceId = chunkElement.dataset.sourceId ?? '';
     const clipId = chunkElement.dataset.clipId ?? '';
     const text =
-      chunkElement.querySelector('.sidebar-transcription-chunk-text')?.textContent?.trim() ?? '';
+      chunkElement.querySelector('.leftnav-transcription-chunk-text')?.textContent?.trim() ?? '';
 
     this.transcriptionManager.removeInterval(startTime, endTime, sourceId, {
       clipId,
@@ -199,20 +199,20 @@ export class TranscriptionView {
 
   #getCurrentChunks(): HTMLElement[] {
     return Array.from(
-      this.chunksContainer.querySelectorAll<HTMLElement>('.sidebar-transcription-chunk'),
+      this.chunksContainer.querySelectorAll<HTMLElement>('.leftnav-transcription-chunk'),
     );
   }
 
   #buildCurrentTranscription(): TranscriptionResult[] {
     const grouped = new Map<string, TranscriptionResult>();
     const chunks = this.chunksContainer.querySelectorAll<HTMLElement>(
-      '.sidebar-transcription-chunk',
+      '.leftnav-transcription-chunk',
     );
 
     for (const chunkEl of chunks) {
       const sourceId = chunkEl.dataset.sourceId ?? '';
       const clipId = chunkEl.dataset.clipId ?? '';
-      const text = chunkEl.querySelector('.sidebar-transcription-chunk-text')?.textContent ?? '';
+      const text = chunkEl.querySelector('.leftnav-transcription-chunk-text')?.textContent ?? '';
       const startTime = Number(chunkEl.dataset.startTime ?? 0);
       const endTime = Number(chunkEl.dataset.endTime ?? 0);
       const entry = grouped.get(sourceId) ?? { sourceId, clipId, text: '', chunks: [] };

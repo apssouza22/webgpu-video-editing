@@ -1,32 +1,32 @@
 import type { CompositionPreviewAPI, CanvasElement } from '@opensource/video-preview';
 
-import { SidebarEventEmitter } from '../event/events';
-import type { SidebarEventHandler, SidebarEventName } from './types';
+import { LeftNavEventEmitter } from './events';
+import type { LeftNavEventHandler, LeftNavEventName } from './types';
 import type {
-  SidebarOptions,
-  SidebarPanelFactory,
-  SidebarPanelId,
+  LeftNavOptions,
+  LeftNavPanelFactory,
+  LeftNavPanelId,
 } from './types';
 
-export class Sidebar {
-  readonly events = new SidebarEventEmitter();
+export class LeftNav {
+  readonly events = new LeftNavEventEmitter();
   private readonly preview: CompositionPreviewAPI;
-  private readonly panelFactories: Partial<Record<SidebarPanelId, SidebarPanelFactory>>;
+  private readonly panelFactories: Partial<Record<LeftNavPanelId, LeftNavPanelFactory>>;
   private readonly disposables: Array<() => void> = [];
-  private activePanel: SidebarPanelId;
+  private activePanel: LeftNavPanelId;
 
-  constructor(preview: CompositionPreviewAPI, options: SidebarOptions = {}) {
+  constructor(preview: CompositionPreviewAPI, options: LeftNavOptions = {}) {
     this.preview = preview;
     this.panelFactories = options.panelFactories ?? {};
     this.activePanel = options.initialPanel ?? 'media';
     this.bindCanvas();
   }
 
-  getActivePanel(): SidebarPanelId {
+  getActivePanel(): LeftNavPanelId {
     return this.activePanel;
   }
 
-  setActivePanel(panel: SidebarPanelId): void {
+  setActivePanel(panel: LeftNavPanelId): void {
     if (this.activePanel === panel) {
       return;
     }
@@ -62,7 +62,7 @@ export class Sidebar {
     return this.preview.getElement(id);
   }
 
-  createPanelElement(panel: SidebarPanelId): HTMLElement | undefined {
+  createPanelElement(panel: LeftNavPanelId): HTMLElement | undefined {
     return this.panelFactories[panel]?.(this);
   }
 
@@ -101,11 +101,11 @@ export class Sidebar {
     });
   }
 
-  on<T extends SidebarEventName>(event: T, handler: SidebarEventHandler<T>): () => void {
+  on<T extends LeftNavEventName>(event: T, handler: LeftNavEventHandler<T>): () => void {
     return this.events.on(event, handler);
   }
 
-  off<T extends SidebarEventName>(event: T, handler: SidebarEventHandler<T>): void {
+  off<T extends LeftNavEventName>(event: T, handler: LeftNavEventHandler<T>): void {
     this.events.off(event, handler);
   }
 

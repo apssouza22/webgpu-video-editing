@@ -1,7 +1,10 @@
 import { TranscriptionService } from './transcription';
 
 export { configureTranscriptionEnv } from './configureEnv';
-export { bindTranscription, type BindTranscriptionOptions } from './bindTranscription';
+export {
+  bindTranscription,
+  type TranscriptionSubscriberOptions as BindTranscriptionOptions,
+} from '../subscribers/TranscriptionSubscriber';
 export { TranscriptionView } from './transcription-view';
 export { TranscriptionService } from './transcription';
 export { TranscriptionEventEmitter } from './TranscriptionEventEmitter';

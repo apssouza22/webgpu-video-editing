@@ -15,7 +15,6 @@ gpu-video-editor/                 ← this repo (assembly)
     ├── timeline/                 ← git submodule → apssouza22/video-timeline
     ├── video-preview/             ← git submodule → apssouza22/video-preview
     ├── core/                     ← lives in this repo (@opensource/core)
-    ├── sidebar/                  ← lives in this repo (@opensource/sidebar)
     └── gpu-video-encode/         ← lives in this repo (@opensource/gpu-video-encode)
 ```
 
@@ -24,7 +23,6 @@ gpu-video-editor/                 ← this repo (assembly)
 | `@opensource/timeline` | Submodule | [apssouza22/video-timeline](https://github.com/apssouza22/video-timeline) |
 | `@opensource/video-preview` | Submodule | [apssouza22/video-canvas](https://github.com/apssouza22/video-canvas) |
 | `@opensource/core` | Assembly repo | [apssouza22/webgpu-video-editing](https://github.com/apssouza22/webgpu-video-editing) |
-| `@opensource/sidebar` | Assembly repo | same |
 | `@opensource/gpu-video-encode` | Assembly repo | same — WebGPU export pipeline (WebCodecs + MediaBunny); library in `src/`, preview player in `demo/` |
 
 Package-specific notes live in `packages/timeline/AGENTS.md` and `packages/video-preview/AGENTS.md`.
@@ -132,7 +130,6 @@ git checkout -b my-feature
 |---------|----------------|
 | `npm install` | Install and link all workspaces (run at repo root) |
 | `npm run dev` | Core demo — timeline + canvas integrated preview (port 5551) |
-| `npm run dev:sidebar` | Sidebar package demo (port 5552) |
 | `npm run dev:timeline` | Timeline package demo (port 5553) |
 | `npm run dev:video-preview` | Video preview demo (port 5554) |
 | `npm run dev:gpu-video-encode` | GPU video encode/export demo (port 5555) |

@@ -20,7 +20,7 @@ export class MediaLibraryPanel {
     const header = document.createElement('div');
     header.className = 'flex flex-col gap-1';
     header.innerHTML = `
-      <h2 class="sidebar-section-title">Media</h2>
+      <h2 class="leftnav-section-title">Media</h2>
       <p class="m-0 text-es-muted text-sm">Upload and browse your videos, images, and audio. Click an item to add it to the canvas.</p>
     `;
 

@@ -8,24 +8,26 @@ export {
   bindClipPreviewSync,
   bindExport,
   bindMediaLibraryTimeline,
-  bindTranscriptionTimelineCut,
+  bindTranscription,
   ClipPreviewSyncService,
   CompositionPreviewSubscriber,
   TimelineSubscriber,
   ExportSubscriber,
   MediaLibrarySubscriber,
+  TranscriptionSubscriber,
   MediaLibrarySubscriber as MediaLibraryTimelineSubscriber,
   fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,
   timelineClipToCanvasElement,
 } from './subscribers';
 export type {
-  BindTranscriptionTimelineCutOptions,
   ClipPreviewSyncOptions,
   CompositionPreviewSubscriberOptions,
   ExportSubscriberOptions,
   MediaLibraryTimelineSubscriberOptions,
   TimelineSubscriberOptions,
+  TranscriptionSubscriberOptions,
+  TranscriptionSubscriberOptions as BindTranscriptionOptions,
 } from './subscribers';
 export {
   AnimationFrameLoop,
@@ -82,7 +84,6 @@ export {
   type ResolvedMediaInput,
 } from './mediaLibrary';
 export {
-  bindTranscription,
   createTranscriptionService,
   TranscriptionView,
   configureTranscriptionEnv,
@@ -92,7 +93,6 @@ export {
   transcribe,
   extractAudioFromMediaUrl,
   createMockTranscriptionResult,
-  type BindTranscriptionOptions,
   type TranscriptionChunk,
   type TranscriptionEventHandler,
   type TranscriptionEventMap,
@@ -103,15 +103,16 @@ export {
   type TranscriptionWordRemovedPayload,
 } from './transcription';
 export {
-  Sidebar,
-  mountSidebar,
-  SidebarEventEmitter,
-  SidebarView,
-} from '@opensource/sidebar';
+  LeftNav,
+  mountLeftNav,
+  LeftNavEventEmitter,
+  LeftNavView,
+} from './leftnav';
 export type {
-  SidebarOptions,
-  SidebarEventMap,
-  SidebarEventName,
-  SidebarEventHandler,
-  SidebarPanelId,
-} from '@opensource/sidebar';
+  LeftNavOptions,
+  LeftNavEventMap,
+  LeftNavEventName,
+  LeftNavEventHandler,
+  LeftNavPanelId,
+  LeftNavPanelFactory,
+} from './leftnav';

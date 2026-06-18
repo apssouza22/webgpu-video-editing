@@ -26,7 +26,6 @@
   "dependencies": {
     "@huggingface/transformers": "^3.7.2",
     "@opensource/gpu-video-encode": "*",
-    "@opensource/sidebar": "*",
     "@opensource/timeline": "*",
     "@opensource/video-preview": "*",
     "mediabunny": "^1.45.4"

@@ -15,8 +15,6 @@ export default defineConfig(({ command }) => {
       resolve: {
         alias: {
           '@opensource/core': resolve(projectRoot, 'src/index.ts'),
-          '@opensource/sidebar/style.css': resolve(projectRoot, '../sidebar/src/index.css'),
-          '@opensource/sidebar': resolve(projectRoot, '../sidebar/src/index.ts'),
           '@opensource/timeline/style.css': resolve(projectRoot, '../timeline/src/view/timeline.css'),
           '@opensource/timeline': resolve(projectRoot, '../timeline/src/common/index.ts'),
           '@opensource/video-preview/style.css': resolve(projectRoot, '../video-preview/src/index.css'),
@@ -53,7 +51,6 @@ export default defineConfig(({ command }) => {
         external: [
           '@huggingface/transformers',
           '@opensource/gpu-video-encode',
-          '@opensource/sidebar',
           '@opensource/timeline',
           '@opensource/video-preview',
           'mediabunny',

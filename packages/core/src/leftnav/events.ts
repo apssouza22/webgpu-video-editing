@@ -1,14 +1,14 @@
 import type {
-  SidebarEventHandler,
-  SidebarEventMap,
-  SidebarEventName,
-} from '../common/types';
+  LeftNavEventHandler,
+  LeftNavEventMap,
+  LeftNavEventName,
+} from './types';
 
 type ListenerMap = {
-  [K in SidebarEventName]: Set<SidebarEventHandler<K>>;
+  [K in LeftNavEventName]: Set<LeftNavEventHandler<K>>;
 };
 
-export class SidebarEventEmitter {
+export class LeftNavEventEmitter {
   private readonly listeners: ListenerMap = {
     'property:changed': new Set(),
     'selection:changed': new Set(),
@@ -20,16 +20,16 @@ export class SidebarEventEmitter {
     'project:availability': new Set(),
   };
 
-  on<T extends SidebarEventName>(event: T, handler: SidebarEventHandler<T>): () => void {
+  on<T extends LeftNavEventName>(event: T, handler: LeftNavEventHandler<T>): () => void {
     this.listeners[event].add(handler);
     return () => this.off(event, handler);
   }
 
-  off<T extends SidebarEventName>(event: T, handler: SidebarEventHandler<T>): void {
+  off<T extends LeftNavEventName>(event: T, handler: LeftNavEventHandler<T>): void {
     this.listeners[event].delete(handler);
   }
 
-  emit<T extends SidebarEventName>(event: T, payload: SidebarEventMap[T]): void {
+  emit<T extends LeftNavEventName>(event: T, payload: LeftNavEventMap[T]): void {
     for (const handler of this.listeners[event]) {
       handler(payload);
     }

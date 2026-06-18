@@ -17,9 +17,10 @@ export {
 } from './ExportSubscriber';
 export type { ExportSubscriberOptions } from './ExportSubscriber';
 export {
-  bindTranscriptionTimelineCut,
-  type BindTranscriptionTimelineCutOptions,
-} from './bindTranscriptionTimelineCut';
+  bindTranscription,
+  TranscriptionSubscriber,
+} from './TranscriptionSubscriber';
+export type { TranscriptionSubscriberOptions } from './TranscriptionSubscriber';
 export {
   fromPreviewElementToTimelineClip,
   getTimelineClipZIndex,

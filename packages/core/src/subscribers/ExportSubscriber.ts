@@ -33,8 +33,7 @@ export class ExportSubscriber {
             },
           });
 
-          const speedLabel =
-            result.settings.playbackRate === 1 ? '' : ` @ ${result.settings.playbackRate}x`;
+          const speedLabel = result.settings.playbackRate === 1 ? '' : ` @ ${result.settings.playbackRate}x`;
           this.exportService.setExportStatus(
             `Export complete (${result.settings.width}×${result.settings.height} @ ${result.settings.fps}fps${speedLabel}). Download started.`,
             false,

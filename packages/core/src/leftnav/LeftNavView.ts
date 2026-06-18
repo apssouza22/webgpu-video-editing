@@ -1,80 +1,80 @@
-import type { Sidebar } from '../common/Sidebar';
-import type { SidebarPanelId } from '../common/types';
+import type { LeftNav } from './LeftNav';
+import type { LeftNavPanelId } from './types';
+import { LEFTNAV_ICONS } from './leftnavIcons';
 import { ProjectPanel } from './ProjectPanel';
 import { PropertiesPanel } from './PropertiesPanel';
-import { SIDEBAR_ICONS } from './sidebarIcons';
 import { UIComponent } from './UIComponent';
 
-const PANELS: Array<{ id: SidebarPanelId; label: string; icon: string }> = [
-  { id: 'project', label: 'Project', icon: SIDEBAR_ICONS.project },
-  { id: 'media', label: 'Media', icon: SIDEBAR_ICONS.media },
-  { id: 'text', label: 'Text', icon: SIDEBAR_ICONS.text },
-  { id: 'properties', label: 'Properties', icon: SIDEBAR_ICONS.properties },
-  { id: 'export', label: 'Export', icon: SIDEBAR_ICONS.export },
-  { id: 'transcription', label: 'Transcription', icon: SIDEBAR_ICONS.transcription },
+const PANELS: Array<{ id: LeftNavPanelId; label: string; icon: string }> = [
+  { id: 'project', label: 'Project', icon: LEFTNAV_ICONS.project },
+  { id: 'media', label: 'Media', icon: LEFTNAV_ICONS.media },
+  { id: 'text', label: 'Text', icon: LEFTNAV_ICONS.text },
+  { id: 'properties', label: 'Properties', icon: LEFTNAV_ICONS.properties },
+  { id: 'export', label: 'Export', icon: LEFTNAV_ICONS.export },
+  { id: 'transcription', label: 'Transcription', icon: LEFTNAV_ICONS.transcription },
 ];
 
-interface SidebarRefs {
-  panels: Map<SidebarPanelId, HTMLElement>;
-  navButtons: Map<SidebarPanelId, HTMLButtonElement>;
+interface LeftNavRefs {
+  panels: Map<LeftNavPanelId, HTMLElement>;
+  navButtons: Map<LeftNavPanelId, HTMLButtonElement>;
   contentHost: HTMLDivElement;
 }
 
-const SIDEBAR_REFS = Symbol('sidebarViewRefs');
+const LEFTNAV_REFS = Symbol('leftNavViewRefs');
 
-type ShellElement = HTMLElement & { [SIDEBAR_REFS]?: SidebarRefs };
+type ShellElement = HTMLElement & { [LEFTNAV_REFS]?: LeftNavRefs };
 
-function getSidebarRefs(shell: HTMLElement): SidebarRefs {
-  const refs = (shell as ShellElement)[SIDEBAR_REFS];
+function getLeftNavRefs(shell: HTMLElement): LeftNavRefs {
+  const refs = (shell as ShellElement)[LEFTNAV_REFS];
   if (!refs) {
-    throw new Error('SidebarView refs are not initialized');
+    throw new Error('LeftNavView refs are not initialized');
   }
   return refs;
 }
 
-export class SidebarView extends UIComponent<Sidebar> {
-  private get sidebar(): Sidebar {
+export class LeftNavView extends UIComponent<LeftNav> {
+  private get leftNav(): LeftNav {
     return this.context;
   }
 
   protected createElement(): HTMLElement {
-    const panels = new Map<SidebarPanelId, HTMLElement>();
-    const navButtons = new Map<SidebarPanelId, HTMLButtonElement>();
+    const panels = new Map<LeftNavPanelId, HTMLElement>();
+    const navButtons = new Map<LeftNavPanelId, HTMLButtonElement>();
 
     const shell = document.createElement('div');
-    shell.className = 'sidebar-shell';
+    shell.className = 'leftnav-shell';
 
     const tabHeader = document.createElement('nav');
-    tabHeader.className = 'sidebar-tab-header';
-    tabHeader.setAttribute('aria-label', 'Editor sidebar');
+    tabHeader.className = 'leftnav-tab-header';
+    tabHeader.setAttribute('aria-label', 'Editor left navigation');
 
     for (const panel of PANELS) {
       const button = document.createElement('button');
       button.type = 'button';
       button.title = panel.label;
       button.dataset.panel = panel.id;
-      button.className = 'sidebar-tab-button';
+      button.className = 'leftnav-tab-button';
       button.innerHTML = `${panel.icon}<span class="sr-only">${panel.label}</span>`;
-      button.addEventListener('click', () => this.sidebar.setActivePanel(panel.id));
+      button.addEventListener('click', () => this.leftNav.setActivePanel(panel.id));
       navButtons.set(panel.id, button);
       tabHeader.append(button);
     }
 
     const contentWrapper = document.createElement('div');
-    contentWrapper.className = 'sidebar-tab-content-wrapper';
+    contentWrapper.className = 'leftnav-tab-content-wrapper';
 
     const contentHost = document.createElement('div');
-    contentHost.className = 'sidebar-tab-content';
+    contentHost.className = 'leftnav-tab-content';
 
-    const projectPanel = new ProjectPanel(this.sidebar);
+    const projectPanel = new ProjectPanel(this.leftNav);
     const mediaPanel =
-      this.sidebar.createPanelElement('media') ?? this.createMissingPanel('Media');
+      this.leftNav.createPanelElement('media') ?? this.createMissingPanel('Media');
     const textPanel = this.createTextPanel();
-    const propertiesPanel = new PropertiesPanel(this.sidebar);
+    const propertiesPanel = new PropertiesPanel(this.leftNav);
     const exportPanel =
-      this.sidebar.createPanelElement('export') ?? this.createMissingPanel('Export');
+      this.leftNav.createPanelElement('export') ?? this.createMissingPanel('Export');
     const transcriptionPanel =
-      this.sidebar.createPanelElement('transcription') ??
+      this.leftNav.createPanelElement('transcription') ??
       this.createMissingPanel('Transcription');
 
     panels.set('project', projectPanel.element);
@@ -84,28 +84,28 @@ export class SidebarView extends UIComponent<Sidebar> {
     panels.set('export', exportPanel);
     panels.set('transcription', transcriptionPanel);
 
-    const refs: SidebarRefs = { panels, navButtons, contentHost };
-    (shell as ShellElement)[SIDEBAR_REFS] = refs;
+    const refs: LeftNavRefs = { panels, navButtons, contentHost };
+    (shell as ShellElement)[LEFTNAV_REFS] = refs;
 
     contentWrapper.append(contentHost);
     shell.append(tabHeader, contentWrapper);
-    this.applyPanel(this.sidebar.getActivePanel(), refs);
+    this.applyPanel(this.leftNav.getActivePanel(), refs);
     return shell;
   }
 
   protected bind(): void {
     this.track(
-      this.sidebar.on('panel:changed', ({ panel }) => {
+      this.leftNav.on('panel:changed', ({ panel }) => {
         this.showPanel(panel);
       }),
     );
   }
 
-  private showPanel(panel: SidebarPanelId): void {
-    this.applyPanel(panel, getSidebarRefs(this.element));
+  private showPanel(panel: LeftNavPanelId): void {
+    this.applyPanel(panel, getLeftNavRefs(this.element));
   }
 
-  private applyPanel(panel: SidebarPanelId, refs: SidebarRefs): void {
+  private applyPanel(panel: LeftNavPanelId, refs: LeftNavRefs): void {
     const node = refs.panels.get(panel);
     if (!node) {
       return;
@@ -131,7 +131,7 @@ export class SidebarView extends UIComponent<Sidebar> {
     panel.className = 'flex flex-col gap-4';
 
     const title = document.createElement('div');
-    title.className = 'sidebar-section-title';
+    title.className = 'leftnav-section-title';
     title.textContent = 'Add Text Layer';
 
     const description = document.createElement('p');
@@ -139,18 +139,18 @@ export class SidebarView extends UIComponent<Sidebar> {
     description.textContent = 'Add a text layer at the current playhead position.';
 
     const textarea = document.createElement('textarea');
-    textarea.className = 'sidebar-textarea';
+    textarea.className = 'leftnav-textarea';
     textarea.placeholder = 'Enter your text here…';
     textarea.rows = 3;
     textarea.value = 'Your title here';
 
     const addButton = document.createElement('button');
     addButton.type = 'button';
-    addButton.className = 'sidebar-action-button sidebar-action-button--primary';
+    addButton.className = 'leftnav-action-button leftnav-action-button--primary';
     addButton.textContent = 'Add text to canvas';
 
     addButton.addEventListener('click', () => {
-      this.sidebar.addTextToCanvas(textarea.value.trim() || 'New text');
+      this.leftNav.addTextToCanvas(textarea.value.trim() || 'New text');
     });
 
     panel.append(title, description, textarea, addButton);
@@ -158,7 +158,7 @@ export class SidebarView extends UIComponent<Sidebar> {
   }
 }
 
-export function mountSidebar(container: HTMLElement, sidebar: Sidebar): () => void {
-  const view = new SidebarView(container, sidebar);
+export function mountLeftNav(container: HTMLElement, leftNav: LeftNav): () => void {
+  const view = new LeftNavView(container, leftNav);
   return () => view.destroy();
 }

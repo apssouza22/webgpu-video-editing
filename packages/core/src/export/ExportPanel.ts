@@ -19,7 +19,7 @@ export class ExportPanel {
     this.root.className = 'flex flex-col gap-4';
 
     const title = document.createElement('h2');
-    title.className = 'sidebar-section-title';
+    title.className = 'leftnav-section-title';
     title.textContent = 'Export Video';
 
     const description = document.createElement('p');
@@ -28,35 +28,35 @@ export class ExportPanel {
       'Render the composition with WebGPU and download an MP4.';
 
     this.form = document.createElement('form');
-    this.form.className = 'sidebar-export-options';
+    this.form.className = 'leftnav-export-options';
     this.form.setAttribute('aria-label', 'Export settings');
     this.form.innerHTML = `
-      <div class="sidebar-export-field">
-        <label for="sidebar-export-quality">Quality</label>
-        <select id="sidebar-export-quality" name="quality">
+      <div class="leftnav-export-field">
+        <label for="leftnav-export-quality">Quality</label>
+        <select id="leftnav-export-quality" name="quality">
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high" selected>High</option>
           <option value="max">Max</option>
         </select>
       </div>
-      <div class="sidebar-export-field">
-        <label for="sidebar-export-fps">FPS</label>
-        <select id="sidebar-export-fps" name="fps">
+      <div class="leftnav-export-field">
+        <label for="leftnav-export-fps">FPS</label>
+        <select id="leftnav-export-fps" name="fps">
           <option value="24">24</option>
           <option value="30" selected>30</option>
           <option value="60">60</option>
         </select>
       </div>
-      <div class="sidebar-export-field">
-        <label for="sidebar-export-format">Format</label>
-        <select id="sidebar-export-format" name="format">
+      <div class="leftnav-export-field">
+        <label for="leftnav-export-format">Format</label>
+        <select id="leftnav-export-format" name="format">
           <option value="mp4" selected>MP4</option>
         </select>
       </div>
-      <div class="sidebar-export-field">
-        <label for="sidebar-export-resolution">Resolution</label>
-        <select id="sidebar-export-resolution" name="resolution">
+      <div class="leftnav-export-field">
+        <label for="leftnav-export-resolution">Resolution</label>
+        <select id="leftnav-export-resolution" name="resolution">
           <option value="source" selected>Source</option>
           <option value="480p">480p</option>
           <option value="720p">720p</option>
@@ -69,11 +69,11 @@ export class ExportPanel {
 
     this.exportButton = document.createElement('button');
     this.exportButton.type = 'submit';
-    this.exportButton.className = 'sidebar-action-button sidebar-action-button--primary';
+    this.exportButton.className = 'leftnav-action-button leftnav-action-button--primary';
     this.exportButton.textContent = 'Export video';
 
     this.statusEl = document.createElement('p');
-    this.statusEl.className = 'sidebar-export-status';
+    this.statusEl.className = 'leftnav-export-status';
     this.statusEl.setAttribute('aria-live', 'polite');
 
     this.form.addEventListener('submit', (event) => {

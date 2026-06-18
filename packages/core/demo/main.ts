@@ -4,21 +4,21 @@ const DEMO_VIDEO_URL = '/demo.mp4';
 
 const timelineEl = document.getElementById('timeline');
 const canvasEl = document.getElementById('canvas');
-const sidebarEl = document.getElementById('sidebar');
+const leftNavEl = document.getElementById('leftnav');
 
-if (!timelineEl || !canvasEl || !sidebarEl) {
-  throw new Error('Demo layout is missing #timeline, #canvas, or #sidebar');
+if (!timelineEl || !canvasEl || !leftNavEl) {
+  throw new Error('Demo layout is missing #timeline, #canvas, or #leftnav');
 }
 
 const editor = new VideoEditor(
   {
     timelineContainer: timelineEl,
     previewContainer: canvasEl,
-    sidebarContainer: sidebarEl,
+    leftNavContainer: leftNavEl,
   },
   {
     transcription: { mockTranscription: true },
-    sidebar: {
+    leftNav: {
       initialPanel: 'media',
     },
   },
@@ -37,11 +37,11 @@ async function seedDemo(): Promise<void> {
     startTime: 0,
   });
   editor.preview.selectElement(null);
-  editor.sidebar?.setActivePanel('media');
+  editor.leftNav?.setActivePanel('media');
 }
 
-editor.sidebar?.on('property:changed', (payload) => {
-  console.debug('[sidebar] property:changed', {
+editor.leftNav?.on('property:changed', (payload) => {
+  console.debug('[leftnav] property:changed', {
     key: payload.key,
     value: payload.value,
     element: payload.element.name,

@@ -1,4 +1,4 @@
-import type { Sidebar } from '../common/Sidebar';
+import type { LeftNav } from './LeftNav';
 
 export class ProjectPanel {
   private readonly root: HTMLElement;
@@ -10,12 +10,12 @@ export class ProjectPanel {
   private busy = false;
   private canManage = false;
 
-  constructor(private readonly sidebar: Sidebar) {
+  constructor(private readonly leftNav: LeftNav) {
     this.root = document.createElement('div');
     this.root.className = 'flex flex-col gap-4';
 
     const title = document.createElement('h2');
-    title.className = 'sidebar-section-title';
+    title.className = 'leftnav-section-title';
     title.textContent = 'Project';
 
     const description = document.createElement('p');
@@ -24,14 +24,14 @@ export class ProjectPanel {
       'Save your edit as a project folder with media files and project.json, or open an existing project.';
 
     const nameField = document.createElement('div');
-    nameField.className = 'sidebar-export-field';
+    nameField.className = 'leftnav-export-field';
 
     const nameLabel = document.createElement('label');
-    nameLabel.htmlFor = 'sidebar-project-name';
+    nameLabel.htmlFor = 'leftnav-project-name';
     nameLabel.textContent = 'Project name';
 
     this.nameInput = document.createElement('input');
-    this.nameInput.id = 'sidebar-project-name';
+    this.nameInput.id = 'leftnav-project-name';
     this.nameInput.name = 'projectName';
     this.nameInput.type = 'text';
     this.nameInput.className =
@@ -43,25 +43,25 @@ export class ProjectPanel {
 
     this.createButton = document.createElement('button');
     this.createButton.type = 'button';
-    this.createButton.className = 'sidebar-action-button sidebar-action-button--primary';
+    this.createButton.className = 'leftnav-action-button leftnav-action-button--primary';
     this.createButton.textContent = 'Create new project';
     this.createButton.addEventListener('click', () => {
       if (this.createButton.disabled) {
         return;
       }
       const name = this.nameInput.value.trim() || 'Untitled project';
-      this.sidebar.requestCreateProject(name);
+      this.leftNav.requestCreateProject(name);
     });
 
     this.openButton = document.createElement('button');
     this.openButton.type = 'button';
-    this.openButton.className = 'sidebar-action-button';
+    this.openButton.className = 'leftnav-action-button';
     this.openButton.textContent = 'Open project';
     this.openButton.addEventListener('click', () => {
       if (this.openButton.disabled) {
         return;
       }
-      this.sidebar.requestOpenProject();
+      this.leftNav.requestOpenProject();
     });
 
     this.currentProjectEl = document.createElement('p');
@@ -69,7 +69,7 @@ export class ProjectPanel {
     this.currentProjectEl.hidden = true;
 
     this.statusEl = document.createElement('p');
-    this.statusEl.className = 'sidebar-export-status';
+    this.statusEl.className = 'leftnav-export-status';
     this.statusEl.setAttribute('aria-live', 'polite');
 
     this.root.append(
@@ -82,7 +82,7 @@ export class ProjectPanel {
       this.statusEl,
     );
 
-    this.sidebar.on('project:status', ({ message, busy, projectName, isOpen }) => {
+    this.leftNav.on('project:status', ({ message, busy, projectName, isOpen }) => {
       this.busy = busy;
       this.statusEl.textContent = message;
       this.currentProjectEl.hidden = !isOpen || !projectName;
@@ -92,12 +92,12 @@ export class ProjectPanel {
       this.updateButtonState();
     });
 
-    this.sidebar.on('project:availability', ({ canManage }) => {
+    this.leftNav.on('project:availability', ({ canManage }) => {
       this.canManage = canManage;
       this.updateButtonState();
     });
 
-    this.canManage = this.sidebar.canManageProject();
+    this.canManage = this.leftNav.canManageProject();
     this.updateButtonState();
   }
 

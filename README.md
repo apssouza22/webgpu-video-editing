@@ -67,7 +67,6 @@ Always run `npm install` from the **repo root** so workspaces link correctly und
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Core demo — integrated timeline + canvas preview (http://localhost:5551) |
-| `npm run dev:sidebar` | Sidebar package demo (http://localhost:5552) |
 | `npm run dev:timeline` | Timeline package demo (http://localhost:5553) |
 | `npm run dev:video-preview` | Video preview package demo (http://localhost:5554) |
 | `npm run dev:gpu-video-encode` | GPU video encode demo (http://localhost:5555) |

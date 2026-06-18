@@ -1,10 +1,10 @@
 import type { CanvasElement } from '@opensource/video-preview';
 
-import type { Sidebar } from './Sidebar';
+import type { LeftNav } from './LeftNav';
 
-export type SidebarPanelId = 'project' | 'media' | 'text' | 'properties' | 'export' | 'transcription';
+export type LeftNavPanelId = 'project' | 'media' | 'text' | 'properties' | 'export' | 'transcription';
 
-export interface SidebarEventMap {
+export interface LeftNavEventMap {
   'property:changed': {
     id: string;
     key: string;
@@ -15,7 +15,7 @@ export interface SidebarEventMap {
     selectedId: string | null;
     selectedElement: CanvasElement | null;
   };
-  'panel:changed': { panel: SidebarPanelId };
+  'panel:changed': { panel: LeftNavPanelId };
   'text:add:requested': { content: string; startTime: number };
   'project:create:requested': { name: string };
   'project:open:requested': Record<string, never>;
@@ -28,17 +28,17 @@ export interface SidebarEventMap {
   'project:availability': { canManage: boolean };
 }
 
-export type SidebarEventName = keyof SidebarEventMap;
+export type LeftNavEventName = keyof LeftNavEventMap;
 
-export type SidebarEventHandler<T extends SidebarEventName> = (
-  payload: SidebarEventMap[T],
+export type LeftNavEventHandler<T extends LeftNavEventName> = (
+  payload: LeftNavEventMap[T],
 ) => void;
 
-export type SidebarPanelFactory = (sidebar: Sidebar) => HTMLElement;
+export type LeftNavPanelFactory = (leftNav: LeftNav) => HTMLElement;
 
-export interface SidebarOptions {
-  /** Initial sidebar panel. */
-  initialPanel?: SidebarPanelId;
+export interface LeftNavOptions {
+  /** Initial left nav panel. */
+  initialPanel?: LeftNavPanelId;
   /** Optional panel element factories supplied by the host application. */
-  panelFactories?: Partial<Record<SidebarPanelId, SidebarPanelFactory>>;
+  panelFactories?: Partial<Record<LeftNavPanelId, LeftNavPanelFactory>>;
 }

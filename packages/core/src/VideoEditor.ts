@@ -1,18 +1,14 @@
 import { CompositionPreview } from '@opensource/video-preview';
 import type { TimelineOptions } from '@opensource/timeline';
 import { Timeline } from '@opensource/timeline';
-import {
-  Sidebar,
-  mountSidebar,
-  type SidebarOptions,
-} from '@opensource/sidebar';
 
+import { LeftNav, mountLeftNav, type LeftNavOptions } from './leftnav';
 import { AnimationFrameLoop, bindEditorPlayback } from './loop';
 import {
   bindClipPreviewSync,
   bindExport,
   bindMediaLibraryTimeline,
-  bindTranscriptionTimelineCut,
+  bindTranscription,
   ClipPreviewSyncService,
 } from './subscribers';
 import {
@@ -25,13 +21,12 @@ import {
 } from './export';
 import { MediaLibraryPanel, MediaLibraryService } from './mediaLibrary';
 import {
-  bindTranscription,
   createTranscriptionService,
   TranscriptionService,
   type TranscriptionOptions,
 } from './transcription';
 
-import '@opensource/sidebar/style.css';
+import './leftnav/leftnav.css';
 import '@opensource/timeline/style.css';
 import '@opensource/video-preview/style.css';
 
@@ -39,8 +34,8 @@ export interface VideoEditorOptions {
   timeline?: TimelineOptions;
   timelineClassName?: string;
   previewClassName?: string;
-  sidebar?: SidebarOptions;
-  sidebarClassName?: string;
+  leftNav?: LeftNavOptions;
+  leftNavClassName?: string;
   /** When true (default), wires export panel and export pipeline. */
   bindExport?: boolean;
   transcription?: TranscriptionOptions;
@@ -51,7 +46,7 @@ export interface VideoEditorOptions {
 export interface VideoEditorMount {
   timelineContainer: HTMLElement;
   previewContainer: HTMLElement;
-  sidebarContainer?: HTMLElement;
+  leftNavContainer?: HTMLElement;
 }
 
 /**
@@ -62,14 +57,14 @@ export class VideoEditor {
   readonly preview: CompositionPreview;
   readonly mediaLibrary: MediaLibraryService;
   readonly exportService: ExportService | null;
-  readonly sidebar: Sidebar | null;
+  readonly leftNav: LeftNav | null;
   readonly transcription: TranscriptionService;
   readonly frameLoop: AnimationFrameLoop;
   readonly clipPreviewSync: ClipPreviewSyncService;
   private readonly disposables: Array<() => void> = [];
 
   constructor(
-    { timelineContainer, previewContainer, sidebarContainer }: VideoEditorMount,
+    { timelineContainer, previewContainer, leftNavContainer }: VideoEditorMount,
     options: VideoEditorOptions = {},
   ) {
     if (options.timelineClassName) {
@@ -81,7 +76,7 @@ export class VideoEditor {
       className: options.previewClassName,
     });
     this.mediaLibrary = new MediaLibraryService();
-    this.exportService = sidebarContainer ? new ExportService(this.preview) : null;
+    this.exportService = leftNavContainer ? new ExportService(this.preview) : null;
     this.transcription = createTranscriptionService({
       mockTranscription: options.transcription?.mockTranscription ?? false,
       language: options.transcription?.language,
@@ -91,33 +86,21 @@ export class VideoEditor {
     this.clipPreviewSync = clipPreviewBinding.sync;
     this.disposables.push(() => clipPreviewBinding.dispose());
 
-    if (sidebarContainer) {
-      if (options.sidebarClassName) {
-        sidebarContainer.classList.add(...options.sidebarClassName.split(/\s+/).filter(Boolean));
+    if (leftNavContainer) {
+      if (options.leftNavClassName) {
+        leftNavContainer.classList.add(...options.leftNavClassName.split(/\s+/).filter(Boolean));
       }
-      this.sidebar = new Sidebar(this.preview, {
-        ...options.sidebar,
+      this.leftNav = new LeftNav(this.preview, {
+        ...options.leftNav,
         panelFactories: {
-          ...options.sidebar?.panelFactories,
+          ...options.leftNav?.panelFactories,
           media: () => new MediaLibraryPanel(this.mediaLibrary).element,
           export: () => new ExportPanel(this.exportService!).element,
           transcription: () => this.transcription.view.element,
         },
       });
-      const unmountSidebar = mountSidebar(sidebarContainer, this.sidebar);
-      this.disposables.push(unmountSidebar);
-
-      if (options.bindTranscription !== false) {
-        this.disposables.push(
-          bindTranscription({
-            transcription: this.transcription,
-            timeline: this.timeline,
-            preview: this.preview,
-            clipPreviewSync: this.clipPreviewSync,
-            sidebar: this.sidebar,
-          }),
-        );
-      }
+      const unmountLeftNav = mountLeftNav(leftNavContainer, this.leftNav);
+      this.disposables.push(unmountLeftNav);
 
       this.disposables.push(
         bindMediaLibraryTimeline({
@@ -137,7 +120,7 @@ export class VideoEditor {
       }
 
     } else {
-      this.sidebar = null;
+      this.leftNav = null;
     }
 
     this.frameLoop = new AnimationFrameLoop();
@@ -148,16 +131,21 @@ export class VideoEditor {
         frameLoop: this.frameLoop,
       }),
     );
-    this.disposables.push(
-      bindTranscriptionTimelineCut({
-        timeline: this.timeline,
-        transcription: this.transcription,
-      }),
-    );
-
-    if (this.sidebar) {
+    if (options.bindTranscription !== false) {
       this.disposables.push(
-        this.sidebar.on('text:add:requested', ({ content, startTime }) => {
+        bindTranscription({
+          transcription: this.transcription,
+          timeline: this.timeline,
+          preview: this.preview,
+          clipPreviewSync: this.clipPreviewSync,
+          leftNav: this.leftNav,
+        }).dispose,
+      );
+    }
+
+    if (this.leftNav) {
+      this.disposables.push(
+        this.leftNav.on('text:add:requested', ({ content, startTime }) => {
           this.timeline.addClip({
             type: 'text',
             name: content.slice(0, 32) || 'Text',
@@ -195,7 +183,7 @@ export class VideoEditor {
     this.transcription.destroy();
     this.mediaLibrary.destroy();
     this.exportService?.destroy();
-    this.sidebar?.destroy();
+    this.leftNav?.destroy();
     this.timeline.destroy();
     this.preview.destroy();
   }
