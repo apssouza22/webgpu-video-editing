@@ -1,14 +1,20 @@
-import type { Sidebar } from '../common/Sidebar';
-import type { ExportFormat, ExportQuality, ExportResolutionPreset, ExportSettings } from '../common/types';
+import type {
+  ExportFormat,
+  ExportQuality,
+  ExportResolutionPreset,
+} from './exportOptions';
+import type { ExportService } from './ExportService';
+import type { ExportSettings } from './events';
 
 export class ExportPanel {
   private readonly root: HTMLElement;
   private readonly form: HTMLFormElement;
   private readonly exportButton: HTMLButtonElement;
   private readonly statusEl: HTMLParagraphElement;
+  private readonly disposers: Array<() => void> = [];
   private exporting = false;
 
-  constructor(private readonly sidebar: Sidebar) {
+  constructor(private readonly exportService: ExportService) {
     this.root = document.createElement('div');
     this.root.className = 'flex flex-col gap-4';
 
@@ -75,27 +81,35 @@ export class ExportPanel {
       if (this.exportButton.disabled) {
         return;
       }
-      this.sidebar.requestExport(this.readSettings());
+      this.exportService.requestExport(this.readSettings());
     });
 
     this.form.append(this.exportButton);
     this.root.append(title, description, this.form, this.statusEl);
 
-    this.sidebar.on('export:status', ({ message, exporting }) => {
-      this.exporting = exporting;
-      this.statusEl.textContent = message;
-      this.updateButtonState(this.sidebar.canExport());
-    });
+    this.disposers.push(
+      this.exportService.on('export:status', ({ message, exporting }) => {
+        this.exporting = exporting;
+        this.statusEl.textContent = message;
+        this.updateButtonState(this.exportService.canExport());
+      }),
+      this.exportService.on('export:availability', ({ canExport }) => {
+        this.updateButtonState(canExport);
+      }),
+    );
 
-    this.sidebar.on('export:availability', ({ canExport }) => {
-      this.updateButtonState(canExport);
-    });
-
-    this.updateButtonState(this.sidebar.canExport());
+    this.updateButtonState(this.exportService.canExport());
   }
 
   get element(): HTMLElement {
     return this.root;
+  }
+
+  destroy(): void {
+    for (const dispose of this.disposers) {
+      dispose();
+    }
+    this.disposers.length = 0;
   }
 
   private readSettings(): ExportSettings {
@@ -118,4 +132,13 @@ export class ExportPanel {
       ? 'Render the composition with WebGPU and download an MP4'
       : 'Add at least one visual layer before exporting';
   }
+}
+
+export function mountExportPanel(
+  container: HTMLElement,
+  exportService: ExportService,
+): () => void {
+  const panel = new ExportPanel(exportService);
+  container.append(panel.element);
+  return () => panel.destroy();
 }

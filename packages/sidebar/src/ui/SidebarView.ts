@@ -1,6 +1,5 @@
 import type { Sidebar } from '../common/Sidebar';
 import type { SidebarPanelId } from '../common/types';
-import { ExportPanel } from './ExportPanel';
 import { ProjectPanel } from './ProjectPanel';
 import { PropertiesPanel } from './PropertiesPanel';
 import { SIDEBAR_ICONS } from './sidebarIcons';
@@ -72,7 +71,8 @@ export class SidebarView extends UIComponent<Sidebar> {
       this.sidebar.createPanelElement('media') ?? this.createMissingPanel('Media');
     const textPanel = this.createTextPanel();
     const propertiesPanel = new PropertiesPanel(this.sidebar);
-    const exportPanel = new ExportPanel(this.sidebar);
+    const exportPanel =
+      this.sidebar.createPanelElement('export') ?? this.createMissingPanel('Export');
     const transcriptionPanel =
       this.sidebar.createPanelElement('transcription') ??
       this.createMissingPanel('Transcription');
@@ -81,7 +81,7 @@ export class SidebarView extends UIComponent<Sidebar> {
     panels.set('media', mediaPanel);
     panels.set('text', textPanel);
     panels.set('properties', propertiesPanel.element);
-    panels.set('export', exportPanel.element);
+    panels.set('export', exportPanel);
     panels.set('transcription', transcriptionPanel);
 
     const refs: SidebarRefs = { panels, navButtons, contentHost };

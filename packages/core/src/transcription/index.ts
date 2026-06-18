@@ -7,7 +7,6 @@ export { TranscriptionService } from './transcription';
 export { TranscriptionEventEmitter } from './TranscriptionEventEmitter';
 export { PipelineFactory, transcribe, onModelInferenceError } from './model';
 export {
-  audioBufferToFloat32Array,
   prepareAudioForWhisper,
   WHISPER_SAMPLE_RATE,
 } from './audioTransform';

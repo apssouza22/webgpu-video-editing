@@ -3,7 +3,6 @@ import type { CompositionPreviewAPI, CanvasElement } from '@opensource/video-pre
 import { SidebarEventEmitter } from '../event/events';
 import type { SidebarEventHandler, SidebarEventName } from './types';
 import type {
-  ExportSettings,
   SidebarOptions,
   SidebarPanelFactory,
   SidebarPanelId,
@@ -95,20 +94,6 @@ export class Sidebar {
     this.events.emit('project:availability', { canManage });
   }
 
-  canExport(): boolean {
-    return this.preview
-      .getElements()
-      .some((element) => element.type !== 'audio');
-  }
-
-  requestExport(settings: ExportSettings): void {
-    this.events.emit('export:requested', { settings });
-  }
-
-  setExportStatus(message: string, exporting = false): void {
-    this.events.emit('export:status', { message, exporting });
-  }
-
   addTextToCanvas(content = 'New text', startTime?: number): void {
     this.events.emit('text:add:requested', {
       content,
@@ -166,15 +151,5 @@ export class Sidebar {
         }
       }),
     );
-
-    const notifyExportAvailability = (): void => {
-      this.events.emit('export:availability', { canExport: this.canExport() });
-    };
-
-    this.disposables.push(
-      this.preview.on('element:added', notifyExportAvailability),
-      this.preview.on('element:removed', notifyExportAvailability),
-    );
-    notifyExportAvailability();
   }
 }

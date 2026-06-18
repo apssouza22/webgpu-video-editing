@@ -31,20 +31,3 @@ export async function prepareAudioForWhisper(audioData: AudioBuffer): Promise<Fl
   return rendered.getChannelData(0);
 }
 
-/** @deprecated Use {@link prepareAudioForWhisper} so audio is resampled for Whisper. */
-export function audioBufferToFloat32Array(audioData: AudioBuffer): Float32Array {
-  if (audioData.numberOfChannels === 2) {
-    const scalingFactor = Math.sqrt(2);
-    const left = audioData.getChannelData(0);
-    const right = audioData.getChannelData(1);
-    const audio = new Float32Array(left.length);
-
-    for (let index = 0; index < audioData.length; index += 1) {
-      audio[index] = (scalingFactor * (left[index] + right[index])) / 2;
-    }
-
-    return audio;
-  }
-
-  return audioData.getChannelData(0);
-}

@@ -1,10 +1,5 @@
 export { Sidebar } from './common/Sidebar';
 export type {
-  ExportFormat,
-  ExportQuality,
-  ExportResolution,
-  ExportResolutionPreset,
-  ExportSettings,
   SidebarEventHandler,
   SidebarEventMap,
   SidebarEventName,

@@ -6,11 +6,13 @@ export { CompositionPreview } from '@opensource/video-preview';
 export type { CompositionPreviewOptions } from '@opensource/video-preview';
 export {
   bindClipPreviewSync,
+  bindExport,
   bindMediaLibraryTimeline,
   bindTranscriptionTimelineCut,
   ClipPreviewSyncService,
   CompositionPreviewSubscriber,
   TimelineSubscriber,
+  ExportSubscriber,
   MediaLibrarySubscriber,
   MediaLibrarySubscriber as MediaLibraryTimelineSubscriber,
   fromPreviewElementToTimelineClip,
@@ -21,6 +23,7 @@ export type {
   BindTranscriptionTimelineCutOptions,
   ClipPreviewSyncOptions,
   CompositionPreviewSubscriberOptions,
+  ExportSubscriberOptions,
   MediaLibraryTimelineSubscriberOptions,
   TimelineSubscriberOptions,
 } from './subscribers';
@@ -34,7 +37,10 @@ export {
   type FrameContext,
 } from './loop';
 export {
-  bindSidebarExport,
+  ExportService,
+  ExportPanel,
+  mountExportPanel,
+  ExportEventEmitter,
   previewElementsToComposition,
   downloadBlob,
   exportVideoFromPreview,
@@ -47,7 +53,10 @@ export {
   resolveExportDimensions,
   resolveExportSettings,
   resolveOutputFilename,
-  type BindSidebarExportOptions,
+  type ExportEventHandler,
+  type ExportEventMap,
+  type ExportEventName,
+  type ExportSettings,
   type PreviewToCompositionOptions,
   type PreviewToCompositionResult,
   type ExportFormat,
@@ -81,7 +90,6 @@ export {
   TranscriptionEventEmitter,
   PipelineFactory,
   transcribe,
-  audioBufferToFloat32Array,
   extractAudioFromMediaUrl,
   createMockTranscriptionResult,
   type BindTranscriptionOptions,
@@ -105,6 +113,5 @@ export type {
   SidebarEventMap,
   SidebarEventName,
   SidebarEventHandler,
-  ExportSettings,
   SidebarPanelId,
 } from '@opensource/sidebar';

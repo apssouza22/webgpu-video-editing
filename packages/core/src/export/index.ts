@@ -1,4 +1,12 @@
-export { bindSidebarExport, type BindSidebarExportOptions } from './bindSidebarExport';
+export { ExportService } from './ExportService';
+export { ExportPanel, mountExportPanel } from './ExportPanel';
+export {
+  ExportEventEmitter,
+  type ExportEventHandler,
+  type ExportEventMap,
+  type ExportEventName,
+  type ExportSettings,
+} from './events';
 export { previewElementsToComposition, type PreviewToCompositionOptions, type PreviewToCompositionResult } from './previewToComposition';
 export { downloadBlob } from './downloadBlob';
 export { exportVideoFromPreview, type ExportVideoResult } from './exportVideo';

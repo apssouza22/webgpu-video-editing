@@ -10,13 +10,15 @@ import {
 import { AnimationFrameLoop, bindEditorPlayback } from './loop';
 import {
   bindClipPreviewSync,
+  bindExport,
   bindMediaLibraryTimeline,
   bindTranscriptionTimelineCut,
   ClipPreviewSyncService,
 } from './subscribers';
 import {
-  bindSidebarExport,
   downloadBlob,
+  ExportPanel,
+  ExportService,
   exportVideoFromPreview,
   type ExportVideoOptions,
   type ExportVideoResult,
@@ -39,8 +41,8 @@ export interface VideoEditorOptions {
   previewClassName?: string;
   sidebar?: SidebarOptions;
   sidebarClassName?: string;
-  /** When true (default), handles `export:requested` from the sidebar. */
-  bindSidebarExport?: boolean;
+  /** When true (default), wires export panel and export pipeline. */
+  bindExport?: boolean;
   transcription?: TranscriptionOptions;
   /** When true (default), wires transcription panel and service. */
   bindTranscription?: boolean;
@@ -59,6 +61,7 @@ export class VideoEditor {
   readonly timeline: Timeline;
   readonly preview: CompositionPreview;
   readonly mediaLibrary: MediaLibraryService;
+  readonly exportService: ExportService | null;
   readonly sidebar: Sidebar | null;
   readonly transcription: TranscriptionService;
   readonly frameLoop: AnimationFrameLoop;
@@ -78,6 +81,7 @@ export class VideoEditor {
       className: options.previewClassName,
     });
     this.mediaLibrary = new MediaLibraryService();
+    this.exportService = sidebarContainer ? new ExportService(this.preview) : null;
     this.transcription = createTranscriptionService({
       mockTranscription: options.transcription?.mockTranscription ?? false,
       language: options.transcription?.language,
@@ -96,6 +100,7 @@ export class VideoEditor {
         panelFactories: {
           ...options.sidebar?.panelFactories,
           media: () => new MediaLibraryPanel(this.mediaLibrary).element,
+          export: () => new ExportPanel(this.exportService!).element,
           transcription: () => this.transcription.view.element,
         },
       });
@@ -122,12 +127,12 @@ export class VideoEditor {
         }).dispose,
       );
 
-      if (options.bindSidebarExport !== false) {
+      if (options.bindExport !== false && this.exportService) {
         this.disposables.push(
-          bindSidebarExport({
-            sidebar: this.sidebar,
+          bindExport({
+            exportService: this.exportService,
             exportVideo: (exportOptions) => this.exportVideo(exportOptions),
-          }),
+          }).dispose,
         );
       }
 
@@ -189,6 +194,7 @@ export class VideoEditor {
     this.frameLoop.destroy();
     this.transcription.destroy();
     this.mediaLibrary.destroy();
+    this.exportService?.destroy();
     this.sidebar?.destroy();
     this.timeline.destroy();
     this.preview.destroy();

@@ -17,7 +17,7 @@ const editor = new VideoEditor(
     sidebarContainer: sidebarEl,
   },
   {
-    transcription: { mockTranscription: false },
+    transcription: { mockTranscription: true },
     sidebar: {
       initialPanel: 'media',
     },

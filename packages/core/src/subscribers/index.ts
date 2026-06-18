@@ -12,6 +12,11 @@ export {
 } from './MediaLibrarySubscriber';
 export type { MediaLibraryTimelineSubscriberOptions } from './MediaLibrarySubscriber';
 export {
+  bindExport,
+  ExportSubscriber,
+} from './ExportSubscriber';
+export type { ExportSubscriberOptions } from './ExportSubscriber';
+export {
   bindTranscriptionTimelineCut,
   type BindTranscriptionTimelineCutOptions,
 } from './bindTranscriptionTimelineCut';
