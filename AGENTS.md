@@ -161,7 +161,7 @@ git checkout -b my-feature
 
 
 ## Component subscribers
-The component subscribers are responsible for subscribing to other components events and react accordingly. 
+The component subscribers are responsible for subscribing to component events and react accordingly. 
 Example: The timeline subscriber is responsible for subscribing to the timeline events and react accordingly. 
 It can react by calling a service, emitting an event or updating the component state.
 
